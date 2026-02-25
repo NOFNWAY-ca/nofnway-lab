@@ -235,9 +235,8 @@
 
 </div>
 <script>
-    // ── Parse code from URL path (/alarm/CODE) ──────────────
-    const segments = window.location.pathname.split('/').filter(Boolean);
-    const code = (segments[0] === 'alarm' && segments[1]) ? segments[1] : null;
+    // ── Parse code from query string (?code=XXXX) ───────────
+    const code = new URLSearchParams(window.location.search).get('code');
 
     let currentData  = null;
     let refreshTimer = null;
@@ -271,7 +270,7 @@
 
     // ── Create new alarm ─────────────────────────────────────
     function createAlarm() {
-        window.location.href = `/alarm/${generateCode()}`;
+        window.location.href = `/alarm?code=${generateCode()}`;
     }
 
     // ── API calls ────────────────────────────────────────────
