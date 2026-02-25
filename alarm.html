@@ -269,6 +269,15 @@
         .msg-error   { font-size: 0.83rem; color: var(--red);  margin: 10px 0 14px; min-height: 1.2em; }
         .msg-loading { font-size: 0.88rem; color: var(--dim); }
 
+        .url-disclaimer {
+            font-size: 0.72rem;
+            color: var(--dim);
+            line-height: 1.6;
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+
         [hidden] { display: none !important; }
 
         .back-link {
@@ -373,6 +382,8 @@
                 <button class="btn btn-ghost" id="edit-btn" onclick="showEdit()">Edit</button>
                 <button class="btn btn-ghost" id="share-btn" onclick="shareLink()">Share link</button>
             </div>
+
+            <p class="url-disclaimer">This link is the alarm. Anyone who has it can see and change it — no passwords, no accounts, that's how it works. Share it with the person who needs it. Don't post it anywhere public.</p>
         </div>
 
         <!-- Ringing state -->
