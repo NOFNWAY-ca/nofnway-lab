@@ -15,7 +15,9 @@
             --border: #2a2a2a;
             --text:   #e0e0e0;
             --dim:    #666;
-            --red:    #ff6b6b;
+            --red:    #ff5252;
+            --green:  #4caf7d;
+            --gold:   #f9a825;
         }
 
         body {
@@ -31,37 +33,140 @@
 
         .wrap { width: 100%; max-width: 360px; text-align: center; }
 
+        /* ── Eyebrow ── */
         .eyebrow {
             font-size: 0.65rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 2px;
             color: var(--blue);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
-        h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 12px; }
-
-        .tagline {
-            font-size: 0.9rem;
-            color: var(--dim);
-            line-height: 1.6;
-            margin-bottom: 36px;
+        /* ── Mode badge ── */
+        .mode-badge {
+            display: inline-block;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
         }
+        .mode-badge.owner    { background: rgba(77,158,255,0.12); color: var(--blue); }
+        .mode-badge.receiver { background: rgba(255,255,255,0.05); color: var(--dim);  border: 1px solid var(--border); }
 
-        /* ── Big time display ── */
+        /* ── Landing ── */
+        h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 10px; }
+        .tagline { font-size: 0.9rem; color: var(--dim); line-height: 1.6; margin-bottom: 36px; }
+
+        /* ── Time display ── */
         .time-display {
-            font-size: 5.5rem;
+            font-size: 5rem;
             font-weight: 700;
             letter-spacing: -3px;
             line-height: 1;
             font-variant-numeric: tabular-nums;
-            margin: 16px 0 6px;
+            margin: 12px 0 4px;
+            transition: color 0.3s;
         }
-        .time-display.unset { color: var(--dim); }
+        .time-display.unset  { color: var(--dim); }
+        .time-display.ringing { animation: ring-pulse 0.9s ease-in-out infinite; }
+
+        @keyframes ring-pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.35; }
+        }
 
         .label-line   { font-size: 0.88rem; color: var(--dim); min-height: 1.2em; margin-bottom: 4px; }
-        .updated-line { font-size: 0.75rem; color: var(--border); min-height: 1em; margin-bottom: 28px; }
+
+        .countdown-line {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--blue);
+            min-height: 1.1em;
+            margin-bottom: 4px;
+        }
+        .countdown-line.fired { color: var(--red); }
+
+        .updated-line { font-size: 0.72rem; color: var(--border); min-height: 1em; margin-bottom: 20px; }
+
+        /* ── Notification prompt ── */
+        .notif-prompt {
+            display: none;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--blue);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 16px;
+            text-align: left;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .notif-prompt.visible { display: flex; }
+        .notif-text { flex: 1; font-size: 0.78rem; color: var(--dim); line-height: 1.4; min-width: 140px; }
+        .notif-yes {
+            background: var(--blue); color: #000; border: none;
+            border-radius: 5px; padding: 6px 12px; font-size: 0.72rem;
+            font-weight: 700; text-transform: uppercase; cursor: pointer; white-space: nowrap;
+        }
+        .notif-no {
+            background: transparent; color: var(--dim); border: none;
+            font-size: 0.85rem; cursor: pointer; padding: 4px;
+        }
+
+        /* ── Sound picker ── */
+        .section-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dim);
+            margin-bottom: 8px;
+        }
+
+        .sound-picker {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .sound-pill {
+            padding: 7px 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            color: var(--dim);
+            background: transparent;
+            transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .sound-pill:hover  { border-color: var(--blue); color: var(--blue); }
+        .sound-pill.active { background: var(--blue); color: #000; border-color: var(--blue); }
+
+        /* ── Volume slider ── */
+        .vol-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 auto 24px;
+            max-width: 260px;
+        }
+        .vol-icon { font-size: 1rem; color: var(--dim); user-select: none; }
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--blue);
+            cursor: pointer;
+            height: 4px;
+        }
 
         /* ── Buttons ── */
         .btn {
@@ -76,16 +181,40 @@
             cursor: pointer;
             transition: opacity 0.15s, transform 0.1s;
             white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
         }
         .btn:hover  { opacity: 0.82; }
         .btn:active { transform: scale(0.96); }
         .btn-primary { background: var(--blue); color: #000; }
-        .btn-ghost { background: transparent; color: var(--dim); border: 1px solid var(--border); }
+        .btn-danger  { background: var(--red);  color: #fff; }
+        .btn-ghost {
+            background: transparent;
+            color: var(--dim);
+            border: 1px solid var(--border);
+        }
         .btn-ghost:hover { color: var(--text); border-color: #444; }
+
+        .btn-dismiss {
+            width: 100%;
+            max-width: 300px;
+            padding: 20px;
+            font-size: 1.1rem;
+            background: var(--red);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-top: 32px;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+        .btn-dismiss:active { transform: scale(0.97); }
 
         .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
-        /* ── Tap picker ── */
+        /* ── Tap picker (edit state) ── */
         .time-picker {
             display: flex;
             align-items: center;
@@ -93,100 +222,46 @@
             gap: 6px;
             margin: 20px 0 24px;
         }
-
-        .picker-col {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
+        .picker-col { display: flex; flex-direction: column; align-items: center; }
         .picker-arrow {
-            background: transparent;
-            border: none;
-            color: var(--dim);
-            font-size: 1.4rem;
-            cursor: pointer;
-            padding: 10px 24px;
-            border-radius: 8px;
-            line-height: 1;
-            transition: background 0.1s, color 0.1s;
+            background: transparent; border: none; color: var(--dim);
+            font-size: 1.4rem; cursor: pointer; padding: 10px 24px;
+            border-radius: 8px; line-height: 1; transition: background 0.1s, color 0.1s;
             -webkit-tap-highlight-color: transparent;
         }
         .picker-arrow:hover  { background: var(--card); color: var(--text); }
         .picker-arrow:active { background: var(--border); }
-
         .picker-val {
-            font-size: 4rem;
-            font-weight: 700;
-            color: var(--text);
-            font-variant-numeric: tabular-nums;
-            min-width: 2ch;
-            text-align: center;
-            line-height: 1.1;
-            user-select: none;
+            font-size: 4rem; font-weight: 700; color: var(--text);
+            font-variant-numeric: tabular-nums; min-width: 2ch;
+            text-align: center; line-height: 1.1; user-select: none;
         }
-
-        .picker-sep {
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: var(--dim);
-            padding-bottom: 6px;
-            user-select: none;
-        }
-
-        .ampm-col {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-left: 6px;
-            padding-bottom: 4px;
-        }
-
+        .picker-sep { font-size: 3.5rem; font-weight: 700; color: var(--dim); padding-bottom: 6px; user-select: none; }
+        .ampm-col { display: flex; flex-direction: column; gap: 8px; margin-left: 6px; padding-bottom: 4px; }
         .ampm-btn {
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--dim);
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 10px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.1s, color 0.1s, border-color 0.1s;
-            -webkit-tap-highlight-color: transparent;
+            background: var(--card); border: 1px solid var(--border); color: var(--dim);
+            font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; padding: 10px 14px; border-radius: 6px;
+            cursor: pointer; transition: all 0.1s; -webkit-tap-highlight-color: transparent;
         }
         .ampm-btn.active { background: var(--blue); color: #000; border-color: var(--blue); }
 
         /* ── Label input ── */
-        .label-wrap { margin-bottom: 6px; text-align: left; }
-
         .form-label {
-            display: block;
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--dim);
-            margin-bottom: 6px;
+            display: block; font-size: 0.68rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            color: var(--dim); margin-bottom: 6px; text-align: left;
         }
         .form-label .hint { font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.75rem; }
-
         input[type="text"] {
-            width: 100%;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 1rem;
-            padding: 12px 14px;
-            outline: none;
-            font-family: inherit;
-            transition: border-color 0.15s;
+            width: 100%; background: var(--card); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text); font-size: 1rem;
+            padding: 12px 14px; outline: none; font-family: inherit; transition: border-color 0.15s;
+            margin-bottom: 20px;
         }
         input[type="text"]:focus { border-color: var(--blue); }
 
-        .msg-error { font-size: 0.83rem; color: var(--red); margin: 10px 0 14px; min-height: 1.2em; }
+        .msg-error   { font-size: 0.83rem; color: var(--red);  margin: 10px 0 14px; min-height: 1.2em; }
         .msg-loading { font-size: 0.88rem; color: var(--dim); }
 
         [hidden] { display: none !important; }
@@ -199,7 +274,7 @@
     <div id="view-landing" hidden>
         <div class="eyebrow">NOFNWAY Lab</div>
         <h1>Shared Alarm</h1>
-        <p class="tagline">See what time someone's alarm is set for — without waking them up.</p>
+        <p class="tagline">Set an alarm and share the link. Whoever has it open gets a softer version — without waking you to ask.</p>
         <button class="btn btn-primary" onclick="createAlarm()">Create alarm link</button>
     </div>
 
@@ -210,53 +285,77 @@
 
     <!-- ── Alarm view ── -->
     <div id="view-alarm" hidden>
-        <div class="eyebrow">NOFNWAY Lab — Alarm</div>
+        <div class="eyebrow">NOFNWAY Lab</div>
+        <div class="mode-badge" id="mode-badge"></div>
 
-        <!-- Display -->
+        <!-- Display state -->
         <div id="state-display">
-            <div class="time-display" id="time-text">—</div>
-            <div class="label-line"   id="label-text"></div>
-            <div class="updated-line" id="updated-text"></div>
+            <div class="time-display"   id="time-text">—</div>
+            <div class="label-line"     id="label-text"></div>
+            <div class="countdown-line" id="countdown-text"></div>
+            <div class="updated-line"   id="updated-text"></div>
+
+            <div class="notif-prompt" id="notif-prompt">
+                <span class="notif-text">Enable notifications to be alerted even when this tab is in the background.</span>
+                <button class="notif-yes" onclick="enableNotifs()">Enable</button>
+                <button class="notif-no"  onclick="dismissNotifPrompt()">✕</button>
+            </div>
+
+            <div class="section-label">Sound</div>
+            <div class="sound-picker">
+                <button class="sound-pill" data-sound="classic" onclick="setSound('classic')">Classic</button>
+                <button class="sound-pill" data-sound="chime"   onclick="setSound('chime')">Chime</button>
+                <button class="sound-pill" data-sound="pulse"   onclick="setSound('pulse')">Pulse</button>
+            </div>
+
+            <div class="vol-row">
+                <span class="vol-icon">🔈</span>
+                <input type="range" id="vol-slider" min="0" max="1" step="0.05"
+                       oninput="setVolume(this.value)">
+                <span class="vol-icon">🔊</span>
+            </div>
+
             <div class="btn-row">
-                <button class="btn btn-ghost" onclick="showEdit()">Edit</button>
+                <button class="btn btn-ghost" id="edit-btn" onclick="showEdit()">Edit</button>
                 <button class="btn btn-ghost" id="share-btn" onclick="shareLink()">Share link</button>
             </div>
         </div>
 
-        <!-- Edit -->
-        <div id="state-edit" hidden>
+        <!-- Ringing state -->
+        <div id="state-ringing" hidden>
+            <div class="time-display ringing" id="ring-time-text"></div>
+            <div class="label-line" id="ring-label-text"></div>
+            <button class="btn-dismiss" onclick="dismissAlarm()">Dismiss</button>
+        </div>
 
+        <!-- Edit state -->
+        <div id="state-edit" hidden>
             <div class="time-picker">
                 <div class="picker-col">
                     <button class="picker-arrow" onclick="adjustHour(1)"  aria-label="Hour up">▲</button>
                     <div class="picker-val" id="pick-hour">7</div>
                     <button class="picker-arrow" onclick="adjustHour(-1)" aria-label="Hour down">▼</button>
                 </div>
-
                 <div class="picker-sep">:</div>
-
                 <div class="picker-col">
                     <button class="picker-arrow" onclick="adjustMin(1)"  aria-label="Minute up">▲</button>
                     <div class="picker-val" id="pick-min">00</div>
                     <button class="picker-arrow" onclick="adjustMin(-1)" aria-label="Minute down">▼</button>
                 </div>
-
                 <div class="ampm-col">
                     <button id="btn-am" class="ampm-btn" onclick="setAmPm('AM')">AM</button>
                     <button id="btn-pm" class="ampm-btn" onclick="setAmPm('PM')">PM</button>
                 </div>
             </div>
 
-            <div class="label-wrap">
-                <label class="form-label" for="input-label">
-                    Label <span class="hint">(optional — e.g. "Gerry's alarm")</span>
-                </label>
-                <input type="text" id="input-label" maxlength="64" placeholder="Whose alarm is this?">
-            </div>
+            <label class="form-label" for="input-label">
+                Label <span class="hint">(optional)</span>
+            </label>
+            <input type="text" id="input-label" maxlength="64" placeholder="e.g. Wake me in an hour">
 
             <div class="msg-error" id="save-error"></div>
 
-            <div class="btn-row" style="margin-top:20px;">
+            <div class="btn-row">
                 <button class="btn btn-primary" onclick="saveAlarm()">Save</button>
                 <button class="btn btn-ghost"   onclick="cancelEdit()">Cancel</button>
             </div>
@@ -265,213 +364,537 @@
 
 </div>
 <script>
-    const code = new URLSearchParams(window.location.search).get('code');
+// ─────────────────────────────────────────────
+// CONSTANTS & STATE
+// ─────────────────────────────────────────────
+const code      = new URLSearchParams(window.location.search).get('code');
+const OWNER_KEY = code ? `nofnway-alarm-owner-${code}` : null;
+const PREFS_KEY = 'nofnway-alarm-prefs';
 
-    let currentData  = null;
-    let refreshTimer = null;
-    let clockTimer   = null;
+let currentData    = null;
+let isOwner        = false;
+let alarmTimer     = null;   // setTimeout id for the alarm
+let countdownTimer = null;   // setInterval id for countdown
+let refreshTimer   = null;   // setInterval id for API polling
+let isRinging      = false;
+let ringActive     = false;
+let ringNodes      = [];
 
-    // Picker state
-    let pickHour  = 7;
-    let pickMin   = 0;
-    let pickAmPm  = 'AM';
+let alarmSound  = 'classic';
+let alarmVolume = 0.5;
 
-    const $ = id => document.getElementById(id);
-    const show = id => $(id).hidden = false;
-    const hide = id => $(id).hidden = true;
+// Audio
+let audioCtx   = null;
+let masterGain = null;
 
-    // ── Picker logic ─────────────────────────────────────────
-    function updatePickerDisplay() {
-        $('pick-hour').textContent = pickHour;
-        $('pick-min').textContent  = String(pickMin).padStart(2, '0');
-        $('btn-am').className = 'ampm-btn' + (pickAmPm === 'AM' ? ' active' : '');
-        $('btn-pm').className = 'ampm-btn' + (pickAmPm === 'PM' ? ' active' : '');
+// Picker state
+let pickHour = 7, pickMin = 0, pickAmPm = 'AM';
+
+// ─────────────────────────────────────────────
+// DOM helpers
+// ─────────────────────────────────────────────
+const $    = id => document.getElementById(id);
+const show = id => $(id).hidden = false;
+const hide = id => $(id).hidden = true;
+
+// ─────────────────────────────────────────────
+// PREFERENCES
+// ─────────────────────────────────────────────
+function loadPrefs() {
+    try {
+        const p = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
+        alarmSound   = p.sound  || 'classic';
+        alarmVolume  = p.volume !== undefined ? p.volume : (isOwner ? 0.85 : 0.25);
+    } catch(e) {
+        alarmVolume = isOwner ? 0.85 : 0.25;
+    }
+}
+
+function savePrefs() {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify({ sound: alarmSound, volume: alarmVolume })); } catch(e) {}
+}
+
+function applyPrefsToUI() {
+    $('vol-slider').value = alarmVolume;
+    document.querySelectorAll('.sound-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.sound === alarmSound);
+    });
+}
+
+// ─────────────────────────────────────────────
+// AUDIO ENGINE
+// ─────────────────────────────────────────────
+function getAudio() {
+    if (!audioCtx) {
+        audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.connect(audioCtx.destination);
+        masterGain.gain.value = alarmVolume;
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+}
+
+function setVolume(v) {
+    alarmVolume = parseFloat(v);
+    if (masterGain) masterGain.gain.value = alarmVolume;
+    savePrefs();
+}
+
+function setSound(s) {
+    alarmSound = s;
+    document.querySelectorAll('.sound-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.sound === s);
+    });
+    savePrefs();
+    // Play a brief preview
+    previewSound();
+}
+
+// ── Sound preview (short, quiet) ─────────────
+function previewSound() {
+    const ctx = getAudio();
+    const g   = ctx.createGain();
+    g.connect(ctx.destination);
+    g.gain.value = alarmVolume * 0.4;
+
+    if (alarmSound === 'classic') {
+        const osc = ctx.createOscillator();
+        osc.connect(g);
+        osc.type = 'square';
+        osc.frequency.value = 880;
+        osc.start();
+        g.gain.setValueAtTime(alarmVolume * 0.4, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+        osc.stop(ctx.currentTime + 0.2);
+    } else if (alarmSound === 'chime') {
+        [523, 659, 784].forEach((f, i) => {
+            const osc = ctx.createOscillator();
+            const ng  = ctx.createGain();
+            osc.connect(ng); ng.connect(ctx.destination);
+            osc.type = 'sine'; osc.frequency.value = f;
+            ng.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+            ng.gain.linearRampToValueAtTime(alarmVolume * 0.4, ctx.currentTime + i * 0.12 + 0.04);
+            ng.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.45);
+            osc.start(ctx.currentTime + i * 0.12);
+            osc.stop(ctx.currentTime + i * 0.12 + 0.5);
+        });
+    } else if (alarmSound === 'pulse') {
+        const osc = ctx.createOscillator();
+        osc.connect(g);
+        osc.type = 'sine'; osc.frequency.value = 440;
+        g.gain.setValueAtTime(0, ctx.currentTime);
+        g.gain.linearRampToValueAtTime(alarmVolume * 0.4, ctx.currentTime + 0.15);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc.start(); osc.stop(ctx.currentTime + 0.65);
+    }
+}
+
+// ── Alarm sounds (loop until dismissed) ──────
+function startAlarmSound() {
+    ringActive = true;
+    ringNodes  = [];
+    const ctx = getAudio();
+    masterGain.gain.value = alarmVolume;
+
+    if (alarmSound === 'classic') startClassic(ctx);
+    else if (alarmSound === 'chime') startChime(ctx);
+    else startPulse(ctx);
+}
+
+function startClassic(ctx) {
+    if (!ringActive) return;
+    // Three sharp beeps, then pause, repeat
+    for (let i = 0; i < 3; i++) {
+        const t   = ctx.currentTime + 0.05 + i * 0.27;
+        const osc = ctx.createOscillator();
+        const g   = ctx.createGain();
+        osc.connect(g); g.connect(masterGain);
+        osc.type = 'square'; osc.frequency.value = 880;
+        g.gain.setValueAtTime(1, t);
+        g.gain.setValueAtTime(0, t + 0.16);
+        osc.start(t); osc.stop(t + 0.17);
+        ringNodes.push(osc);
+    }
+    if (ringActive) {
+        ringNodes._classicTimer = setTimeout(() => startClassic(getAudio()), 1900);
+    }
+}
+
+function startChime(ctx) {
+    if (!ringActive) return;
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        const t   = ctx.currentTime + 0.05 + i * 0.2;
+        const osc = ctx.createOscillator();
+        const g   = ctx.createGain();
+        osc.connect(g); g.connect(masterGain);
+        osc.type = 'sine'; osc.frequency.value = freq;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(1, t + 0.06);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.85);
+        osc.start(t); osc.stop(t + 0.9);
+        ringNodes.push(osc);
+    });
+    if (ringActive) {
+        ringNodes._chimeTimer = setTimeout(() => startChime(getAudio()), 2800);
+    }
+}
+
+function startPulse(ctx) {
+    if (!ringActive) return;
+    const osc  = ctx.createOscillator();
+    const lfo  = ctx.createOscillator();
+    const lfoG = ctx.createGain();
+    const envG = ctx.createGain();
+
+    lfo.frequency.value = 0.7;
+    lfoG.gain.value     = 0.45;
+    envG.gain.value     = 0.55;
+
+    lfo.connect(lfoG);
+    lfoG.connect(envG.gain);
+    osc.connect(envG);
+    envG.connect(masterGain);
+
+    osc.type = 'sine'; osc.frequency.value = 432;
+    osc.start(); lfo.start();
+
+    ringNodes.push({ stop: () => { try { osc.stop(); lfo.stop(); } catch(e) {} } });
+}
+
+function stopAlarmSound() {
+    ringActive = false;
+    clearTimeout(ringNodes._classicTimer);
+    clearTimeout(ringNodes._chimeTimer);
+    ringNodes.forEach(n => { try { if (n.stop) n.stop(); else n.disconnect(); } catch(e) {} });
+    ringNodes = [];
+}
+
+// ─────────────────────────────────────────────
+// HAPTICS
+// ─────────────────────────────────────────────
+function haptic(ms) { try { navigator.vibrate?.(ms); } catch(e) {} }
+
+// ─────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────
+function showNotifPrompt() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'default') return;
+    $('notif-prompt').classList.add('visible');
+}
+
+async function enableNotifs() {
+    $('notif-prompt').classList.remove('visible');
+    try { await Notification.requestPermission(); } catch(e) {}
+}
+
+function dismissNotifPrompt() {
+    $('notif-prompt').classList.remove('visible');
+}
+
+function sendNotification(title, body) {
+    if (Notification.permission !== 'granted') return;
+    try {
+        new Notification(title, {
+            body,
+            icon:    '/favicon.svg',
+            vibrate: [300, 100, 300, 100, 300],
+        });
+    } catch(e) {}
+}
+
+// ─────────────────────────────────────────────
+// TIME UTILITIES
+// ─────────────────────────────────────────────
+function msUntilTime(timeStr) {
+    const [h, m] = timeStr.split(':').map(Number);
+    const now    = new Date();
+    const target = new Date();
+    target.setHours(h, m, 0, 0);
+    let ms = target - now;
+    if (ms <= 0) ms += 86400000; // next occurrence
+    return ms;
+}
+
+function formatCountdown(ms) {
+    if (ms <= 0) return '';
+    const totalMin = Math.ceil(ms / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (h > 0 && m > 0) return `Fires in ${h}h ${m}m`;
+    if (h > 0)           return `Fires in ${h}h`;
+    return `Fires in ${m}m`;
+}
+
+function timeAgo(ms) {
+    const diff = Date.now() - ms;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1)   return 'just now';
+    if (mins === 1) return '1 minute ago';
+    if (mins < 60)  return `${mins} minutes ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs === 1)  return '1 hour ago';
+    if (hrs < 24)   return `${hrs} hours ago`;
+    return `${Math.floor(hrs / 24)} days ago`;
+}
+
+function formatTime12(timeStr) {
+    const [h, m] = timeStr.split(':').map(Number);
+    const ampm   = h < 12 ? 'AM' : 'PM';
+    const h12    = h % 12 || 12;
+    return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+// ─────────────────────────────────────────────
+// ALARM SCHEDULING
+// ─────────────────────────────────────────────
+function scheduleAlarm(timeStr) {
+    clearTimeout(alarmTimer);
+    clearInterval(countdownTimer);
+    if (!timeStr) return;
+
+    const ms = msUntilTime(timeStr);
+
+    // Update countdown now and every 30s
+    updateCountdown(timeStr);
+    countdownTimer = setInterval(() => updateCountdown(timeStr), 30000);
+
+    alarmTimer = setTimeout(() => triggerAlarm(), ms);
+}
+
+function updateCountdown(timeStr) {
+    if (isRinging) return;
+    const ms = msUntilTime(timeStr);
+    $('countdown-text').textContent = formatCountdown(ms);
+    $('countdown-text').classList.remove('fired');
+}
+
+function triggerAlarm() {
+    if (isRinging) return;
+    isRinging = true;
+
+    const displayTime  = $('time-text').textContent;
+    const displayLabel = $('label-text').textContent || 'Alarm';
+
+    // Show ringing state
+    hide('state-display');
+    hide('state-edit');
+    show('state-ringing');
+    $('ring-time-text').textContent  = displayTime;
+    $('ring-label-text').textContent = displayLabel;
+
+    // Sound + haptic
+    startAlarmSound();
+    haptic([400, 200, 400, 200, 400]);
+
+    // Browser notification (works even in background tab)
+    sendNotification('⏰ Alarm!', displayLabel);
+}
+
+function dismissAlarm() {
+    isRinging = false;
+    stopAlarmSound();
+    hide('state-ringing');
+    show('state-display');
+    $('countdown-text').textContent = 'Alarm dismissed';
+    $('countdown-text').classList.add('fired');
+    haptic(40);
+}
+
+// ─────────────────────────────────────────────
+// RENDER DISPLAY
+// ─────────────────────────────────────────────
+function renderDisplay(data) {
+    hide('state-edit');
+    hide('state-ringing');
+    show('state-display');
+
+    const timeEl    = $('time-text');
+    const labelEl   = $('label-text');
+    const updatedEl = $('updated-text');
+    const countEl   = $('countdown-text');
+
+    if (!data) {
+        timeEl.textContent    = '—';
+        timeEl.className      = 'time-display unset';
+        labelEl.textContent   = 'No alarm set yet.';
+        updatedEl.textContent = '';
+        countEl.textContent   = '';
+    } else {
+        timeEl.textContent    = formatTime12(data.time);
+        timeEl.className      = 'time-display';
+        labelEl.textContent   = data.label || '';
+        updatedEl.textContent = data.updated ? 'Updated ' + timeAgo(data.updated) : '';
+        scheduleAlarm(data.time);
     }
 
-    function adjustHour(dir) {
-        pickHour = ((pickHour - 1 + dir + 12) % 12) + 1;
-        updatePickerDisplay();
-    }
+    // Owner: show Edit, receiver: hide it
+    $('edit-btn').style.display = isOwner ? '' : 'none';
+}
 
-    function adjustMin(dir) {
-        pickMin = (pickMin + dir * 5 + 60) % 60;
-        updatePickerDisplay();
-    }
+// ─────────────────────────────────────────────
+// MODE BADGE
+// ─────────────────────────────────────────────
+function renderModeBadge() {
+    const b = $('mode-badge');
+    if (isOwner) { b.textContent = 'Your alarm'; b.className = 'mode-badge owner'; }
+    else         { b.textContent = 'Shared alarm'; b.className = 'mode-badge receiver'; }
+}
 
-    function setAmPm(val) {
-        pickAmPm = val;
-        updatePickerDisplay();
-    }
+// ─────────────────────────────────────────────
+// PICKER
+// ─────────────────────────────────────────────
+function updatePickerDisplay() {
+    $('pick-hour').textContent = pickHour;
+    $('pick-min').textContent  = String(pickMin).padStart(2, '0');
+    $('btn-am').className = 'ampm-btn' + (pickAmPm === 'AM' ? ' active' : '');
+    $('btn-pm').className = 'ampm-btn' + (pickAmPm === 'PM' ? ' active' : '');
+}
 
-    function timeToPickerState(time) {
-        const [h, m] = time.split(':').map(Number);
-        if      (h === 0)  { pickHour = 12; pickAmPm = 'AM'; }
-        else if (h < 12)   { pickHour = h;  pickAmPm = 'AM'; }
-        else if (h === 12) { pickHour = 12; pickAmPm = 'PM'; }
-        else               { pickHour = h - 12; pickAmPm = 'PM'; }
-        pickMin = Math.round(m / 5) * 5 % 60;
-    }
+function adjustHour(d) { pickHour = ((pickHour - 1 + d + 12) % 12) + 1; updatePickerDisplay(); }
+function adjustMin(d)  { pickMin  = (pickMin + d * 5 + 60) % 60;         updatePickerDisplay(); }
+function setAmPm(v)    { pickAmPm = v;                                    updatePickerDisplay(); }
 
-    function pickerStateToTime() {
-        let h = pickHour;
-        if (pickAmPm === 'AM' && h === 12) h = 0;
-        else if (pickAmPm === 'PM' && h !== 12) h += 12;
-        return `${String(h).padStart(2, '0')}:${String(pickMin).padStart(2, '0')}`;
-    }
+function timeToPickerState(t) {
+    const [h, m] = t.split(':').map(Number);
+    if      (h === 0)  { pickHour = 12; pickAmPm = 'AM'; }
+    else if (h < 12)   { pickHour = h;  pickAmPm = 'AM'; }
+    else if (h === 12) { pickHour = 12; pickAmPm = 'PM'; }
+    else               { pickHour = h - 12; pickAmPm = 'PM'; }
+    pickMin = Math.round(m / 5) * 5 % 60;
+}
 
-    // ── Time ago ─────────────────────────────────────────────
-    function timeAgo(ms) {
-        const diff = Date.now() - ms;
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1)   return 'just now';
-        if (mins === 1) return '1 minute ago';
-        if (mins < 60)  return `${mins} minutes ago`;
-        const hrs = Math.floor(mins / 60);
-        if (hrs === 1)  return '1 hour ago';
-        if (hrs < 24)   return `${hrs} hours ago`;
-        return `${Math.floor(hrs / 24)} days ago`;
-    }
+function pickerStateToTime() {
+    let h = pickHour;
+    if (pickAmPm === 'AM' && h === 12) h = 0;
+    else if (pickAmPm === 'PM' && h !== 12) h += 12;
+    return `${String(h).padStart(2,'0')}:${String(pickMin).padStart(2,'0')}`;
+}
 
-    // ── Code generator ───────────────────────────────────────
-    function generateCode() {
-        const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
-        let c = '';
-        for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
-        return c;
-    }
+// ─────────────────────────────────────────────
+// EDIT
+// ─────────────────────────────────────────────
+function showEdit() {
+    hide('state-display');
+    show('state-edit');
+    if (currentData?.time) timeToPickerState(currentData.time);
+    else { pickHour = 7; pickMin = 0; pickAmPm = 'AM'; }
+    updatePickerDisplay();
+    $('input-label').value      = currentData?.label || '';
+    $('save-error').textContent = '';
+}
 
-    function createAlarm() {
-        window.location.href = `/alarm?code=${generateCode()}`;
-    }
+function cancelEdit() { renderDisplay(currentData); }
 
-    // ── API ──────────────────────────────────────────────────
-    async function fetchAlarm() {
-        try {
-            const res = await fetch(`/api/alarm/${code}`);
-            if (res.status === 404) return null;
-            if (!res.ok) throw new Error();
-            return await res.json();
-        } catch { return null; }
-    }
-
-    async function postAlarm(time, label) {
+async function saveAlarm() {
+    const time  = pickerStateToTime();
+    const label = $('input-label').value.trim();
+    $('save-error').textContent = '';
+    try {
         const res = await fetch(`/api/alarm/${code}`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ time, label }),
         });
-        if (!res.ok) throw new Error('save failed');
-    }
-
-    // ── Render display ───────────────────────────────────────
-    function renderDisplay(data) {
-        hide('state-edit');
-        show('state-display');
-        const timeEl    = $('time-text');
-        const labelEl   = $('label-text');
-        const updatedEl = $('updated-text');
-
-        if (!data) {
-            timeEl.textContent    = '—';
-            timeEl.className      = 'time-display unset';
-            labelEl.textContent   = 'No alarm set yet.';
-            updatedEl.textContent = '';
-        } else {
-            // Convert stored 24h time to 12h for display
-            const [h, m] = data.time.split(':').map(Number);
-            const ampm   = h < 12 ? 'AM' : 'PM';
-            const hour12 = h % 12 || 12;
-            const display = `${hour12}:${String(m).padStart(2,'0')} ${ampm}`;
-            timeEl.textContent    = display;
-            timeEl.className      = 'time-display';
-            labelEl.textContent   = data.label || '';
-            updatedEl.textContent = data.updated ? 'Updated ' + timeAgo(data.updated) : '';
-        }
-    }
-
-    function startClock() {
-        clearInterval(clockTimer);
-        clockTimer = setInterval(() => {
-            if (currentData?.updated && $('state-edit').hidden) {
-                $('updated-text').textContent = 'Updated ' + timeAgo(currentData.updated);
-            }
-        }, 30000);
-    }
-
-    // ── Edit ─────────────────────────────────────────────────
-    function showEdit() {
-        hide('state-display');
-        show('state-edit');
-        if (currentData?.time) {
-            timeToPickerState(currentData.time);
-        } else {
-            pickHour = 7; pickMin = 0; pickAmPm = 'AM';
-        }
-        updatePickerDisplay();
-        $('input-label').value      = currentData?.label || '';
-        $('save-error').textContent = '';
-    }
-
-    function cancelEdit() { renderDisplay(currentData); }
-
-    async function saveAlarm() {
-        const time  = pickerStateToTime();
-        const label = $('input-label').value.trim();
-        const errEl = $('save-error');
-        errEl.textContent = '';
-        try {
-            await postAlarm(time, label);
-            currentData = { time, label, updated: Date.now() };
-            renderDisplay(currentData);
-        } catch {
-            errEl.textContent = 'Something went wrong. Try again.';
-        }
-    }
-
-    // ── Share ────────────────────────────────────────────────
-    function shareLink() {
-        const url  = window.location.href;
-        const btn  = $('share-btn');
-        const orig = btn.textContent;
-        if (navigator.share) { navigator.share({ title: 'My alarm link', url }).catch(() => {}); return; }
-        navigator.clipboard.writeText(url).then(() => {
-            btn.textContent = 'Copied!';
-            setTimeout(() => { btn.textContent = orig; }, 2000);
-        }).catch(() => {
-            btn.textContent = 'Copy failed';
-            setTimeout(() => { btn.textContent = orig; }, 2000);
-        });
-    }
-
-    // ── Auto-refresh ─────────────────────────────────────────
-    function startRefresh() {
-        clearInterval(refreshTimer);
-        refreshTimer = setInterval(async () => {
-            if (!$('state-edit').hidden) return;
-            currentData = await fetchAlarm();
-            renderDisplay(currentData);
-        }, 60000);
-    }
-
-    // ── Keyboard ─────────────────────────────────────────────
-    document.addEventListener('keydown', e => {
-        if (!$('state-edit').hidden) {
-            if (e.key === 'Enter')  saveAlarm();
-            if (e.key === 'Escape') cancelEdit();
-        }
-    });
-
-    // ── Init ─────────────────────────────────────────────────
-    (async function init() {
-        if (!code) { show('view-landing'); return; }
-        show('view-loading');
-        currentData = await fetchAlarm();
-        hide('view-loading');
-        show('view-alarm');
+        if (!res.ok) throw new Error();
+        currentData = { time, label, updated: Date.now() };
         renderDisplay(currentData);
-        startRefresh();
-        startClock();
-    })();
+    } catch {
+        $('save-error').textContent = 'Something went wrong. Try again.';
+    }
+}
+
+// ─────────────────────────────────────────────
+// API
+// ─────────────────────────────────────────────
+async function fetchAlarm() {
+    try {
+        const res = await fetch(`/api/alarm/${code}`);
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error();
+        return await res.json();
+    } catch { return null; }
+}
+
+// ─────────────────────────────────────────────
+// SHARE
+// ─────────────────────────────────────────────
+function shareLink() {
+    const url  = window.location.href;
+    const btn  = $('share-btn');
+    const orig = btn.textContent;
+    if (navigator.share) { navigator.share({ title: 'Alarm link', url }).catch(() => {}); return; }
+    navigator.clipboard.writeText(url).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = orig; }, 2000);
+    }).catch(() => {
+        btn.textContent = 'Copy failed';
+        setTimeout(() => { btn.textContent = orig; }, 2000);
+    });
+}
+
+// ─────────────────────────────────────────────
+// CREATE
+// ─────────────────────────────────────────────
+function generateCode() {
+    const c = 'abcdefghjkmnpqrstuvwxyz23456789';
+    let s = '';
+    for (let i = 0; i < 6; i++) s += c[Math.floor(Math.random() * c.length)];
+    return s;
+}
+
+function createAlarm() {
+    const newCode = generateCode();
+    try { localStorage.setItem(`nofnway-alarm-owner-${newCode}`, '1'); } catch(e) {}
+    window.location.href = `/alarm?code=${newCode}`;
+}
+
+// ─────────────────────────────────────────────
+// KEYBOARD
+// ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+    if (!$('state-edit').hidden) {
+        if (e.key === 'Enter')  saveAlarm();
+        if (e.key === 'Escape') cancelEdit();
+    }
+    if (isRinging && e.key === 'Escape') dismissAlarm();
+});
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+(async function init() {
+    if (!code) { show('view-landing'); return; }
+
+    // Determine mode
+    try { isOwner = localStorage.getItem(OWNER_KEY) === '1'; } catch(e) {}
+
+    // Load sound/volume preferences
+    loadPrefs();
+    applyPrefsToUI();
+    renderModeBadge();
+
+    // Fetch alarm
+    show('view-loading');
+    currentData = await fetchAlarm();
+    hide('view-loading');
+    show('view-alarm');
+    renderDisplay(currentData);
+
+    // Notification prompt (after a short delay so it's not the first thing they see)
+    setTimeout(showNotifPrompt, 3000);
+
+    // Poll for updates every 60s (catches changes from the other device)
+    refreshTimer = setInterval(async () => {
+        if (isRinging) return;
+        const data = await fetchAlarm();
+        if (JSON.stringify(data) !== JSON.stringify(currentData)) {
+            currentData = data;
+            renderDisplay(data);
+        }
+    }, 60000);
+})();
 </script>
 </body>
 </html>
