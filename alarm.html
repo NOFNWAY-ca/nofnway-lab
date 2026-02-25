@@ -384,8 +384,9 @@ let alarmSound  = 'classic';
 let alarmVolume = 0.5;
 
 // Audio
-let audioCtx   = null;
-let masterGain = null;
+let audioCtx    = null;
+let masterGain  = null;
+let ringInterval = null;
 
 // Picker state
 let pickHour = 7, pickMin = 0, pickAmPm = 'AM';
@@ -497,34 +498,46 @@ function startAlarmSound() {
     const ctx = getAudio();
     masterGain.gain.value = alarmVolume;
 
-    if (alarmSound === 'classic') startClassic(ctx);
-    else if (alarmSound === 'chime') startChime(ctx);
-    else startPulse(ctx);
+    if (alarmSound === 'pulse') {
+        startPulse(ctx);
+        return;
+    }
+
+    // Play immediately, then repeat on a reliable interval
+    playAlarmPattern(ctx);
+    haptic([300, 100, 300]);
+
+    const repeatMs = alarmSound === 'classic' ? 1500 : 2400;
+    ringInterval = setInterval(() => {
+        if (!ringActive) { clearInterval(ringInterval); ringInterval = null; return; }
+        playAlarmPattern(getAudio());
+        haptic([300, 100, 300]);
+    }, repeatMs);
 }
 
-function startClassic(ctx) {
-    if (!ringActive) return;
-    // Three sharp beeps, then pause, repeat
-    for (let i = 0; i < 3; i++) {
-        const t   = ctx.currentTime + 0.05 + i * 0.27;
+function playAlarmPattern(ctx) {
+    if (alarmSound === 'classic') playClassic(ctx);
+    else playChime(ctx);
+}
+
+function playClassic(ctx) {
+    // 5 rapid beeps — like a real alarm clock
+    for (let i = 0; i < 5; i++) {
+        const t   = ctx.currentTime + i * 0.25;
         const osc = ctx.createOscillator();
         const g   = ctx.createGain();
         osc.connect(g); g.connect(masterGain);
         osc.type = 'square'; osc.frequency.value = 880;
         g.gain.setValueAtTime(1, t);
-        g.gain.setValueAtTime(0, t + 0.16);
-        osc.start(t); osc.stop(t + 0.17);
+        g.gain.setValueAtTime(0, t + 0.14);
+        osc.start(t); osc.stop(t + 0.15);
         ringNodes.push(osc);
-    }
-    if (ringActive) {
-        ringNodes._classicTimer = setTimeout(() => startClassic(getAudio()), 1900);
     }
 }
 
-function startChime(ctx) {
-    if (!ringActive) return;
+function playChime(ctx) {
     [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-        const t   = ctx.currentTime + 0.05 + i * 0.2;
+        const t   = ctx.currentTime + i * 0.2;
         const osc = ctx.createOscillator();
         const g   = ctx.createGain();
         osc.connect(g); g.connect(masterGain);
@@ -535,19 +548,15 @@ function startChime(ctx) {
         osc.start(t); osc.stop(t + 0.9);
         ringNodes.push(osc);
     });
-    if (ringActive) {
-        ringNodes._chimeTimer = setTimeout(() => startChime(getAudio()), 2800);
-    }
 }
 
 function startPulse(ctx) {
-    if (!ringActive) return;
     const osc  = ctx.createOscillator();
     const lfo  = ctx.createOscillator();
     const lfoG = ctx.createGain();
     const envG = ctx.createGain();
 
-    lfo.frequency.value = 0.7;
+    lfo.frequency.value = 2;    // faster pulse = more urgent
     lfoG.gain.value     = 0.45;
     envG.gain.value     = 0.55;
 
@@ -564,8 +573,8 @@ function startPulse(ctx) {
 
 function stopAlarmSound() {
     ringActive = false;
-    clearTimeout(ringNodes._classicTimer);
-    clearTimeout(ringNodes._chimeTimer);
+    clearInterval(ringInterval);
+    ringInterval = null;
     ringNodes.forEach(n => { try { if (n.stop) n.stop(); else n.disconnect(); } catch(e) {} });
     ringNodes = [];
 }
@@ -684,9 +693,7 @@ function triggerAlarm() {
     $('ring-time-text').textContent  = displayTime;
     $('ring-label-text').textContent = displayLabel;
 
-    // Sound + haptic
     startAlarmSound();
-    haptic([400, 200, 400, 200, 400]);
 
     // Browser notification (works even in background tab)
     sendNotification('⏰ Alarm!', displayLabel);
