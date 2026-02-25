@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate VAPID Keys</title>
+    <style>
+        body { background: #0a0a0a; color: #e0e0e0; font-family: monospace; padding: 40px 20px; max-width: 700px; margin: 0 auto; }
+        h1 { color: #4d9eff; font-size: 1.2rem; margin-bottom: 6px; }
+        p { color: #666; font-size: 0.85rem; line-height: 1.6; margin-bottom: 24px; }
+        .field { margin-bottom: 20px; }
+        label { display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #4d9eff; margin-bottom: 6px; }
+        textarea { width: 100%; background: #141414; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0e0e0; font-family: monospace; font-size: 0.8rem; padding: 12px; resize: vertical; min-height: 70px; }
+        button { background: #4d9eff; color: #000; border: none; border-radius: 6px; padding: 12px 24px; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 32px; }
+        button:hover { opacity: 0.85; }
+        .note { font-size: 0.78rem; color: #666; border-top: 1px solid #2a2a2a; padding-top: 20px; line-height: 1.7; }
+        .note strong { color: #e0e0e0; }
+    </style>
+</head>
+<body>
+    <h1>VAPID Key Generator</h1>
+    <p>Generates a pair of cryptographic keys for Shhhhh... push notifications. Run this once. Keep the private key secret — it never leaves your browser.</p>
+    <button onclick="generate()">Generate Keys</button>
+    <div id="output" style="display:none">
+        <div class="field">
+            <label>VAPID_PUBLIC_KEY — paste this into Cloudflare as an environment variable</label>
+            <textarea id="pub" readonly onclick="this.select()"></textarea>
+        </div>
+        <div class="field">
+            <label>VAPID_PRIVATE_JWK — paste this into Cloudflare as an environment variable (keep it secret)</label>
+            <textarea id="priv" readonly onclick="this.select()" style="min-height:120px"></textarea>
+        </div>
+    </div>
+    <p class="note">
+        <strong>What to do with these:</strong><br>
+        1. Go to Cloudflare → Pages → nofnway-lab → Settings → Environment Variables<br>
+        2. Add VAPID_PUBLIC_KEY with the first value<br>
+        3. Add VAPID_PRIVATE_JWK with the second value (mark it as secret)<br>
+        4. Save and redeploy<br><br>
+        Don't run this again unless you also re-subscribe all devices — changing keys breaks existing subscriptions.
+    </p>
+
+    <script>
+    async function generate() {
+        const keyPair = await crypto.subtle.generateKey(
+            { name: 'ECDSA', namedCurve: 'P-256' },
+            true,
+            ['sign', 'verify']
+        );
+
+        // Public key: 65-byte uncompressed P-256 point, base64url encoded
+        const rawPublic = await crypto.subtle.exportKey('raw', keyPair.publicKey);
+        const bytes = new Uint8Array(rawPublic);
+        let s = '';
+        bytes.forEach(b => s += String.fromCharCode(b));
+        const publicKeyB64 = btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+
+        // Private key: JWK (needed for re-import into Web Crypto on server)
+        const privateJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
+
+        document.getElementById('pub').value  = publicKeyB64;
+        document.getElementById('priv').value = JSON.stringify(privateJwk);
+        document.getElementById('output').style.display = 'block';
+    }
+    </script>
+</body>
+</html>

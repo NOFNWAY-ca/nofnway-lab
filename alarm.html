@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shhhhh... — NOFNWAY Lab</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Shhhhh">
+    <meta name="theme-color" content="#0a0a0a">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -277,12 +282,47 @@
             margin-bottom: 24px;
         }
         .back-link:hover { color: var(--text); }
+
+        /* ── iOS install banner ── */
+        .ios-banner {
+            display: none;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--gold);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .ios-banner.visible { display: block; }
+        .ios-banner-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gold);
+            margin-bottom: 5px;
+        }
+        .ios-banner-text {
+            font-size: 0.78rem;
+            color: var(--dim);
+            line-height: 1.55;
+        }
     </style>
 </head>
 <body>
 <div class="wrap">
 
     <a href="/" class="back-link">← NOFNWAY Lab</a>
+
+    <!-- ── iOS install banner (hidden until JS decides) ── -->
+    <div class="ios-banner" id="ios-banner">
+        <div class="ios-banner-title">For alarm notifications on iPhone</div>
+        <div class="ios-banner-text">
+            Tap <strong>Share</strong> → <strong>Add to Home Screen</strong>, then open from your home screen.
+            That's the only way iOS allows background alarms.
+        </div>
+    </div>
 
     <!-- ── Landing ── -->
     <div id="view-landing" hidden>
@@ -310,8 +350,8 @@
             <div class="updated-line"   id="updated-text"></div>
 
             <div class="notif-prompt" id="notif-prompt">
-                <span class="notif-text">Enable notifications to be alerted even when this tab is in the background.</span>
-                <button class="notif-yes" onclick="enableNotifs()">Enable</button>
+                <span class="notif-text">Get this alarm even when your screen is off — enable notifications.</span>
+                <button class="notif-yes" onclick="enablePush()">Enable</button>
                 <button class="notif-no"  onclick="dismissNotifPrompt()">✕</button>
             </div>
 
@@ -398,9 +438,13 @@ let alarmSound  = 'classic';
 let alarmVolume = 0.5;
 
 // Audio
-let audioCtx    = null;
-let masterGain  = null;
+let audioCtx     = null;
+let masterGain   = null;
 let ringInterval = null;
+
+// Push
+let swRegistration   = null;
+let pushSubscription = null;
 
 // Picker state
 let pickHour = 7, pickMin = 0, pickAmPm = 'AM';
@@ -599,32 +643,92 @@ function stopAlarmSound() {
 function haptic(ms) { try { navigator.vibrate?.(ms); } catch(e) {} }
 
 // ─────────────────────────────────────────────
-// NOTIFICATIONS
+// SERVICE WORKER + PUSH
 // ─────────────────────────────────────────────
+async function registerSW() {
+    if (!('serviceWorker' in navigator)) return null;
+    try {
+        const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        swRegistration = reg;
+        return reg;
+    } catch(e) { return null; }
+}
+
+async function getVapidPublicKey() {
+    try {
+        const res = await fetch('/api/config');
+        if (!res.ok) return null;
+        const d = await res.json();
+        return d.vapidPublicKey || null;
+    } catch { return null; }
+}
+
+function urlBase64ToUint8Array(b64) {
+    const pad  = '='.repeat((4 - b64.length % 4) % 4);
+    const base = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+    const raw  = atob(base);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function subscribeToPush() {
+    if (!swRegistration) return;
+    const vapidKey = await getVapidPublicKey();
+    if (!vapidKey) return; // push not configured yet
+
+    try {
+        const sw  = await navigator.serviceWorker.ready;
+        const sub = await sw.pushManager.subscribe({
+            userVisibleOnly:      true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        });
+        pushSubscription = sub;
+        await fetch(`/api/alarm/${code}/sub`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(sub.toJSON()),
+        });
+    } catch(e) {}
+}
+
 function showNotifPrompt() {
     if (!('Notification' in window)) return;
-    if (Notification.permission !== 'default') return;
+    if (Notification.permission === 'denied') return;
+    if (Notification.permission === 'granted') {
+        // Already granted — subscribe silently
+        subscribeToPush();
+        return;
+    }
     $('notif-prompt').classList.add('visible');
 }
 
-async function enableNotifs() {
+async function enablePush() {
     $('notif-prompt').classList.remove('visible');
-    try { await Notification.requestPermission(); } catch(e) {}
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') await subscribeToPush();
+    } catch(e) {}
 }
 
 function dismissNotifPrompt() {
     $('notif-prompt').classList.remove('visible');
 }
 
-function sendNotification(title, body) {
-    if (Notification.permission !== 'granted') return;
-    try {
-        new Notification(title, {
-            body,
-            icon:    '/favicon.svg',
-            vibrate: [300, 100, 300, 100, 300],
+// Trigger push to all subscribers (called when alarm fires on any open device)
+async function notifySubscribers() {
+    if (!code) return;
+    try { await fetch(`/api/alarm/${code}/push`, { method: 'POST' }); } catch(e) {}
+}
+
+// Tell the service worker which alarm code to watch
+function sendCodeToSW(alarmCode) {
+    const send = sw => sw.postMessage({ type: 'SET_CODE', code: alarmCode });
+    if (swRegistration?.active) {
+        send(swRegistration.active);
+    } else if (swRegistration) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (navigator.serviceWorker.controller) send(navigator.serviceWorker.controller);
         });
-    } catch(e) {}
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -709,8 +813,8 @@ function triggerAlarm() {
 
     startAlarmSound();
 
-    // Browser notification (works even in background tab)
-    sendNotification('⏰ Alarm!', displayLabel);
+    // Push to all subscribed devices (fires on receiver's phone even if tab is background)
+    notifySubscribers();
 }
 
 function dismissAlarm() {
@@ -886,10 +990,23 @@ document.addEventListener('keydown', e => {
 // INIT
 // ─────────────────────────────────────────────
 (async function init() {
+    // iOS: show install banner if not already running as a home screen app
+    const isIOS        = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = navigator.standalone === true;
+    if (isIOS && !isStandalone) {
+        $('ios-banner').classList.add('visible');
+    }
+
+    // Register service worker (needed for push on all platforms)
+    await registerSW();
+
     if (!code) { show('view-landing'); return; }
 
     // Determine mode
     try { isOwner = localStorage.getItem(OWNER_KEY) === '1'; } catch(e) {}
+
+    // Tell service worker which alarm this is
+    if (code) sendCodeToSW(code);
 
     // Load sound/volume preferences
     loadPrefs();
@@ -903,7 +1020,7 @@ document.addEventListener('keydown', e => {
     show('view-alarm');
     renderDisplay(currentData);
 
-    // Notification prompt (after a short delay so it's not the first thing they see)
+    // Push/notification prompt (after a short delay so it's not the first thing they see)
     setTimeout(showNotifPrompt, 3000);
 
     // Poll for updates every 60s (catches changes from the other device)
