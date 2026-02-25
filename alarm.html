@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOFNWAY Lab — Shared Alarm</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --blue:   #4d9eff;
+            --bg:     #0a0a0a;
+            --card:   #141414;
+            --border: #2a2a2a;
+            --text:   #e0e0e0;
+            --dim:    #666;
+            --red:    #ff6b6b;
+            --green:  #4caf7d;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 20px;
+        }
+
+        .wrap {
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+
+        /* ── Eyebrow / header ── */
+        .eyebrow {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--blue);
+            margin-bottom: 6px;
+        }
+
+        h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .tagline {
+            font-size: 0.9rem;
+            color: var(--dim);
+            line-height: 1.6;
+            margin-bottom: 36px;
+        }
+
+        /* ── Big time display ── */
+        .time-display {
+            font-size: 5.5rem;
+            font-weight: 700;
+            letter-spacing: -3px;
+            line-height: 1;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+            margin: 16px 0 6px;
+        }
+
+        .time-display.unset { color: var(--dim); }
+
+        .label-line {
+            font-size: 0.88rem;
+            color: var(--dim);
+            min-height: 1.2em;
+            margin-bottom: 4px;
+        }
+
+        .updated-line {
+            font-size: 0.75rem;
+            color: var(--border);
+            min-height: 1em;
+            margin-bottom: 28px;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-block;
+            padding: 12px 22px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+            white-space: nowrap;
+        }
+        .btn:hover  { opacity: 0.82; }
+        .btn:active { transform: scale(0.96); }
+
+        .btn-primary { background: var(--blue); color: #000; }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--dim);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover { color: var(--text); border-color: #444; }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ── Edit form ── */
+        .edit-form {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px;
+            margin: 20px 0 16px;
+            text-align: left;
+        }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group:last-child { margin-bottom: 0; }
+
+        .form-label {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--dim);
+            margin-bottom: 6px;
+        }
+        .form-label .hint {
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: 0;
+            font-size: 0.75rem;
+        }
+
+        input[type="time"],
+        input[type="text"] {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 1.05rem;
+            padding: 10px 12px;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.15s;
+        }
+        input:focus { border-color: var(--blue); }
+        input[type="time"] { font-variant-numeric: tabular-nums; }
+
+        /* ── Status / error ── */
+        .msg-error {
+            font-size: 0.83rem;
+            color: var(--red);
+            margin: 10px 0 14px;
+            min-height: 1.2em;
+        }
+
+        .msg-loading {
+            font-size: 0.88rem;
+            color: var(--dim);
+        }
+
+        [hidden] { display: none !important; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <!-- ── Landing (no code) ── -->
+    <div id="view-landing" hidden>
+        <div class="eyebrow">NOFNWAY Lab</div>
+        <h1>Shared Alarm</h1>
+        <p class="tagline">See what time someone's alarm is set for — without waking them up.</p>
+        <button class="btn btn-primary" onclick="createAlarm()">Create alarm link</button>
+    </div>
+
+    <!-- ── Loading ── -->
+    <div id="view-loading" hidden>
+        <p class="msg-loading">Loading…</p>
+    </div>
+
+    <!-- ── Alarm view ── -->
+    <div id="view-alarm" hidden>
+        <div class="eyebrow">NOFNWAY Lab — Alarm</div>
+
+        <!-- Display state -->
+        <div id="state-display">
+            <div class="time-display" id="time-text">—</div>
+            <div class="label-line"  id="label-text"></div>
+            <div class="updated-line" id="updated-text"></div>
+            <div class="btn-row">
+                <button class="btn btn-ghost" onclick="showEdit()">Edit</button>
+                <button class="btn btn-ghost" id="share-btn" onclick="shareLink()">Share link</button>
+            </div>
+        </div>
+
+        <!-- Edit state -->
+        <div id="state-edit" hidden>
+            <div class="edit-form">
+                <div class="form-group">
+                    <label class="form-label" for="input-time">Alarm time</label>
+                    <input type="time" id="input-time">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="input-label">
+                        Label <span class="hint">(optional — e.g. "Gerry's alarm")</span>
+                    </label>
+                    <input type="text" id="input-label" maxlength="64" placeholder="Whose alarm is this?">
+                </div>
+            </div>
+            <div class="msg-error" id="save-error"></div>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="saveAlarm()">Save</button>
+                <button class="btn btn-ghost"   onclick="cancelEdit()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    // ── Parse code from URL path (/alarm/CODE) ──────────────
+    const segments = window.location.pathname.split('/').filter(Boolean);
+    const code = (segments[0] === 'alarm' && segments[1]) ? segments[1] : null;
+
+    let currentData  = null;
+    let refreshTimer = null;
+    let clockTimer   = null;
+
+    // ── DOM helpers ──────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const show = id => $(id).hidden = false;
+    const hide = id => $(id).hidden = true;
+
+    // ── Time formatting ──────────────────────────────────────
+    function timeAgo(ms) {
+        const diff = Date.now() - ms;
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1)  return 'just now';
+        if (mins === 1) return '1 minute ago';
+        if (mins < 60) return `${mins} minutes ago`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs === 1) return '1 hour ago';
+        if (hrs < 24)  return `${hrs} hours ago`;
+        return `${Math.floor(hrs / 24)} days ago`;
+    }
+
+    // ── Code generator ───────────────────────────────────────
+    function generateCode() {
+        const chars = 'abcdefghjkmnpqrstuvwxyz23456789'; // no ambiguous chars
+        let c = '';
+        for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
+        return c;
+    }
+
+    // ── Create new alarm ─────────────────────────────────────
+    function createAlarm() {
+        window.location.href = `/alarm/${generateCode()}`;
+    }
+
+    // ── API calls ────────────────────────────────────────────
+    async function fetchAlarm() {
+        try {
+            const res = await fetch(`/api/alarm/${code}`);
+            if (res.status === 404) return null;
+            if (!res.ok) throw new Error();
+            return await res.json();
+        } catch { return null; }
+    }
+
+    async function postAlarm(time, label) {
+        const res = await fetch(`/api/alarm/${code}`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ time, label }),
+        });
+        if (!res.ok) throw new Error('save failed');
+    }
+
+    // ── Render display state ─────────────────────────────────
+    function renderDisplay(data) {
+        hide('state-edit');
+        show('state-display');
+
+        const timeEl    = $('time-text');
+        const labelEl   = $('label-text');
+        const updatedEl = $('updated-text');
+
+        if (!data) {
+            timeEl.textContent    = '—';
+            timeEl.className      = 'time-display unset';
+            labelEl.textContent   = 'No alarm set yet.';
+            updatedEl.textContent = '';
+        } else {
+            timeEl.textContent    = data.time;
+            timeEl.className      = 'time-display';
+            labelEl.textContent   = data.label || '';
+            updatedEl.textContent = data.updated ? 'Updated ' + timeAgo(data.updated) : '';
+        }
+    }
+
+    // Keep "updated X mins ago" fresh without re-fetching
+    function startClock() {
+        clearInterval(clockTimer);
+        clockTimer = setInterval(() => {
+            if (currentData?.updated && $('state-edit').hidden) {
+                $('updated-text').textContent = 'Updated ' + timeAgo(currentData.updated);
+            }
+        }, 30000);
+    }
+
+    // ── Edit state ───────────────────────────────────────────
+    function showEdit() {
+        hide('state-display');
+        show('state-edit');
+        $('input-time').value  = currentData?.time  || '';
+        $('input-label').value = currentData?.label || '';
+        $('save-error').textContent = '';
+        $('input-time').focus();
+    }
+
+    function cancelEdit() { renderDisplay(currentData); }
+
+    async function saveAlarm() {
+        const time  = $('input-time').value;
+        const label = $('input-label').value.trim();
+        const errEl = $('save-error');
+
+        if (!time) { errEl.textContent = 'Pick a time first.'; return; }
+        errEl.textContent = '';
+
+        try {
+            await postAlarm(time, label);
+            currentData = { time, label, updated: Date.now() };
+            renderDisplay(currentData);
+        } catch {
+            errEl.textContent = 'Something went wrong. Try again.';
+        }
+    }
+
+    // ── Share ─────────────────────────────────────────────────
+    function shareLink() {
+        const url  = window.location.href;
+        const btn  = $('share-btn');
+        const orig = btn.textContent;
+
+        if (navigator.share) {
+            navigator.share({ title: 'My alarm link', url }).catch(() => {});
+            return;
+        }
+        navigator.clipboard.writeText(url).then(() => {
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = orig; }, 2000);
+        }).catch(() => {
+            btn.textContent = 'Copy failed';
+            setTimeout(() => { btn.textContent = orig; }, 2000);
+        });
+    }
+
+    // ── Auto-refresh every 60s ───────────────────────────────
+    function startRefresh() {
+        clearInterval(refreshTimer);
+        refreshTimer = setInterval(async () => {
+            if (!$('state-edit').hidden) return; // don't clobber an open edit form
+            const data = await fetchAlarm();
+            currentData = data;
+            renderDisplay(data);
+        }, 60000);
+    }
+
+    // ── Keyboard shortcuts ───────────────────────────────────
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !$('state-edit').hidden) saveAlarm();
+        if (e.key === 'Escape' && !$('state-edit').hidden) cancelEdit();
+    });
+
+    // ── Init ─────────────────────────────────────────────────
+    (async function init() {
+        if (!code) { show('view-landing'); return; }
+
+        show('view-loading');
+        currentData = await fetchAlarm();
+        hide('view-loading');
+        show('view-alarm');
+        renderDisplay(currentData);
+        startRefresh();
+        startClock();
+    })();
+</script>
+</body>
+</html>
