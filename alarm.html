@@ -16,7 +16,6 @@
             --text:   #e0e0e0;
             --dim:    #666;
             --red:    #ff6b6b;
-            --green:  #4caf7d;
         }
 
         body {
@@ -30,13 +29,8 @@
             padding: 24px 20px;
         }
 
-        .wrap {
-            width: 100%;
-            max-width: 360px;
-            text-align: center;
-        }
+        .wrap { width: 100%; max-width: 360px; text-align: center; }
 
-        /* ── Eyebrow / header ── */
         .eyebrow {
             font-size: 0.65rem;
             font-weight: 700;
@@ -46,11 +40,7 @@
             margin-bottom: 6px;
         }
 
-        h1 {
-            font-size: 1.35rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
+        h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 12px; }
 
         .tagline {
             font-size: 0.9rem;
@@ -65,26 +55,13 @@
             font-weight: 700;
             letter-spacing: -3px;
             line-height: 1;
-            color: var(--text);
             font-variant-numeric: tabular-nums;
             margin: 16px 0 6px;
         }
-
         .time-display.unset { color: var(--dim); }
 
-        .label-line {
-            font-size: 0.88rem;
-            color: var(--dim);
-            min-height: 1.2em;
-            margin-bottom: 4px;
-        }
-
-        .updated-line {
-            font-size: 0.75rem;
-            color: var(--border);
-            min-height: 1em;
-            margin-bottom: 28px;
-        }
+        .label-line   { font-size: 0.88rem; color: var(--dim); min-height: 1.2em; margin-bottom: 4px; }
+        .updated-line { font-size: 0.75rem; color: var(--border); min-height: 1em; margin-bottom: 28px; }
 
         /* ── Buttons ── */
         .btn {
@@ -102,35 +79,87 @@
         }
         .btn:hover  { opacity: 0.82; }
         .btn:active { transform: scale(0.96); }
-
         .btn-primary { background: var(--blue); color: #000; }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--dim);
-            border: 1px solid var(--border);
-        }
+        .btn-ghost { background: transparent; color: var(--dim); border: 1px solid var(--border); }
         .btn-ghost:hover { color: var(--text); border-color: #444; }
 
-        .btn-row {
+        .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+        /* ── Tap picker ── */
+        .time-picker {
             display: flex;
-            gap: 10px;
+            align-items: center;
             justify-content: center;
-            flex-wrap: wrap;
+            gap: 6px;
+            margin: 20px 0 24px;
         }
 
-        /* ── Edit form ── */
-        .edit-form {
+        .picker-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .picker-arrow {
+            background: transparent;
+            border: none;
+            color: var(--dim);
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 10px 24px;
+            border-radius: 8px;
+            line-height: 1;
+            transition: background 0.1s, color 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .picker-arrow:hover  { background: var(--card); color: var(--text); }
+        .picker-arrow:active { background: var(--border); }
+
+        .picker-val {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+            min-width: 2ch;
+            text-align: center;
+            line-height: 1.1;
+            user-select: none;
+        }
+
+        .picker-sep {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--dim);
+            padding-bottom: 6px;
+            user-select: none;
+        }
+
+        .ampm-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-left: 6px;
+            padding-bottom: 4px;
+        }
+
+        .ampm-btn {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 22px;
-            margin: 20px 0 16px;
-            text-align: left;
+            color: var(--dim);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.1s, color 0.1s, border-color 0.1s;
+            -webkit-tap-highlight-color: transparent;
         }
+        .ampm-btn.active { background: var(--blue); color: #000; border-color: var(--blue); }
 
-        .form-group { margin-bottom: 16px; }
-        .form-group:last-child { margin-bottom: 0; }
+        /* ── Label input ── */
+        .label-wrap { margin-bottom: 6px; text-align: left; }
 
         .form-label {
             display: block;
@@ -141,41 +170,24 @@
             color: var(--dim);
             margin-bottom: 6px;
         }
-        .form-label .hint {
-            font-weight: 400;
-            text-transform: none;
-            letter-spacing: 0;
-            font-size: 0.75rem;
-        }
+        .form-label .hint { font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.75rem; }
 
-        input[type="time"],
         input[type="text"] {
             width: 100%;
-            background: var(--bg);
+            background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 8px;
             color: var(--text);
-            font-size: 1.05rem;
-            padding: 10px 12px;
+            font-size: 1rem;
+            padding: 12px 14px;
             outline: none;
             font-family: inherit;
             transition: border-color 0.15s;
         }
-        input:focus { border-color: var(--blue); }
-        input[type="time"] { font-variant-numeric: tabular-nums; }
+        input[type="text"]:focus { border-color: var(--blue); }
 
-        /* ── Status / error ── */
-        .msg-error {
-            font-size: 0.83rem;
-            color: var(--red);
-            margin: 10px 0 14px;
-            min-height: 1.2em;
-        }
-
-        .msg-loading {
-            font-size: 0.88rem;
-            color: var(--dim);
-        }
+        .msg-error { font-size: 0.83rem; color: var(--red); margin: 10px 0 14px; min-height: 1.2em; }
+        .msg-loading { font-size: 0.88rem; color: var(--dim); }
 
         [hidden] { display: none !important; }
     </style>
@@ -183,7 +195,7 @@
 <body>
 <div class="wrap">
 
-    <!-- ── Landing (no code) ── -->
+    <!-- ── Landing ── -->
     <div id="view-landing" hidden>
         <div class="eyebrow">NOFNWAY Lab</div>
         <h1>Shared Alarm</h1>
@@ -200,10 +212,10 @@
     <div id="view-alarm" hidden>
         <div class="eyebrow">NOFNWAY Lab — Alarm</div>
 
-        <!-- Display state -->
+        <!-- Display -->
         <div id="state-display">
             <div class="time-display" id="time-text">—</div>
-            <div class="label-line"  id="label-text"></div>
+            <div class="label-line"   id="label-text"></div>
             <div class="updated-line" id="updated-text"></div>
             <div class="btn-row">
                 <button class="btn btn-ghost" onclick="showEdit()">Edit</button>
@@ -211,22 +223,40 @@
             </div>
         </div>
 
-        <!-- Edit state -->
+        <!-- Edit -->
         <div id="state-edit" hidden>
-            <div class="edit-form">
-                <div class="form-group">
-                    <label class="form-label" for="input-time">Alarm time</label>
-                    <input type="time" id="input-time">
+
+            <div class="time-picker">
+                <div class="picker-col">
+                    <button class="picker-arrow" onclick="adjustHour(1)"  aria-label="Hour up">▲</button>
+                    <div class="picker-val" id="pick-hour">7</div>
+                    <button class="picker-arrow" onclick="adjustHour(-1)" aria-label="Hour down">▼</button>
                 </div>
-                <div class="form-group">
-                    <label class="form-label" for="input-label">
-                        Label <span class="hint">(optional — e.g. "Gerry's alarm")</span>
-                    </label>
-                    <input type="text" id="input-label" maxlength="64" placeholder="Whose alarm is this?">
+
+                <div class="picker-sep">:</div>
+
+                <div class="picker-col">
+                    <button class="picker-arrow" onclick="adjustMin(1)"  aria-label="Minute up">▲</button>
+                    <div class="picker-val" id="pick-min">00</div>
+                    <button class="picker-arrow" onclick="adjustMin(-1)" aria-label="Minute down">▼</button>
+                </div>
+
+                <div class="ampm-col">
+                    <button id="btn-am" class="ampm-btn" onclick="setAmPm('AM')">AM</button>
+                    <button id="btn-pm" class="ampm-btn" onclick="setAmPm('PM')">PM</button>
                 </div>
             </div>
+
+            <div class="label-wrap">
+                <label class="form-label" for="input-label">
+                    Label <span class="hint">(optional — e.g. "Gerry's alarm")</span>
+                </label>
+                <input type="text" id="input-label" maxlength="64" placeholder="Whose alarm is this?">
+            </div>
+
             <div class="msg-error" id="save-error"></div>
-            <div class="btn-row">
+
+            <div class="btn-row" style="margin-top:20px;">
                 <button class="btn btn-primary" onclick="saveAlarm()">Save</button>
                 <button class="btn btn-ghost"   onclick="cancelEdit()">Cancel</button>
             </div>
@@ -235,45 +265,86 @@
 
 </div>
 <script>
-    // ── Parse code from query string (?code=XXXX) ───────────
     const code = new URLSearchParams(window.location.search).get('code');
 
     let currentData  = null;
     let refreshTimer = null;
     let clockTimer   = null;
 
-    // ── DOM helpers ──────────────────────────────────────────
+    // Picker state
+    let pickHour  = 7;
+    let pickMin   = 0;
+    let pickAmPm  = 'AM';
+
     const $ = id => document.getElementById(id);
     const show = id => $(id).hidden = false;
     const hide = id => $(id).hidden = true;
 
-    // ── Time formatting ──────────────────────────────────────
+    // ── Picker logic ─────────────────────────────────────────
+    function updatePickerDisplay() {
+        $('pick-hour').textContent = pickHour;
+        $('pick-min').textContent  = String(pickMin).padStart(2, '0');
+        $('btn-am').className = 'ampm-btn' + (pickAmPm === 'AM' ? ' active' : '');
+        $('btn-pm').className = 'ampm-btn' + (pickAmPm === 'PM' ? ' active' : '');
+    }
+
+    function adjustHour(dir) {
+        pickHour = ((pickHour - 1 + dir + 12) % 12) + 1;
+        updatePickerDisplay();
+    }
+
+    function adjustMin(dir) {
+        pickMin = (pickMin + dir * 5 + 60) % 60;
+        updatePickerDisplay();
+    }
+
+    function setAmPm(val) {
+        pickAmPm = val;
+        updatePickerDisplay();
+    }
+
+    function timeToPickerState(time) {
+        const [h, m] = time.split(':').map(Number);
+        if      (h === 0)  { pickHour = 12; pickAmPm = 'AM'; }
+        else if (h < 12)   { pickHour = h;  pickAmPm = 'AM'; }
+        else if (h === 12) { pickHour = 12; pickAmPm = 'PM'; }
+        else               { pickHour = h - 12; pickAmPm = 'PM'; }
+        pickMin = Math.round(m / 5) * 5 % 60;
+    }
+
+    function pickerStateToTime() {
+        let h = pickHour;
+        if (pickAmPm === 'AM' && h === 12) h = 0;
+        else if (pickAmPm === 'PM' && h !== 12) h += 12;
+        return `${String(h).padStart(2, '0')}:${String(pickMin).padStart(2, '0')}`;
+    }
+
+    // ── Time ago ─────────────────────────────────────────────
     function timeAgo(ms) {
         const diff = Date.now() - ms;
         const mins = Math.floor(diff / 60000);
-        if (mins < 1)  return 'just now';
+        if (mins < 1)   return 'just now';
         if (mins === 1) return '1 minute ago';
-        if (mins < 60) return `${mins} minutes ago`;
+        if (mins < 60)  return `${mins} minutes ago`;
         const hrs = Math.floor(mins / 60);
-        if (hrs === 1) return '1 hour ago';
-        if (hrs < 24)  return `${hrs} hours ago`;
+        if (hrs === 1)  return '1 hour ago';
+        if (hrs < 24)   return `${hrs} hours ago`;
         return `${Math.floor(hrs / 24)} days ago`;
     }
 
     // ── Code generator ───────────────────────────────────────
     function generateCode() {
-        const chars = 'abcdefghjkmnpqrstuvwxyz23456789'; // no ambiguous chars
+        const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
         let c = '';
         for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
         return c;
     }
 
-    // ── Create new alarm ─────────────────────────────────────
     function createAlarm() {
         window.location.href = `/alarm?code=${generateCode()}`;
     }
 
-    // ── API calls ────────────────────────────────────────────
+    // ── API ──────────────────────────────────────────────────
     async function fetchAlarm() {
         try {
             const res = await fetch(`/api/alarm/${code}`);
@@ -292,11 +363,10 @@
         if (!res.ok) throw new Error('save failed');
     }
 
-    // ── Render display state ─────────────────────────────────
+    // ── Render display ───────────────────────────────────────
     function renderDisplay(data) {
         hide('state-edit');
         show('state-display');
-
         const timeEl    = $('time-text');
         const labelEl   = $('label-text');
         const updatedEl = $('updated-text');
@@ -307,14 +377,18 @@
             labelEl.textContent   = 'No alarm set yet.';
             updatedEl.textContent = '';
         } else {
-            timeEl.textContent    = data.time;
+            // Convert stored 24h time to 12h for display
+            const [h, m] = data.time.split(':').map(Number);
+            const ampm   = h < 12 ? 'AM' : 'PM';
+            const hour12 = h % 12 || 12;
+            const display = `${hour12}:${String(m).padStart(2,'0')} ${ampm}`;
+            timeEl.textContent    = display;
             timeEl.className      = 'time-display';
             labelEl.textContent   = data.label || '';
             updatedEl.textContent = data.updated ? 'Updated ' + timeAgo(data.updated) : '';
         }
     }
 
-    // Keep "updated X mins ago" fresh without re-fetching
     function startClock() {
         clearInterval(clockTimer);
         clockTimer = setInterval(() => {
@@ -324,26 +398,27 @@
         }, 30000);
     }
 
-    // ── Edit state ───────────────────────────────────────────
+    // ── Edit ─────────────────────────────────────────────────
     function showEdit() {
         hide('state-display');
         show('state-edit');
-        $('input-time').value  = currentData?.time  || '';
-        $('input-label').value = currentData?.label || '';
+        if (currentData?.time) {
+            timeToPickerState(currentData.time);
+        } else {
+            pickHour = 7; pickMin = 0; pickAmPm = 'AM';
+        }
+        updatePickerDisplay();
+        $('input-label').value      = currentData?.label || '';
         $('save-error').textContent = '';
-        $('input-time').focus();
     }
 
     function cancelEdit() { renderDisplay(currentData); }
 
     async function saveAlarm() {
-        const time  = $('input-time').value;
+        const time  = pickerStateToTime();
         const label = $('input-label').value.trim();
         const errEl = $('save-error');
-
-        if (!time) { errEl.textContent = 'Pick a time first.'; return; }
         errEl.textContent = '';
-
         try {
             await postAlarm(time, label);
             currentData = { time, label, updated: Date.now() };
@@ -353,16 +428,12 @@
         }
     }
 
-    // ── Share ─────────────────────────────────────────────────
+    // ── Share ────────────────────────────────────────────────
     function shareLink() {
         const url  = window.location.href;
         const btn  = $('share-btn');
         const orig = btn.textContent;
-
-        if (navigator.share) {
-            navigator.share({ title: 'My alarm link', url }).catch(() => {});
-            return;
-        }
+        if (navigator.share) { navigator.share({ title: 'My alarm link', url }).catch(() => {}); return; }
         navigator.clipboard.writeText(url).then(() => {
             btn.textContent = 'Copied!';
             setTimeout(() => { btn.textContent = orig; }, 2000);
@@ -372,27 +443,27 @@
         });
     }
 
-    // ── Auto-refresh every 60s ───────────────────────────────
+    // ── Auto-refresh ─────────────────────────────────────────
     function startRefresh() {
         clearInterval(refreshTimer);
         refreshTimer = setInterval(async () => {
-            if (!$('state-edit').hidden) return; // don't clobber an open edit form
-            const data = await fetchAlarm();
-            currentData = data;
-            renderDisplay(data);
+            if (!$('state-edit').hidden) return;
+            currentData = await fetchAlarm();
+            renderDisplay(currentData);
         }, 60000);
     }
 
-    // ── Keyboard shortcuts ───────────────────────────────────
+    // ── Keyboard ─────────────────────────────────────────────
     document.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !$('state-edit').hidden) saveAlarm();
-        if (e.key === 'Escape' && !$('state-edit').hidden) cancelEdit();
+        if (!$('state-edit').hidden) {
+            if (e.key === 'Enter')  saveAlarm();
+            if (e.key === 'Escape') cancelEdit();
+        }
     });
 
     // ── Init ─────────────────────────────────────────────────
     (async function init() {
         if (!code) { show('view-landing'); return; }
-
         show('view-loading');
         currentData = await fetchAlarm();
         hide('view-loading');
