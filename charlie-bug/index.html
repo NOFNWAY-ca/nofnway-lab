@@ -99,77 +99,6 @@
       box-shadow: 0 0 10px rgba(255,230,50,0.7);
     }
 
-    /* ── Title overlay ── */
-    #title-overlay {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 20;
-      background: rgba(200,234,245,0.7);
-      backdrop-filter: blur(2px);
-      padding: 24px;
-      text-align: center;
-    }
-
-    #title-overlay h1 {
-      font-size: clamp(2.4rem, 8vw, 3.5rem);
-      font-weight: 900;
-      color: var(--accent);
-      text-shadow: 3px 3px 0 rgba(0,0,0,0.12);
-      letter-spacing: -1px;
-      margin-bottom: 4px;
-    }
-
-    #title-overlay .subtitle {
-      font-size: clamp(0.85rem, 3vw, 1.1rem);
-      color: var(--text);
-      opacity: 0.75;
-      margin-bottom: 20px;
-    }
-
-    #title-theme {
-      font-size: clamp(1.2rem, 4vw, 1.6rem);
-      font-weight: 800;
-      color: var(--text);
-      margin-bottom: 10px;
-    }
-
-    #title-palette {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      margin-bottom: 28px;
-    }
-
-    #title-palette span {
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      display: block;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-
-    #title-resume {
-      font-size: 0.78rem;
-      color: #4CAF50;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .tap-prompt {
-      font-size: clamp(0.85rem, 3vw, 1rem);
-      color: var(--text);
-      opacity: 0.6;
-      animation: pulse 1.6s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.5; }
-      50%       { opacity: 0.9; }
-    }
-
     /* ── Celebrate overlay ── */
     #celebrate-overlay {
       position: fixed;
@@ -297,16 +226,6 @@
   </div>
 </div>
 
-<!-- Title overlay -->
-<div id="title-overlay">
-  <h1>Charlie-Bug</h1>
-  <p class="subtitle">Find everything to finish the look!</p>
-  <div id="title-theme"></div>
-  <div id="title-palette"></div>
-  <p id="title-resume" hidden>▶ Continue where you left off</p>
-  <p class="tap-prompt">Tap anywhere to start</p>
-</div>
-
 <!-- Celebrate overlay -->
 <div id="celebrate-overlay" style="display:none">
   <h2>You found everything!</h2>
@@ -328,8 +247,7 @@
 <script src="js/game.js"></script>
 <script src="js/ui.js"></script>
 <script>
-  // Tap on canvas/title to start
-  document.getElementById('title-overlay').addEventListener('click', () => startDay());
+  // Tap canvas to start (canvas fills the screen during title)
   document.getElementById('game-canvas').addEventListener('click', () => {
     if (state.screen === 'title') startDay();
   });

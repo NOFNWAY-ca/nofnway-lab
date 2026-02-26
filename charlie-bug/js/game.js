@@ -550,21 +550,77 @@ function render() {
 }
 
 function renderTitle() {
-  // Title drawn as DOM, canvas just shows animated Charlie
   ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
-  // Sky background
+  // Background
   ctx.fillStyle = state.theme ? state.theme.bgTint : '#C8EAF5';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-  // Bouncing Charlie in centre for title
+  // Bouncing Charlie (slightly below centre)
   const bob = Math.sin(state.time * 0.003) * 6;
   const fakeCharlie = {
-    x: CANVAS_W / 2, y: CANVAS_H / 2 + bob,
+    x: CANVAS_W / 2, y: 268 + bob,
     vx: 0, vy: 0, facing: 0,
     cosmetics: state.charlie.cosmetics,
   };
   drawCharlie(ctx, fakeCharlie, state.time, { x: 0, y: 0 });
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+
+  // Title "Charlie-Bug"
+  ctx.font = 'bold 46px sans-serif';
+  ctx.fillStyle = '#FF6B6B';
+  ctx.shadowOffsetX = 3; ctx.shadowOffsetY = 3;
+  ctx.shadowColor = 'rgba(0,0,0,0.13)'; ctx.shadowBlur = 0;
+  ctx.fillText('Charlie-Bug', CANVAS_W / 2, 22);
+  ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; ctx.shadowColor = 'rgba(0,0,0,0)';
+
+  // Subtitle
+  ctx.font = '16px sans-serif';
+  ctx.fillStyle = '#2D2D2D';
+  ctx.globalAlpha = 0.72;
+  ctx.fillText('Find everything to finish the look!', CANVAS_W / 2, 76);
+  ctx.globalAlpha = 1;
+
+  // Theme name + palette dots
+  if (state.theme) {
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillStyle = '#2D2D2D';
+    ctx.fillText(state.theme.emoji + ' ' + state.theme.name, CANVAS_W / 2, 104);
+
+    if (state.theme.palette) {
+      const n = state.theme.palette.length;
+      const gap = 26;
+      const dotX = CANVAS_W / 2 - ((n - 1) * gap) / 2;
+      state.theme.palette.forEach((col, i) => {
+        ctx.beginPath();
+        ctx.arc(dotX + i * gap, 142, 9, 0, Math.PI * 2);
+        ctx.fillStyle = col;
+        ctx.shadowBlur = 5; ctx.shadowColor = 'rgba(0,0,0,0.2)';
+        ctx.fill();
+        ctx.shadowBlur = 0; ctx.shadowColor = 'rgba(0,0,0,0)';
+      });
+    }
+
+    // Resume indicator
+    if (localStorage.getItem('charlie-bug-day')) {
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillStyle = '#4CAF50';
+      ctx.fillText('▶ Continue where you left off', CANVAS_W / 2, 164);
+    }
+  }
+
+  // "Tap anywhere to start" — pulsing
+  const pulse = 0.55 + Math.sin(state.time * 0.004) * 0.3;
+  ctx.globalAlpha = pulse;
+  ctx.font = '17px sans-serif';
+  ctx.fillStyle = '#2D2D2D';
+  ctx.fillText('Tap anywhere to start', CANVAS_W / 2, CANVAS_H - 42);
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
 }
 
 // ── Screen helpers (called from ui.js) ───────────────────────────────────────
