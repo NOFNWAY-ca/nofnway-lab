@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Charlie-Bug — NOFNWAY Lab</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky:    #C8EAF5;
+      --grass:  #7DC87A;
+      --panel:  #FFFDF5;
+      --text:   #2D2D2D;
+      --dim:    #888;
+      --accent: #FF6B6B;
+      --gold:   #FFD700;
+      --shadow: rgba(0,0,0,0.18);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      touch-action: none;
+    }
+
+    /* ── Game canvas wrapper ── */
+    #canvas-wrap {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--sky);
+    }
+
+    #game-canvas {
+      display: block;
+      width: min(100vw, 100vh);
+      height: min(100vw, 100vh);
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* ── HUD ── */
+    #hud {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #hud-back {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.9);
+      text-decoration: none;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      pointer-events: auto;
+      background: rgba(0,0,0,0.22);
+      padding: 5px 10px;
+      border-radius: 20px;
+    }
+
+    #hud-items {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .hud-icon {
+      width: 34px; height: 34px;
+      background: rgba(255,255,255,0.3);
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      opacity: 0.45;
+      transition: opacity 0.3s, transform 0.3s, background 0.3s;
+      filter: grayscale(1);
+    }
+
+    .hud-icon.found {
+      opacity: 1;
+      filter: none;
+      background: rgba(255,255,255,0.7);
+      transform: scale(1.15);
+      box-shadow: 0 0 10px rgba(255,230,50,0.7);
+    }
+
+    /* ── Title overlay ── */
+    #title-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      background: rgba(200,234,245,0.7);
+      backdrop-filter: blur(2px);
+      padding: 24px;
+      text-align: center;
+    }
+
+    #title-overlay h1 {
+      font-size: clamp(2.4rem, 8vw, 3.5rem);
+      font-weight: 900;
+      color: var(--accent);
+      text-shadow: 3px 3px 0 rgba(0,0,0,0.12);
+      letter-spacing: -1px;
+      margin-bottom: 4px;
+    }
+
+    #title-overlay .subtitle {
+      font-size: clamp(0.85rem, 3vw, 1.1rem);
+      color: var(--text);
+      opacity: 0.75;
+      margin-bottom: 20px;
+    }
+
+    #title-theme {
+      font-size: clamp(1.2rem, 4vw, 1.6rem);
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    #title-palette {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+
+    #title-palette span {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: block;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    #title-resume {
+      font-size: 0.78rem;
+      color: #4CAF50;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .tap-prompt {
+      font-size: clamp(0.85rem, 3vw, 1rem);
+      color: var(--text);
+      opacity: 0.6;
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50%       { opacity: 0.9; }
+    }
+
+    /* ── Celebrate overlay ── */
+    #celebrate-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      background: rgba(255,253,245,0.88);
+      backdrop-filter: blur(4px);
+      padding: 24px;
+      text-align: center;
+    }
+
+    #celebrate-overlay h2 {
+      font-size: clamp(1.8rem, 7vw, 2.8rem);
+      font-weight: 900;
+      color: var(--accent);
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+      margin-bottom: 6px;
+    }
+
+    #celebrate-theme {
+      font-size: clamp(1rem, 3.5vw, 1.3rem);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    #celebrate-canvas {
+      border-radius: 50%;
+      background: var(--sky);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      margin-bottom: 20px;
+    }
+
+    #play-again-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 40px;
+      padding: 14px 36px;
+      font-size: clamp(1rem, 3.5vw, 1.2rem);
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+      transition: transform 0.1s, box-shadow 0.1s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    #play-again-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+    }
+
+    .celebrate-note {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--dim);
+    }
+
+    /* ── Virtual joystick ── */
+    #joy-container {
+      position: fixed;
+      bottom: 28px;
+      left: 28px;
+      z-index: 15;
+      pointer-events: auto;
+    }
+
+    #joy-base {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.22);
+      border: 2.5px solid rgba(255,255,255,0.45);
+      position: relative;
+      touch-action: none;
+      cursor: pointer;
+    }
+
+    #joy-thumb {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.65);
+      border: 2px solid rgba(255,255,255,0.8);
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      transition: transform 0.05s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* ── Screen reader only ── */
+    #sr-announce {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Screen reader announcements -->
+<div id="sr-announce" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Game canvas -->
+<div id="canvas-wrap">
+  <canvas id="game-canvas" aria-label="Charlie-Bug garden explorer game"></canvas>
+</div>
+
+<!-- HUD -->
+<div id="hud" aria-hidden="true">
+  <a href="/" id="hud-back">← Lab</a>
+  <div id="hud-items">
+    <div class="hud-icon" id="hud-hat"      title="Hat">🎩</div>
+    <div class="hud-icon" id="hud-wings"    title="Wings">🦋</div>
+    <div class="hud-icon" id="hud-antennae" title="Antennae">✨</div>
+    <div class="hud-icon" id="hud-body"     title="Body">⭐</div>
+  </div>
+</div>
+
+<!-- Title overlay -->
+<div id="title-overlay">
+  <h1>Charlie-Bug</h1>
+  <p class="subtitle">Find everything to finish the look!</p>
+  <div id="title-theme"></div>
+  <div id="title-palette"></div>
+  <p id="title-resume" hidden>▶ Continue where you left off</p>
+  <p class="tap-prompt">Tap anywhere to start</p>
+</div>
+
+<!-- Celebrate overlay -->
+<div id="celebrate-overlay" hidden>
+  <h2>You found everything!</h2>
+  <div id="celebrate-theme"></div>
+  <canvas id="celebrate-canvas" width="120" height="120"></canvas>
+  <button id="play-again-btn">Play Again</button>
+  <p class="celebrate-note">Press Space or Enter to play again</p>
+</div>
+
+<!-- Virtual joystick (touch/mouse) -->
+<div id="joy-container">
+  <div id="joy-base">
+    <div id="joy-thumb"></div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  // Tap on canvas/title to start
+  document.getElementById('title-overlay').addEventListener('click', () => startDay());
+  document.getElementById('game-canvas').addEventListener('click', () => {
+    if (state.screen === 'title') startDay();
+  });
+  // Initialise
+  window.addEventListener('load', init);
+</script>
+</body>
+</html>
