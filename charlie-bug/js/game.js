@@ -569,18 +569,20 @@ function renderTitle() {
 
 // ── Screen helpers (called from ui.js) ───────────────────────────────────────
 
+function showEl(id, show, displayVal) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = show ? (displayVal || 'block') : 'none';
+}
+
 function setScreen(s) {
   state.screen = s;
-  document.getElementById('title-overlay').hidden    = (s !== 'title');
-  document.getElementById('celebrate-overlay').hidden = (s !== 'celebrate');
-
-  const joy = document.getElementById('joy-container');
-  if (joy) joy.hidden = (s !== 'game' && s !== 'scatter');
+  showEl('title-overlay',    s === 'title',    'flex');
+  showEl('celebrate-overlay', s === 'celebrate', 'flex');
+  showEl('joy-container',    s === 'game' || s === 'scatter');
 
   if (s === 'celebrate') {
     const themeEl = document.getElementById('celebrate-theme');
     if (themeEl && state.theme) themeEl.textContent = state.theme.emoji + ' ' + state.theme.name;
-    // renderCelebrateCharlie is defined in ui.js (loaded after)
     setTimeout(() => { if (typeof renderCelebrateCharlie === 'function') renderCelebrateCharlie(); }, 50);
   }
 }
@@ -620,8 +622,8 @@ function init() {
   if (joy && !hasTouch) joy.style.display = 'none';
 
   state.screen = 'title';
-  document.getElementById('title-overlay').hidden = false;
-  document.getElementById('celebrate-overlay').hidden = true;
+  showEl('title-overlay', true, 'flex');
+  showEl('celebrate-overlay', false);
 
   // If there's a saved day, show its theme on title
   const saved = localStorage.getItem('charlie-bug-day');
@@ -631,8 +633,7 @@ function init() {
       state.theme = THEMES[data.themeIndex];
       state.themeIndex = data.themeIndex;
       updateTitleTheme();
-      const resumeEl = document.getElementById('title-resume');
-      if (resumeEl) resumeEl.hidden = false;
+      showEl('title-resume', true);
     } catch(e) { localStorage.removeItem('charlie-bug-day'); }
   }
 

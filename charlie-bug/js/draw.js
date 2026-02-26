@@ -136,87 +136,101 @@ function drawCharlie(ctx, charlie, time, camera) {
   ctx.translate(sx, sy + bob);
   ctx.rotate(charlie.facing);
 
-  // Shadow (unrotated, stays flat on ground)
+  // Shadow (unrotated, flat on ground)
   ctx.save();
   ctx.rotate(-charlie.facing);
-  ctx.scale(1.3, 0.35);
+  ctx.scale(1.4, 0.3);
   ctx.beginPath();
-  ctx.arc(0, 58, 13, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.arc(0, 62, 14, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
   ctx.fill();
   ctx.restore();
 
-  // Wings (behind body)
+  // Wings (behind everything)
   if (cos.wings) drawWings(ctx, cos.wings, time);
 
-  // Body pattern (clipped to body ellipse)
+  // Legs (behind body)
+  drawLegs(ctx, time, charlie);
+
+  // Body pattern (clipped)
   if (cos.body) {
     ctx.save();
     ctx.beginPath();
-    ctx.ellipse(0, 4, 12, 15, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 7, 13, 14, 0, 0, Math.PI * 2);
     ctx.clip();
     drawBodyPattern(ctx, cos.body, time);
     ctx.restore();
   }
 
-  // Body shell
+  // Body shell — rounder, slightly shorter
   ctx.beginPath();
-  ctx.ellipse(0, 4, 12, 15, 0, 0, Math.PI * 2);
-  ctx.fillStyle = cos.body ? 'rgba(229,57,53,0.72)' : '#E53935';
+  ctx.ellipse(0, 7, 13, 14, 0, 0, Math.PI * 2);
+  ctx.fillStyle = cos.body ? 'rgba(229,57,53,0.75)' : '#E53935';
   ctx.fill();
-  ctx.strokeStyle = '#B71C1C';
+  ctx.strokeStyle = '#C62828';
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // Default spots
+  // Default spots (3 classic ladybug dots)
   if (!cos.body) {
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    [[-5,1],[5,1],[0,9],[-5,14],[5,14]].forEach(([sx,sy]) => {
-      ctx.beginPath(); ctx.arc(sx, sy, 2.5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.32)';
+    [[-5, 4],[5, 4],[0, 13]].forEach(([bx,by]) => {
+      ctx.beginPath(); ctx.arc(bx, by, 3.2, 0, Math.PI*2); ctx.fill();
     });
   }
 
-  // Wing dividing line
+  // Wing seam line
   ctx.beginPath();
-  ctx.moveTo(0, -10); ctx.lineTo(0, 18);
-  ctx.strokeStyle = 'rgba(183,28,28,0.6)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
+  ctx.moveTo(0, -6); ctx.lineTo(0, 20);
+  ctx.strokeStyle = 'rgba(198,40,40,0.5)';
+  ctx.lineWidth = 1; ctx.stroke();
 
-  // Legs
-  drawLegs(ctx, time, charlie);
-
-  // Head
+  // Head — bigger and rounder for chibi proportions
   ctx.beginPath();
-  ctx.arc(0, -13, 9, 0, Math.PI * 2);
-  ctx.fillStyle = '#212121';
+  ctx.arc(0, -14, 12, 0, Math.PI * 2);
+  ctx.fillStyle = '#1a1a1a';
   ctx.fill();
 
-  // Eyes
+  // Big cute eyes
   ctx.fillStyle = 'white';
-  ctx.beginPath(); ctx.arc(-3.5, -14, 2.5, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( 3.5, -14, 2.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-4.8, -15, 5, 5.5, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 4.8, -15, 5, 5.5, 0, 0, Math.PI*2); ctx.fill();
+
+  // Pupils (offset slightly up-center for that wide-eyed look)
   ctx.fillStyle = '#111';
-  ctx.beginPath(); ctx.arc(-3, -14.5, 1.3, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( 4, -14.5, 1.3, 0, Math.PI*2); ctx.fill();
-  // Eye shine
+  ctx.beginPath(); ctx.arc(-4.2, -15.8, 2.8, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc( 5.4, -15.8, 2.8, 0, Math.PI*2); ctx.fill();
+
+  // Eye shine — two dots per eye for extra sparkle
   ctx.fillStyle = 'white';
-  ctx.beginPath(); ctx.arc(-2.2, -15.5, 0.6, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( 4.8, -15.5, 0.6, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(-3.2, -17.2, 1.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(-5.8, -15.2, 0.6, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc( 6.4, -17.2, 1.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc( 3.8, -15.2, 0.6, 0, Math.PI*2); ctx.fill();
 
-  // Antennae
-  const tipType  = cos.antennae ? cos.antennae.type   : 'dot';
-  const tipCol1  = cos.antennae ? cos.antennae.color1 : '#212121';
-  const tipCol2  = cos.antennae ? cos.antennae.color2 : null;
-  ctx.strokeStyle = '#212121';
-  ctx.lineWidth = 1.5;
-  ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(-4,-21); ctx.quadraticCurveTo(-14,-30,-11,-38); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo( 4,-21); ctx.quadraticCurveTo( 14,-30, 11,-38); ctx.stroke();
-  drawAntennaTip(ctx, -11, -38, tipType, tipCol1, tipCol2);
-  drawAntennaTip(ctx,  11, -38, tipType, tipCol1, tipCol2);
+  // Blush marks
+  ctx.fillStyle = 'rgba(255,120,120,0.38)';
+  ctx.beginPath(); ctx.ellipse(-9.5, -12, 4.5, 2.8, 0.3, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 9.5, -12, 4.5, 2.8, -0.3, 0, Math.PI*2); ctx.fill();
 
-  // Hat (topmost)
+  // Tiny smile
+  ctx.beginPath();
+  ctx.arc(0, -11.5, 4, 0.25, Math.PI - 0.25);
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth = 1.4; ctx.lineCap = 'round'; ctx.stroke();
+
+  // Antennae (from top of head)
+  const tipType = cos.antennae ? cos.antennae.type   : 'dot';
+  const tipCol1 = cos.antennae ? cos.antennae.color1 : '#1a1a1a';
+  const tipCol2 = cos.antennae ? cos.antennae.color2 : null;
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-5,-25); ctx.quadraticCurveTo(-14,-33,-11,-40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo( 5,-25); ctx.quadraticCurveTo( 14,-33, 11,-40); ctx.stroke();
+  drawAntennaTip(ctx, -11, -40, tipType, tipCol1, tipCol2);
+  drawAntennaTip(ctx,  11, -40, tipType, tipCol1, tipCol2);
+
+  // Hat (topmost layer)
   if (cos.hat) drawHat(ctx, cos.hat, time);
 
   ctx.restore();
@@ -224,15 +238,16 @@ function drawCharlie(ctx, charlie, time, camera) {
 
 function drawLegs(ctx, time, charlie) {
   const speed = Math.hypot(charlie.vx || 0, charlie.vy || 0);
-  const walk = speed > 0.5 ? time * 0.012 : 0;
-  ctx.strokeStyle = '#212121';
-  ctx.lineWidth = 1.3;
+  const walk  = speed > 0.5 ? time * 0.013 : 0;
+  // Shorter, stubbier legs — thick and rounded
+  ctx.strokeStyle = '#2a2a2a';
+  ctx.lineWidth = 3;
   ctx.lineCap = 'round';
-  [[-2, 0], [4, 1.2], [10, 2.4]].forEach(([ly, phase]) => {
-    const lw = Math.sin(walk + phase) * 4;
-    const rw = -Math.sin(walk + phase) * 4;
-    ctx.beginPath(); ctx.moveTo(-11, ly); ctx.lineTo(-19, ly + lw + 5); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo( 11, ly); ctx.lineTo( 19, ly + rw + 5); ctx.stroke();
+  [[0, 0], [7, 1.1], [13, 2.2]].forEach(([ly, phase]) => {
+    const lw = Math.sin(walk + phase) * 3.5;
+    const rw = -Math.sin(walk + phase) * 3.5;
+    ctx.beginPath(); ctx.moveTo(-12, ly); ctx.lineTo(-19, ly + lw + 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo( 12, ly); ctx.lineTo( 19, ly + rw + 4); ctx.stroke();
   });
 }
 
