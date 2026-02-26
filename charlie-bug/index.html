@@ -7,7 +7,6 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    [hidden] { display: none !important; }
 
     :root {
       --sky:    #C8EAF5;
@@ -309,7 +308,7 @@
 </div>
 
 <!-- Celebrate overlay -->
-<div id="celebrate-overlay" hidden>
+<div id="celebrate-overlay" style="display:none">
   <h2>You found everything!</h2>
   <div id="celebrate-theme"></div>
   <canvas id="celebrate-canvas" width="120" height="120"></canvas>
@@ -318,7 +317,7 @@
 </div>
 
 <!-- Virtual joystick (touch/mouse) -->
-<div id="joy-container">
+<div id="joy-container" style="display:none">
   <div id="joy-base">
     <div id="joy-thumb"></div>
   </div>

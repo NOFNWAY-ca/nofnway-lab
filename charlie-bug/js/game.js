@@ -571,7 +571,13 @@ function renderTitle() {
 
 function showEl(id, show, displayVal) {
   const el = document.getElementById(id);
-  if (el) el.style.display = show ? (displayVal || 'block') : 'none';
+  if (!el) return;
+  if (show) {
+    el.removeAttribute('hidden');
+    el.style.display = displayVal || 'block';
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 function setScreen(s) {
