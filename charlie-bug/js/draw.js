@@ -12,10 +12,14 @@ function drawWorld(ctx, camera, time, bgTint) {
 
   // Subtle grass texture patches (lighter/darker spots)
   const patches = [
-    [120,120,80,70,'#72be70'],[300,80,100,60,'#82d07e'],[500,160,90,80,'#78c975'],
-    [700,120,110,70,'#6dbd6a'],[850,300,80,90,'#82d07e'],[100,400,90,100,'#72be70'],
-    [200,600,100,80,'#78c975'],[400,700,80,90,'#82d07e'],[650,800,110,70,'#6dbd6a'],
-    [800,650,90,80,'#72be70'],[550,500,70,60,'#82d07e'],[350,350,80,70,'#6dbd6a'],
+    [ 180, 180,80,70,'#72be70'],[ 450, 120,100,60,'#82d07e'],[ 750, 240,90,80,'#78c975'],
+    [1050, 180,110,70,'#6dbd6a'],[1275, 450,80,90,'#82d07e'],[ 150, 600,90,100,'#72be70'],
+    [ 300, 900,100,80,'#78c975'],[ 600,1050,80,90,'#82d07e'],[ 975,1200,110,70,'#6dbd6a'],
+    [1200, 975,90,80,'#72be70'],[ 825, 750,70,60,'#82d07e'],[ 525, 525,80,70,'#6dbd6a'],
+    [ 900, 300,90,70,'#82d07e'],[ 200,1050,100,80,'#6dbd6a'],[1100, 850,90,80,'#72be70'],
+    [ 450, 480,80,70,'#78c975'],[ 750,1100,100,80,'#82d07e'],[1200, 400,80,90,'#6dbd6a'],
+    [ 500, 900,70,60,'#72be70'],[1050, 620,90,70,'#82d07e'],[ 280, 720,80,80,'#6dbd6a'],
+    [ 680, 400,90,70,'#78c975'],[1150,1150,80,80,'#72be70'],[ 200, 350,70,60,'#82d07e'],
   ];
   patches.forEach(([px,py,pw,ph,col]) => {
     ctx.fillStyle = col;
@@ -119,6 +123,92 @@ function drawDecoration(ctx, d, cx, cy, time) {
       ctx.quadraticCurveTo(gx + sway, -4, gx + sway * 1.5, -10);
       ctx.stroke();
     });
+    ctx.restore();
+
+  } else if (d.type === 'tree') {
+    ctx.save();
+    ctx.translate(x, y);
+    // Ground shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.13)';
+    ctx.beginPath();
+    ctx.ellipse(4, 2, 18, 7, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Trunk
+    ctx.fillStyle = '#6D4C41';
+    ctx.fillRect(-5, -18, 10, 20);
+    // Canopy — overlapping blobs with gentle sway
+    const sway = Math.sin(time * 0.001 + d.x * 0.01) * 2;
+    [
+      [sway,    -36, 20, '#388E3C'],
+      [sway-12, -26, 16, '#2E7D32'],
+      [sway+12, -26, 16, '#2E7D32'],
+      [sway,    -20, 14, '#66BB6A'],
+    ].forEach(([tx, ty, r, col]) => {
+      ctx.beginPath();
+      ctx.arc(tx, ty, r, 0, Math.PI*2);
+      ctx.fillStyle = col;
+      ctx.fill();
+    });
+    ctx.restore();
+
+  } else if (d.type === 'pond') {
+    const s = d.size || 1;
+    ctx.save();
+    ctx.translate(x, y);
+    // Water shadow/depth
+    ctx.fillStyle = 'rgba(0,60,100,0.18)';
+    ctx.beginPath();
+    ctx.ellipse(3, 3, 36*s, 22*s, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Water body
+    ctx.fillStyle = 'rgba(100,190,230,0.82)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 34*s, 20*s, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Highlight shimmer
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(-6*s, -4*s, 12*s, 5*s, -0.3, 0, Math.PI*2);
+    ctx.fill();
+    // Animated ripple ring
+    const ripA = 0.15 + Math.abs(Math.sin(time * 0.003 + d.x * 0.01)) * 0.25;
+    ctx.strokeStyle = `rgba(255,255,255,${ripA})`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(6*s, 3*s, 10*s, 5*s, 0.2, 0, Math.PI*2);
+    ctx.stroke();
+    // Lily pad with notch
+    ctx.save();
+    ctx.translate(-14*s, 5*s);
+    ctx.fillStyle = '#388E3C';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, 7*s, 0.4, Math.PI*2 - 0.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    ctx.restore();
+
+  } else if (d.type === 'clover') {
+    const bob = Math.sin(time * 0.0015 + d.x) * 1;
+    ctx.save();
+    ctx.translate(x, y + bob);
+    // Stem
+    ctx.beginPath();
+    ctx.moveTo(0, 4); ctx.lineTo(0, 12);
+    ctx.strokeStyle = '#4a8f46'; ctx.lineWidth = 1.5; ctx.stroke();
+    // 4 leaves in + pattern
+    ctx.fillStyle = '#4CAF50';
+    [[0, -5], [5, 0], [0, 5], [-5, 0]].forEach(([lx, ly]) => {
+      ctx.beginPath();
+      ctx.arc(lx, ly, 4.5, 0, Math.PI*2);
+      ctx.fill();
+    });
+    // Center
+    ctx.fillStyle = '#81C784';
+    ctx.beginPath();
+    ctx.arc(0, 0, 2, 0, Math.PI*2);
+    ctx.fill();
     ctx.restore();
   }
 }
@@ -652,33 +742,48 @@ function drawItem(ctx, item, time, camera) {
 
   const sx = item.x - camera.x;
   const sy = item.y - camera.y;
-  const bob = Math.sin(time * 0.003 + item.x) * 4;
+  const bob = Math.sin(time * 0.003 + item.x) * 5;
   const spin = time * 0.001;
+  const pulse = 0.85 + Math.sin(time * 0.005 + item.y) * 0.15;
+
+  // Ground glow (stays on ground, no bob)
+  ctx.save();
+  ctx.translate(sx, sy);
+  const groundGlow = ctx.createRadialGradient(0, 0, 4, 0, 0, 30);
+  groundGlow.addColorStop(0, `rgba(255,240,100,${0.4 * pulse})`);
+  groundGlow.addColorStop(1, 'rgba(255,240,100,0)');
+  ctx.beginPath();
+  ctx.arc(0, 0, 30, 0, Math.PI*2);
+  ctx.fillStyle = groundGlow;
+  ctx.fill();
+  ctx.restore();
 
   ctx.save();
   ctx.translate(sx, sy + bob);
 
-  // Glow ring
-  const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 22);
-  glow.addColorStop(0, 'rgba(255,240,120,0.35)');
-  glow.addColorStop(1, 'rgba(255,240,120,0)');
-  ctx.beginPath();
-  ctx.arc(0, 0, 22, 0, Math.PI*2);
-  ctx.fillStyle = glow;
-  ctx.fill();
-
-  // Sparkle star bursts
+  // Outer spinning sparkle star (larger than before)
   ctx.save();
   ctx.rotate(spin);
-  drawStar(ctx, 0, 0, 4, 14, 2, 'rgba(255,230,50,0.7)');
-  ctx.restore();
-  ctx.save();
-  ctx.rotate(-spin * 1.5);
-  drawStar(ctx, 0, 0, 6, 10, 3, 'rgba(255,255,255,0.5)');
+  drawStar(ctx, 0, 0, 4, 26, 5, `rgba(255,230,60,${0.5 * pulse})`);
   ctx.restore();
 
-  // Item icon (small cosmetic preview)
-  ctx.scale(0.55, 0.55);
+  // Inner counter-spinning star
+  ctx.save();
+  ctx.rotate(-spin * 1.3);
+  drawStar(ctx, 0, 0, 6, 18, 7, `rgba(255,255,255,${0.4 * pulse})`);
+  ctx.restore();
+
+  // White bubble backing with item-coloured border
+  ctx.beginPath();
+  ctx.arc(0, 0, 22, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.fill();
+  ctx.strokeStyle = item.color1;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Icon at larger scale
+  ctx.scale(0.75, 0.75);
   drawItemIcon(ctx, item, time);
 
   ctx.restore();

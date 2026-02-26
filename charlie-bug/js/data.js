@@ -1,7 +1,7 @@
 // js/data.js — Theme and world definitions for Charlie-Bug
 
-const WORLD_W = 960;
-const WORLD_H = 960;
+const WORLD_W = 1440;
+const WORLD_H = 1440;
 
 // ── Themes ────────────────────────────────────────────────────────────────────
 
@@ -91,65 +91,131 @@ const RAINBOW_COLORS = ['#FF5252','#FF9800','#FFEB3B','#4CAF50','#2196F3','#9C27
 // ── Item scatter zones (one per quadrant) ─────────────────────────────────────
 
 const SCATTER_ZONES = [
-  { minX: 100, maxX: 380, minY: 100, maxY: 380 }, // top-left
-  { minX: 580, maxX: 860, minY: 100, maxY: 380 }, // top-right
-  { minX: 100, maxX: 380, minY: 580, maxY: 860 }, // bottom-left
-  { minX: 580, maxX: 860, minY: 580, maxY: 860 }, // bottom-right
+  { minX: 130, maxX: 550, minY: 130, maxY: 550 }, // top-left
+  { minX: 890, maxX: 1310, minY: 130, maxY: 550 }, // top-right
+  { minX: 130, maxX: 550, minY: 890, maxY: 1310 }, // bottom-left
+  { minX: 890, maxX: 1310, minY: 890, maxY: 1310 }, // bottom-right
 ];
 
 // ── World decorations ─────────────────────────────────────────────────────────
 
 const DECORATIONS = [
-  // Flowers (spread around the garden, avoiding center and path)
-  { type: 'flower', x:  90, y:  90, color: '#FF6B9D', size: 1.0 },
-  { type: 'flower', x: 210, y:  65, color: '#FFD700', size: 0.8 },
-  { type: 'flower', x: 340, y: 130, color: '#FF6B9D', size: 1.1 },
-  { type: 'flower', x: 130, y: 270, color: '#FF9800', size: 0.9 },
-  { type: 'flower', x: 700, y:  80, color: '#FF6B9D', size: 1.0 },
-  { type: 'flower', x: 830, y: 190, color: '#FFD700', size: 0.8 },
-  { type: 'flower', x: 890, y: 340, color: '#E040FB', size: 1.0 },
-  { type: 'flower', x: 760, y: 430, color: '#FF6B9D', size: 0.9 },
-  { type: 'flower', x: 910, y: 610, color: '#FFD700', size: 1.1 },
-  { type: 'flower', x: 820, y: 790, color: '#FF9800', size: 0.8 },
-  { type: 'flower', x: 670, y: 890, color: '#FF6B9D', size: 1.0 },
-  { type: 'flower', x: 110, y: 710, color: '#FFD700', size: 0.9 },
-  { type: 'flower', x:  70, y: 870, color: '#E040FB', size: 1.0 },
-  { type: 'flower', x: 230, y: 840, color: '#FF6B9D', size: 0.8 },
-  { type: 'flower', x: 410, y: 910, color: '#FFD700', size: 1.0 },
-  { type: 'flower', x: 560, y:  60, color: '#FF9800', size: 0.9 },
-  { type: 'flower', x: 480, y: 140, color: '#FF6B9D', size: 0.8 },
-  { type: 'flower', x:  60, y: 480, color: '#FFD700', size: 1.0 },
-  { type: 'flower', x: 900, y: 480, color: '#E040FB', size: 0.9 },
-  // Mushrooms
-  { type: 'mushroom', x: 170, y: 170, color: '#E53935' },
-  { type: 'mushroom', x: 790, y: 270, color: '#FF9800' },
-  { type: 'mushroom', x: 150, y: 600, color: '#9C27B0' },
-  { type: 'mushroom', x: 860, y: 730, color: '#E53935' },
-  { type: 'mushroom', x: 510, y: 870, color: '#FF9800' },
-  { type: 'mushroom', x: 430, y:  70, color: '#9C27B0' },
-  // Rocks
-  { type: 'rock', x: 310, y: 210, color: '#9E9E9E' },
-  { type: 'rock', x: 660, y: 330, color: '#78909C' },
-  { type: 'rock', x: 210, y: 690, color: '#9E9E9E' },
-  { type: 'rock', x: 760, y: 610, color: '#78909C' },
-  { type: 'rock', x: 400, y: 790, color: '#9E9E9E' },
-  { type: 'rock', x: 550, y: 200, color: '#78909C' },
-  // Tall grass tufts
-  { type: 'grass', x: 450, y: 110, color: '#5a9e56' },
-  { type: 'grass', x: 110, y: 450, color: '#5a9e56' },
-  { type: 'grass', x: 870, y: 490, color: '#5a9e56' },
-  { type: 'grass', x: 490, y: 870, color: '#5a9e56' },
-  { type: 'grass', x: 280, y: 490, color: '#5a9e56' },
-  { type: 'grass', x: 680, y: 510, color: '#5a9e56' },
+  // ── Flowers ──────────────────────────────────────────────────────────────────
+  { type: 'flower', x:  135, y:  135, color: '#FF6B9D', size: 1.0 },
+  { type: 'flower', x:  315, y:   97, color: '#FFD700', size: 0.8 },
+  { type: 'flower', x:  510, y:  195, color: '#FF6B9D', size: 1.1 },
+  { type: 'flower', x:  195, y:  405, color: '#FF9800', size: 0.9 },
+  { type: 'flower', x: 1050, y:  120, color: '#FF6B9D', size: 1.0 },
+  { type: 'flower', x: 1245, y:  285, color: '#FFD700', size: 0.8 },
+  { type: 'flower', x: 1335, y:  510, color: '#E040FB', size: 1.0 },
+  { type: 'flower', x: 1140, y:  645, color: '#FF6B9D', size: 0.9 },
+  { type: 'flower', x: 1365, y:  915, color: '#FFD700', size: 1.1 },
+  { type: 'flower', x: 1230, y: 1185, color: '#FF9800', size: 0.8 },
+  { type: 'flower', x: 1005, y: 1335, color: '#FF6B9D', size: 1.0 },
+  { type: 'flower', x:  165, y: 1065, color: '#FFD700', size: 0.9 },
+  { type: 'flower', x:  105, y: 1305, color: '#E040FB', size: 1.0 },
+  { type: 'flower', x:  345, y: 1260, color: '#FF6B9D', size: 0.8 },
+  { type: 'flower', x:  615, y: 1365, color: '#FFD700', size: 1.0 },
+  { type: 'flower', x:  840, y:   90, color: '#FF9800', size: 0.9 },
+  { type: 'flower', x:  720, y:  210, color: '#FF6B9D', size: 0.8 },
+  { type: 'flower', x:   90, y:  720, color: '#FFD700', size: 1.0 },
+  { type: 'flower', x: 1350, y:  720, color: '#E040FB', size: 0.9 },
+  // Mid-field flowers filling the larger world
+  { type: 'flower', x:  480, y:  720, color: '#FF6B9D', size: 0.9 },
+  { type: 'flower', x:  720, y:  480, color: '#FFD700', size: 1.0 },
+  { type: 'flower', x:  960, y:  720, color: '#FF9800', size: 0.8 },
+  { type: 'flower', x:  720, y:  960, color: '#E040FB', size: 1.0 },
+  { type: 'flower', x:  360, y:  580, color: '#FF6B9D', size: 0.9 },
+  { type: 'flower', x: 1080, y:  840, color: '#FFD700', size: 0.8 },
+  { type: 'flower', x:  640, y: 1180, color: '#FF9800', size: 1.0 },
+  { type: 'flower', x:  880, y: 1380, color: '#FF6B9D', size: 0.9 },
+  { type: 'flower', x:  200, y:  900, color: '#FFD700', size: 0.8 },
+  { type: 'flower', x: 1200, y: 1060, color: '#E040FB', size: 0.9 },
+
+  // ── Trees ───────────────────────────────────────────────────────────────────
+  { type: 'tree', x:  200, y:  200 },
+  { type: 'tree', x: 1240, y:  200 },
+  { type: 'tree', x:  200, y: 1240 },
+  { type: 'tree', x: 1240, y: 1240 },
+  { type: 'tree', x:  720, y:  150 },
+  { type: 'tree', x:  150, y:  720 },
+  { type: 'tree', x: 1290, y:  720 },
+  { type: 'tree', x:  720, y: 1290 },
+  { type: 'tree', x:  460, y:  460 },
+  { type: 'tree', x:  980, y:  460 },
+  { type: 'tree', x:  460, y:  980 },
+  { type: 'tree', x:  980, y:  980 },
+
+  // ── Ponds ───────────────────────────────────────────────────────────────────
+  { type: 'pond', x:  380, y:  820, size: 1.0 },
+  { type: 'pond', x: 1060, y:  420, size: 0.85 },
+  { type: 'pond', x:  580, y: 1180, size: 0.9 },
+  { type: 'pond', x: 1140, y: 1100, size: 1.0 },
+
+  // ── Clovers ─────────────────────────────────────────────────────────────────
+  { type: 'clover', x:  300, y:  160 },
+  { type: 'clover', x:  480, y:  260 },
+  { type: 'clover', x:  620, y:  340 },
+  { type: 'clover', x:  860, y:  200 },
+  { type: 'clover', x: 1000, y:  300 },
+  { type: 'clover', x: 1180, y:  460 },
+  { type: 'clover', x:  260, y:  540 },
+  { type: 'clover', x:  420, y:  640 },
+  { type: 'clover', x:  680, y:  720 },
+  { type: 'clover', x:  960, y:  680 },
+  { type: 'clover', x: 1120, y:  820 },
+  { type: 'clover', x:  340, y:  900 },
+  { type: 'clover', x:  580, y: 1040 },
+  { type: 'clover', x:  800, y: 1120 },
+  { type: 'clover', x: 1020, y: 1000 },
+  { type: 'clover', x:  240, y: 1100 },
+  { type: 'clover', x:  760, y:  560 },
+  { type: 'clover', x:  560, y:  820 },
+
+  // ── Mushrooms ───────────────────────────────────────────────────────────────
+  { type: 'mushroom', x:  255, y:  255, color: '#E53935' },
+  { type: 'mushroom', x: 1185, y:  405, color: '#FF9800' },
+  { type: 'mushroom', x:  225, y:  900, color: '#9C27B0' },
+  { type: 'mushroom', x: 1290, y: 1095, color: '#E53935' },
+  { type: 'mushroom', x:  765, y: 1305, color: '#FF9800' },
+  { type: 'mushroom', x:  645, y:  105, color: '#9C27B0' },
+  { type: 'mushroom', x:  820, y:  820, color: '#E53935' },
+  { type: 'mushroom', x:  340, y: 1200, color: '#FF9800' },
+  { type: 'mushroom', x: 1100, y:  700, color: '#9C27B0' },
+
+  // ── Rocks ───────────────────────────────────────────────────────────────────
+  { type: 'rock', x:  465, y:  315, color: '#9E9E9E' },
+  { type: 'rock', x:  990, y:  495, color: '#78909C' },
+  { type: 'rock', x:  315, y: 1035, color: '#9E9E9E' },
+  { type: 'rock', x: 1140, y:  915, color: '#78909C' },
+  { type: 'rock', x:  600, y: 1185, color: '#9E9E9E' },
+  { type: 'rock', x:  825, y:  300, color: '#78909C' },
+  { type: 'rock', x: 1250, y:  640, color: '#9E9E9E' },
+  { type: 'rock', x:  200, y:  680, color: '#78909C' },
+  { type: 'rock', x:  700, y: 1360, color: '#9E9E9E' },
+
+  // ── Tall grass tufts ────────────────────────────────────────────────────────
+  { type: 'grass', x:  675, y:  165, color: '#5a9e56' },
+  { type: 'grass', x:  165, y:  675, color: '#5a9e56' },
+  { type: 'grass', x: 1305, y:  735, color: '#5a9e56' },
+  { type: 'grass', x:  735, y: 1305, color: '#5a9e56' },
+  { type: 'grass', x:  420, y:  735, color: '#5a9e56' },
+  { type: 'grass', x: 1020, y:  765, color: '#5a9e56' },
+  { type: 'grass', x:  540, y:  380, color: '#5a9e56' },
+  { type: 'grass', x:  900, y: 1200, color: '#5a9e56' },
+  { type: 'grass', x: 1180, y:  980, color: '#5a9e56' },
+  { type: 'grass', x:  280, y: 1000, color: '#5a9e56' },
 ];
 
-// ── Winding path control points (bezier) ─────────────────────────────────────
+// ── Winding path control points ───────────────────────────────────────────────
 // Defines a path through the garden that Charlie can walk along (decoration only)
 const PATH_SEGMENTS = [
-  { x: 480, y:  20 },
-  { x: 200, y: 200 },
-  { x: 400, y: 480 },
-  { x: 760, y: 480 },
-  { x: 800, y: 760 },
-  { x: 480, y: 940 },
+  { x:  720, y:   30 },
+  { x:  280, y:  320 },
+  { x:  520, y:  600 },
+  { x:  920, y:  560 },
+  { x: 1200, y:  320 },
+  { x: 1300, y:  760 },
+  { x:  900, y: 1100 },
+  { x:  720, y: 1410 },
 ];

@@ -150,59 +150,115 @@ function getAudio() {
 
 function playCollect() {
   const ac = getAudio();
-  const notes = [261.63, 329.63, 392.00, 523.25]; // C4 E4 G4 C5
-  notes.forEach((freq, i) => {
+  const now = ac.currentTime;
+
+  // Spring pop: brief frequency sweep up
+  const pop = ac.createOscillator();
+  const popG = ac.createGain();
+  pop.connect(popG); popG.connect(ac.destination);
+  pop.type = 'sine';
+  pop.frequency.setValueAtTime(180, now);
+  pop.frequency.linearRampToValueAtTime(720, now + 0.05);
+  popG.gain.setValueAtTime(0.18, now);
+  popG.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+  pop.start(now); pop.stop(now + 0.08);
+
+  // Warm ascending arpeggio — triangle wave is fuller/warmer than sine
+  [329.63, 392.00, 493.88, 659.25].forEach((freq, i) => { // E4 G4 B4 E5
     const osc = ac.createOscillator();
     const g   = ac.createGain();
     osc.connect(g); g.connect(ac.destination);
-    osc.type = 'sine';
+    osc.type = 'triangle';
     osc.frequency.value = freq;
-    const t = ac.currentTime + i * 0.1;
+    const t = now + 0.04 + i * 0.09;
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.3, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-    osc.start(t); osc.stop(t + 0.26);
+    g.gain.linearRampToValueAtTime(0.28, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    osc.start(t); osc.stop(t + 0.3);
   });
 }
 
 function playWin() {
   const ac = getAudio();
-  const chord = [261.63, 329.63, 392.00, 523.25, 659.25];
-  chord.forEach((freq, i) => {
+  const now = ac.currentTime;
+
+  // Rising sweep intro
+  const sweep = ac.createOscillator();
+  const sweepG = ac.createGain();
+  sweep.connect(sweepG); sweepG.connect(ac.destination);
+  sweep.type = 'sine';
+  sweep.frequency.setValueAtTime(220, now);
+  sweep.frequency.exponentialRampToValueAtTime(880, now + 0.4);
+  sweepG.gain.setValueAtTime(0.12, now);
+  sweepG.gain.linearRampToValueAtTime(0.2, now + 0.3);
+  sweepG.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+  sweep.start(now); sweep.stop(now + 0.5);
+
+  // Triumphant chord — staggered entry, triangle bass + sine highs
+  [261.63, 329.63, 392.00, 523.25, 659.25, 783.99].forEach((freq, i) => {
+    const osc = ac.createOscillator();
+    const g   = ac.createGain();
+    osc.connect(g); g.connect(ac.destination);
+    osc.type = i < 3 ? 'triangle' : 'sine';
+    osc.frequency.value = freq;
+    const t = now + 0.35 + i * 0.07;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.14, t + 0.1);
+    g.gain.setValueAtTime(0.14, t + 0.7);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
+    osc.start(t); osc.stop(t + 2.6);
+  });
+
+  // Sparkle twinkles cascading in
+  [1046.5, 1318.5, 1568.0].forEach((freq, i) => {
     const osc = ac.createOscillator();
     const g   = ac.createGain();
     osc.connect(g); g.connect(ac.destination);
     osc.type = 'sine';
     osc.frequency.value = freq;
-    const t = ac.currentTime;
+    const t = now + 0.8 + i * 0.18;
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.18, t + 0.08);
-    g.gain.setValueAtTime(0.18, t + 0.6);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 2.2);
-    osc.start(t + i * 0.06);
-    osc.stop(t + 2.3);
+    g.gain.linearRampToValueAtTime(0.1, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    osc.start(t); osc.stop(t + 0.45);
   });
 }
 
 function playWind() {
   const ac = getAudio();
-  const bufSize = ac.sampleRate * 0.8;
+  const dur = 1.4;
+  const bufSize = Math.ceil(ac.sampleRate * dur);
   const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
   const src = ac.createBufferSource();
   src.buffer = buf;
-  const filter = ac.createBiquadFilter();
-  filter.type = 'bandpass';
-  filter.frequency.value = 800;
-  filter.Q.value = 0.5;
+
+  // Two sweeping bandpass filters for a richer whoosh
+  const f1 = ac.createBiquadFilter();
+  f1.type = 'bandpass';
+  f1.frequency.setValueAtTime(300, ac.currentTime);
+  f1.frequency.linearRampToValueAtTime(1100, ac.currentTime + 0.7);
+  f1.frequency.linearRampToValueAtTime(500, ac.currentTime + dur);
+  f1.Q.value = 0.8;
+
+  const f2 = ac.createBiquadFilter();
+  f2.type = 'bandpass';
+  f2.frequency.setValueAtTime(600, ac.currentTime);
+  f2.frequency.linearRampToValueAtTime(1600, ac.currentTime + 0.6);
+  f2.frequency.linearRampToValueAtTime(800, ac.currentTime + dur);
+  f2.Q.value = 1.2;
+
   const g = ac.createGain();
-  src.connect(filter); filter.connect(g); g.connect(ac.destination);
+  src.connect(f1); f1.connect(g);
+  src.connect(f2); f2.connect(g);
+  g.connect(ac.destination);
+
   g.gain.setValueAtTime(0, ac.currentTime);
-  g.gain.linearRampToValueAtTime(0.15, ac.currentTime + 0.2);
-  g.gain.setValueAtTime(0.15, ac.currentTime + 0.5);
-  g.gain.linearRampToValueAtTime(0, ac.currentTime + 0.8);
-  src.start(); src.stop(ac.currentTime + 0.85);
+  g.gain.linearRampToValueAtTime(0.18, ac.currentTime + 0.25);
+  g.gain.setValueAtTime(0.18, ac.currentTime + 0.9);
+  g.gain.linearRampToValueAtTime(0, ac.currentTime + dur);
+  src.start(); src.stop(ac.currentTime + dur + 0.05);
 }
 
 // ── Session / theme ───────────────────────────────────────────────────────────
