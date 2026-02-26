@@ -293,7 +293,7 @@ function startDay() {
   updateTitleTheme();
   updateHUD();
 
-  state.screen = 'scatter';
+  setScreen('scatter');
   state.scatterFrame = 0;
   spawnWindParticles();
   playWind();
