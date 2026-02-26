@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Event Recorder — NOFNWAY Lab</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #0057B8;
+    --blue-dark: #003d82;
+    --blue-light: #1a6fd4;
+    --blue-pale: #dbeafe;
+    --yellow: #FFD700;
+    --red: #e53e3e;
+    --green: #38a169;
+    --white: #ffffff;
+    --off-white: #f0f6ff;
+    --ink: #1a1a2e;
+    --ink-light: #4a4a6a;
+    --border: 3px solid var(--ink);
+    --shadow: 4px 4px 0px var(--ink);
+    --shadow-sm: 2px 2px 0px var(--ink);
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--off-white);
+    background-image:
+      radial-gradient(circle at 20px 20px, rgba(0,87,184,0.06) 2px, transparent 0),
+      radial-gradient(circle at 60px 60px, rgba(0,87,184,0.04) 2px, transparent 0);
+    background-size: 80px 80px;
+    font-family: 'Nunito', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--blue);
+    border-bottom: var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 0 var(--ink);
+  }
+
+  .header-home {
+    text-decoration: none;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-family: 'Bangers', cursive;
+    font-size: 2rem;
+    color: var(--yellow);
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--ink);
+    line-height: 1;
+  }
+
+  .logo span { color: var(--white); }
+
+  .tool-title {
+    font-family: 'Bangers', cursive;
+    font-size: 1.3rem;
+    color: var(--white);
+    letter-spacing: 1px;
+    opacity: 0.9;
+  }
+
+  .header-spacer { flex: 1; }
+
+  .records-count {
+    background: var(--yellow);
+    border: var(--border);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+  }
+
+  /* ── PRIVACY SHIELD ── */
+  .privacy-btn {
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.9);
+    padding: 6px 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+
+  .privacy-btn:hover { background: rgba(255,255,255,0.25); }
+
+  .privacy-panel {
+    position: fixed;
+    top: 72px;
+    right: 16px;
+    width: 290px;
+    background: var(--white);
+    border: var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--ink-light);
+    z-index: 9999;
+  }
+
+  .privacy-panel-hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .privacy-panel-title {
+    font-weight: 800;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--blue);
+  }
+
+  .privacy-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-light);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .privacy-close:hover { color: var(--red); }
+
+  /* ── MAIN LAYOUT ── */
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+  }
+
+  /* ── QUICK LOG CARD ── */
+  .quick-log {
+    background: var(--white);
+    border: var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quick-log::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: var(--blue);
+  }
+
+  .section-label {
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    color: var(--blue);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label .icon {
+    background: var(--blue);
+    color: var(--white);
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    border: 2px solid var(--ink);
+  }
+
+  /* Quick log type buttons */
+  .event-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .type-btn {
+    background: var(--off-white);
+    border: var(--border);
+    border-radius: var(--radius);
+    padding: 12px 8px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    transition: all 0.12s ease;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  .type-btn .emoji { font-size: 1.4rem; }
+
+  .type-btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .type-btn.active {
+    background: var(--blue);
+    color: var(--white);
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+
+  /* Quick note field */
+  .quick-note-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .quick-note-input {
+    flex: 1;
+    border: var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    resize: none;
+    min-height: 52px;
+    max-height: 140px;
+    overflow-y: auto;
+    background: var(--white);
+    transition: border-color 0.15s;
+  }
+
+  .quick-note-input:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(0,87,184,0.12);
+  }
+
+  .quick-note-input::placeholder { color: #999; font-weight: 400; }
+
+  .log-btn {
+    background: var(--blue);
+    color: var(--white);
+    border: var(--border);
+    border-radius: var(--radius);
+    padding: 12px 20px;
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.12s ease;
+    white-space: nowrap;
+    align-self: flex-end;
+  }
+
+  .log-btn:hover {
+    background: var(--blue-light);
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .log-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+
+  /* ── EXPANDED DETAIL FORM ── */
+  .detail-form {
+    display: none;
+    margin-top: 20px;
+    border-top: 2px dashed #ccc;
+    padding-top: 20px;
+  }
+
+  .detail-form.open { display: block; }
+
+  .expand-link {
+    background: none;
+    border: none;
+    color: var(--blue);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .expand-link:hover { color: var(--blue-dark); }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  @media (max-width: 540px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .event-type-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  .form-group label {
+    font-weight: 800;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ink-light);
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    border: var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    background: var(--white);
+    color: var(--ink);
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(0,87,184,0.12);
+  }
+
+  .form-group textarea { resize: vertical; min-height: 70px; }
+
+  /* Pain scale */
+  .pain-scale {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .pain-btn {
+    width: 36px; height: 36px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.85rem;
+    background: var(--off-white);
+    transition: all 0.1s;
+  }
+
+  .pain-btn:hover { background: var(--blue-pale); }
+
+  .pain-btn.active {
+    background: var(--blue);
+    color: var(--white);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Custom field add */
+  .add-field-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 4px;
+  }
+
+  .add-field-row input {
+    flex: 1;
+    border: 2px dashed #aaa;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    background: var(--off-white);
+  }
+
+  .add-field-row input:focus {
+    outline: none;
+    border-color: var(--blue);
+    border-style: solid;
+  }
+
+  .add-field-btn {
+    background: var(--yellow);
+    border: var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+    transition: all 0.12s;
+  }
+
+  .add-field-btn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+
+  /* ── RECORDS LIST ── */
+  .records-section { margin-top: 8px; }
+
+  .records-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .filter-pill {
+    background: var(--white);
+    border: 2px solid var(--ink);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+
+  .filter-pill.active {
+    background: var(--blue);
+    color: var(--white);
+    border-color: var(--blue-dark);
+  }
+
+  .filter-pill:hover:not(.active) { background: var(--blue-pale); }
+
+  .export-btn {
+    background: var(--green);
+    color: var(--white);
+    border: var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .export-btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink); }
+
+  /* Export modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--white);
+    border: var(--border);
+    border-radius: var(--radius);
+    box-shadow: 8px 8px 0 var(--ink);
+    padding: 28px;
+    max-width: 480px;
+    width: 100%;
+    position: relative;
+  }
+
+  .modal-title {
+    font-family: 'Bangers', cursive;
+    font-size: 1.6rem;
+    color: var(--blue);
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+  }
+
+  .export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .export-option {
+    border: var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.1s;
+    background: var(--off-white);
+  }
+
+  .export-option:hover { background: var(--blue-pale); border-color: var(--blue); }
+
+  .export-option .opt-icon { font-size: 1.4rem; }
+
+  .export-option .opt-label { font-weight: 800; font-size: 0.95rem; }
+  .export-option .opt-desc { font-size: 0.8rem; color: var(--ink-light); font-weight: 600; }
+
+  .modal-close {
+    position: absolute;
+    top: 12px; right: 14px;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: var(--ink-light);
+    line-height: 1;
+  }
+
+  .modal-close:hover { color: var(--red); }
+
+  /* Record cards */
+  .record-card {
+    background: var(--white);
+    border: var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    position: relative;
+    transition: box-shadow 0.12s;
+  }
+
+  .record-card:hover { box-shadow: var(--shadow); }
+
+  .record-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .record-type-badge {
+    background: var(--blue);
+    color: var(--white);
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .record-note {
+    flex: 1;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .record-meta {
+    font-size: 0.78rem;
+    color: var(--ink-light);
+    font-weight: 600;
+    margin-top: 6px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .record-details {
+    margin-top: 10px;
+    border-top: 2px dashed #e0e0e0;
+    padding-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+  }
+
+  .detail-chip {
+    background: var(--off-white);
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .detail-chip .chip-label {
+    color: var(--ink-light);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: block;
+  }
+
+  .record-actions {
+    position: absolute;
+    top: 12px; right: 14px;
+    display: flex;
+    gap: 6px;
+  }
+
+  .icon-btn {
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    width: 28px; height: 28px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.1s;
+  }
+
+  .icon-btn:hover { background: var(--off-white); border-color: #ccc; }
+
+  .icon-btn.delete:hover { background: #fff0f0; border-color: var(--red); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--ink-light);
+  }
+
+  .empty-state .big-emoji { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state h3 { font-family: 'Bangers', cursive; font-size: 1.4rem; color: var(--blue); margin-bottom: 8px; letter-spacing: 1px; }
+  .empty-state p { font-size: 0.9rem; font-weight: 600; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--ink);
+    color: var(--white);
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    z-index: 300;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Textarea auto-grow */
+  textarea { field-sizing: content; }
+
+  /* Print styles */
+  @media print {
+    header, .quick-log, .records-header, .record-actions, .filter-pills, .export-btn { display: none !important; }
+    body { background: white; }
+    .record-card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+    .container { padding: 0; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="header-home" title="Back to Lab">
+    <div class="logo">NO<span>FN</span>WAY</div>
+  </a>
+  <div class="tool-title">Medical Event Recorder</div>
+  <div class="header-spacer"></div>
+  <div class="records-count" id="records-count">0 entries</div>
+  <button class="privacy-btn" onclick="togglePrivacy()" aria-label="Privacy information">
+    🛡️ Privacy
+  </button>
+</header>
+
+<!-- Privacy panel -->
+<div class="privacy-panel" id="privacy-panel" hidden>
+  <div class="privacy-panel-hd">
+    <div class="privacy-panel-title">🛡️ Privacy &amp; Data</div>
+    <button class="privacy-close" onclick="document.getElementById('privacy-panel').hidden=true" aria-label="Close">&#x2715;</button>
+  </div>
+  <p>Your records are saved in <strong>this browser only</strong>, using localStorage. Nothing leaves your device — no accounts, no cloud, no tracking.</p>
+  <p style="margin-top:8px">Use <strong>Export → Download Backup</strong> before clearing your browser data, or you'll lose everything.</p>
+</div>
+
+<div class="container">
+
+  <!-- QUICK LOG CARD -->
+  <div class="quick-log">
+    <div class="section-label">
+      <div class="icon">⚡</div>
+      Quick Log
+    </div>
+
+    <!-- Event type selector -->
+    <div class="event-type-grid" id="type-grid">
+      <!-- populated by JS -->
+    </div>
+
+    <!-- Quick note + Log button -->
+    <div class="quick-note-row">
+      <textarea
+        class="quick-note-input"
+        id="quick-note"
+        placeholder="What happened? (optional — you can always add notes later)"
+        rows="1"
+      ></textarea>
+      <button class="log-btn" onclick="logEvent()">LOG IT</button>
+    </div>
+
+    <button class="expand-link" onclick="toggleDetail()" id="expand-link">
+      <span id="expand-arrow">▼</span> Add more details
+    </button>
+
+    <!-- EXPANDED DETAIL FORM -->
+    <div class="detail-form" id="detail-form">
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label>Date &amp; Time</label>
+          <input type="datetime-local" id="detail-datetime">
+        </div>
+
+        <div class="form-group">
+          <label>Severity / Pain (1–10)</label>
+          <div class="pain-scale" id="pain-scale">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Medication / Substance</label>
+          <input type="text" id="detail-med" placeholder="Name, dose (e.g. Ibuprofen 400mg)">
+        </div>
+
+        <div class="form-group">
+          <label>Duration</label>
+          <input type="text" id="detail-duration" placeholder="e.g. 20 min, all day">
+        </div>
+
+        <div class="form-group">
+          <label>Body Location</label>
+          <input type="text" id="detail-location" placeholder="e.g. left knee, chest, head">
+        </div>
+
+        <div class="form-group">
+          <label>Possible Trigger</label>
+          <input type="text" id="detail-trigger" placeholder="e.g. stress, food, activity">
+        </div>
+
+        <div class="form-group full">
+          <label>Additional Notes</label>
+          <textarea id="detail-notes" placeholder="Anything else worth noting..."></textarea>
+        </div>
+
+        <!-- Custom fields container -->
+        <div class="form-group full" id="custom-fields-container"></div>
+
+        <div class="form-group full">
+          <label>Add a Custom Field</label>
+          <div class="add-field-row">
+            <input type="text" id="custom-field-name" placeholder="Field name (e.g. Sleep hours, Mood)">
+            <input type="text" id="custom-field-value" placeholder="Value">
+            <button class="add-field-btn" onclick="addCustomField()">+ Add</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RECORDS SECTION -->
+  <div class="records-section">
+    <div class="records-header">
+      <div class="filter-pills" id="filter-pills">
+        <button class="filter-pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
+      </div>
+      <button class="export-btn" onclick="openExport()">
+        ⬇ Export
+      </button>
+    </div>
+    <div id="records-list"></div>
+  </div>
+
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeExport()">✕</button>
+    <div class="modal-title">Export Your Records</div>
+    <div class="export-options">
+      <div class="export-option" onclick="exportAs('print')">
+        <div class="opt-icon">🖨️</div>
+        <div>
+          <div class="opt-label">Print / Save as PDF</div>
+          <div class="opt-desc">Clean printable layout — great for doctor visits</div>
+        </div>
+      </div>
+      <div class="export-option" onclick="exportAs('text')">
+        <div class="opt-icon">📋</div>
+        <div>
+          <div class="opt-label">Copy as Plain Text</div>
+          <div class="opt-desc">Paste into email, notes app, or anywhere</div>
+        </div>
+      </div>
+      <div class="export-option" onclick="exportAs('csv')">
+        <div class="opt-icon">📊</div>
+        <div>
+          <div class="opt-label">Download CSV</div>
+          <div class="opt-desc">Open in Excel, Google Sheets, or Numbers</div>
+        </div>
+      </div>
+      <div class="export-option" onclick="exportAs('json')">
+        <div class="opt-icon">💾</div>
+        <div>
+          <div class="opt-label">Download Backup (JSON)</div>
+          <div class="opt-desc">Save a full backup — restore it by importing the file</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const EVENT_TYPES = [
+  { id: 'symptom',     label: 'Symptom',       emoji: '🤕' },
+  { id: 'medication',  label: 'Medication',    emoji: '💊' },
+  { id: 'appointment', label: 'Appointment',   emoji: '🏥' },
+  { id: 'reaction',    label: 'Reaction',      emoji: '⚠️' },
+  { id: 'mood',        label: 'Mood / Energy', emoji: '🧠' },
+  { id: 'sleep',       label: 'Sleep',         emoji: '😴' },
+  { id: 'food',        label: 'Food / Drink',  emoji: '🍽️' },
+  { id: 'exercise',    label: 'Activity',      emoji: '🏃' },
+  { id: 'other',       label: 'Other',         emoji: '📝' },
+];
+
+let records = [];
+let selectedType = 'symptom';
+let selectedPain = null;
+let currentFilter = 'all';
+let customFields = {};
+let detailOpen = false;
+
+const STORAGE_KEY = 'nofnway_medical_records';
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+function init() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) records = JSON.parse(saved);
+  } catch(e) {}
+
+  buildTypeGrid();
+  buildPainScale();
+  setDefaultDatetime();
+  render();
+}
+
+function buildTypeGrid() {
+  const grid = document.getElementById('type-grid');
+  grid.innerHTML = EVENT_TYPES.map(t => `
+    <button
+      class="type-btn${t.id === selectedType ? ' active' : ''}"
+      data-type="${t.id}"
+      onclick="selectType('${t.id}')"
+    >
+      <span class="emoji">${t.emoji}</span>
+      ${t.label}
+    </button>
+  `).join('');
+}
+
+function buildPainScale() {
+  const scale = document.getElementById('pain-scale');
+  scale.innerHTML = Array.from({length: 10}, (_, i) => i + 1).map(n => `
+    <button class="pain-btn" data-val="${n}" onclick="selectPain(${n})">${n}</button>
+  `).join('');
+}
+
+function setDefaultDatetime() {
+  const now = new Date();
+  const local = new Date(now - now.getTimezoneOffset() * 60000)
+    .toISOString().slice(0, 16);
+  document.getElementById('detail-datetime').value = local;
+}
+
+// ─── INTERACTIONS ─────────────────────────────────────────────────────────────
+
+function selectType(id) {
+  selectedType = id;
+  document.querySelectorAll('.type-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.type === id);
+  });
+}
+
+function selectPain(val) {
+  selectedPain = selectedPain === val ? null : val;
+  document.querySelectorAll('.pain-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.val) === selectedPain);
+  });
+}
+
+function toggleDetail() {
+  detailOpen = !detailOpen;
+  document.getElementById('detail-form').classList.toggle('open', detailOpen);
+  const link = document.getElementById('expand-link');
+  link.innerHTML = `<span>${detailOpen ? '▲' : '▼'}</span> ${detailOpen ? 'Hide details' : 'Add more details'}`;
+}
+
+function addCustomField() {
+  const nameEl = document.getElementById('custom-field-name');
+  const valEl  = document.getElementById('custom-field-value');
+  const name   = nameEl.value.trim();
+  const val    = valEl.value.trim();
+  if (!name) return;
+
+  customFields[name] = val;
+  nameEl.value = '';
+  valEl.value  = '';
+  renderCustomFields();
+}
+
+function renderCustomFields() {
+  const container = document.getElementById('custom-fields-container');
+  const keys = Object.keys(customFields);
+  if (!keys.length) { container.innerHTML = ''; return; }
+
+  container.innerHTML = `
+    <label>Custom Fields</label>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+      ${keys.map(k => `
+        <div style="display:flex;align-items:center;gap:6px;background:var(--blue-pale);border:2px solid var(--blue);border-radius:6px;padding:5px 10px;">
+          <span style="font-weight:700;font-size:0.85rem;">${escHtml(k)}: ${escHtml(customFields[k])}</span>
+          <button onclick="removeCustomField('${escAttr(k)}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:1rem;line-height:1;padding:0;">✕</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function removeCustomField(key) {
+  delete customFields[key];
+  renderCustomFields();
+}
+
+// ─── LOG EVENT ───────────────────────────────────────────────────────────────
+
+function logEvent() {
+  const note     = document.getElementById('quick-note').value.trim();
+  const typeInfo = EVENT_TYPES.find(t => t.id === selectedType);
+  const dtVal    = document.getElementById('detail-datetime').value;
+  const timestamp = dtVal ? new Date(dtVal).toISOString() : new Date().toISOString();
+
+  const record = {
+    id:           Date.now().toString(36) + Math.random().toString(36).slice(2),
+    type:         selectedType,
+    typeLabel:    typeInfo.label,
+    typeEmoji:    typeInfo.emoji,
+    note,
+    timestamp,
+    pain:         selectedPain,
+    medication:   document.getElementById('detail-med').value.trim(),
+    duration:     document.getElementById('detail-duration').value.trim(),
+    bodyLocation: document.getElementById('detail-location').value.trim(),
+    trigger:      document.getElementById('detail-trigger').value.trim(),
+    detailNotes:  document.getElementById('detail-notes').value.trim(),
+    custom:       {...customFields},
+  };
+
+  records.unshift(record);
+  saveRecords();
+
+  // Reset form
+  document.getElementById('quick-note').value    = '';
+  document.getElementById('detail-med').value    = '';
+  document.getElementById('detail-duration').value = '';
+  document.getElementById('detail-location').value = '';
+  document.getElementById('detail-trigger').value  = '';
+  document.getElementById('detail-notes').value    = '';
+  customFields = {};
+  renderCustomFields();
+  selectedPain = null;
+  document.querySelectorAll('.pain-btn').forEach(b => b.classList.remove('active'));
+  setDefaultDatetime();
+
+  showToast(`${typeInfo.emoji} ${typeInfo.label} logged!`);
+  render();
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+
+function render() {
+  renderCount();
+  renderFilters();
+  renderList();
+}
+
+function renderCount() {
+  const el = document.getElementById('records-count');
+  el.textContent = `${records.length} ${records.length === 1 ? 'entry' : 'entries'}`;
+}
+
+function renderFilters() {
+  const typesUsed = [...new Set(records.map(r => r.type))];
+  const pills = document.getElementById('filter-pills');
+  const existing = new Set([...pills.querySelectorAll('.filter-pill')].map(p => p.dataset.filter));
+
+  typesUsed.forEach(type => {
+    if (!existing.has(type)) {
+      const info = EVENT_TYPES.find(t => t.id === type);
+      const pill = document.createElement('button');
+      pill.className = 'filter-pill';
+      pill.dataset.filter = type;
+      pill.textContent = `${info.emoji} ${info.label}`;
+      pill.onclick = function() { setFilter(type, this); };
+      pills.appendChild(pill);
+    }
+  });
+}
+
+function setFilter(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.filter === filter);
+  });
+  renderList();
+}
+
+function renderList() {
+  const list = document.getElementById('records-list');
+  const filtered = currentFilter === 'all'
+    ? records
+    : records.filter(r => r.type === currentFilter);
+
+  if (!filtered.length) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="big-emoji">${currentFilter === 'all' ? '📋' : (EVENT_TYPES.find(t => t.id === currentFilter) || {}).emoji || '📋'}</div>
+        <h3>${currentFilter === 'all' ? 'No entries yet' : 'None of this type yet'}</h3>
+        <p>${currentFilter === 'all' ? 'Pick a type above and hit LOG IT — you can add details anytime.' : 'Switch back to All or log a new entry.'}</p>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => buildRecordCard(r)).join('');
+}
+
+function buildRecordCard(r) {
+  const dt      = new Date(r.timestamp);
+  const dateStr = dt.toLocaleDateString('en-CA');
+  const timeStr = dt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+
+  const details = [];
+  if (r.pain)         details.push({label: 'Pain',       val: `${r.pain}/10`});
+  if (r.medication)   details.push({label: 'Medication', val: r.medication});
+  if (r.duration)     details.push({label: 'Duration',   val: r.duration});
+  if (r.bodyLocation) details.push({label: 'Location',   val: r.bodyLocation});
+  if (r.trigger)      details.push({label: 'Trigger',    val: r.trigger});
+  if (r.detailNotes)  details.push({label: 'Notes',      val: r.detailNotes});
+  if (r.custom) {
+    Object.entries(r.custom).forEach(([k, v]) => details.push({label: k, val: v}));
+  }
+
+  const detailsHtml = details.length ? `
+    <div class="record-details">
+      ${details.map(d => `
+        <div class="detail-chip">
+          <span class="chip-label">${escHtml(d.label)}</span>
+          ${escHtml(d.val)}
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  return `
+    <div class="record-card" id="card-${r.id}">
+      <div class="record-actions">
+        <button class="icon-btn" title="Edit" onclick="editRecord('${r.id}')">✏️</button>
+        <button class="icon-btn delete" title="Delete" onclick="deleteRecord('${r.id}')">🗑️</button>
+      </div>
+      <div class="record-top">
+        <div class="record-type-badge">${r.typeEmoji} ${escHtml(r.typeLabel)}</div>
+        <div class="record-note">${r.note ? escHtml(r.note) : '<em style="color:#999;font-weight:400">No note</em>'}</div>
+      </div>
+      <div class="record-meta">
+        <span>📅 ${dateStr}</span>
+        <span>🕐 ${timeStr}</span>
+        ${r.pain ? `<span>💢 Pain: ${r.pain}/10</span>` : ''}
+      </div>
+      ${detailsHtml}
+    </div>
+  `;
+}
+
+// ─── EDIT / DELETE ────────────────────────────────────────────────────────────
+
+function deleteRecord(id) {
+  if (!confirm('Delete this entry?')) return;
+  records = records.filter(r => r.id !== id);
+  saveRecords();
+  render();
+  showToast('Entry deleted.');
+}
+
+function editRecord(id) {
+  const r = records.find(rec => rec.id === id);
+  if (!r) return;
+
+  selectType(r.type);
+  buildTypeGrid();
+
+  document.getElementById('quick-note').value = r.note || '';
+
+  if (!detailOpen) toggleDetail();
+
+  const d   = new Date(r.timestamp);
+  const pad = n => String(n).padStart(2, '0');
+  document.getElementById('detail-datetime').value =
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  document.getElementById('detail-med').value      = r.medication   || '';
+  document.getElementById('detail-duration').value = r.duration     || '';
+  document.getElementById('detail-location').value = r.bodyLocation || '';
+  document.getElementById('detail-trigger').value  = r.trigger      || '';
+  document.getElementById('detail-notes').value    = r.detailNotes  || '';
+
+  selectedPain = r.pain || null;
+  document.querySelectorAll('.pain-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.val) === selectedPain);
+  });
+
+  customFields = {...(r.custom || {})};
+  renderCustomFields();
+
+  // Remove original so re-logging replaces it
+  records = records.filter(rec => rec.id !== id);
+  saveRecords();
+  render();
+
+  document.getElementById('quick-note').focus();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  showToast('Entry loaded for editing — hit LOG IT when done.');
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+
+function saveRecords() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch(e) {}
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+
+function openExport() {
+  if (!records.length) { showToast('Nothing to export yet.'); return; }
+  document.getElementById('export-modal').classList.add('open');
+}
+
+function closeExport() {
+  document.getElementById('export-modal').classList.remove('open');
+}
+
+function exportAs(format) {
+  closeExport();
+
+  if (format === 'print') {
+    window.print();
+    return;
+  }
+
+  if (format === 'text') {
+    const text = records.map(r => {
+      const dt = new Date(r.timestamp);
+      const lines = [
+        `[${r.typeLabel}] — ${dt.toLocaleDateString()} ${dt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`,
+      ];
+      if (r.note)         lines.push(`  Note: ${r.note}`);
+      if (r.pain)         lines.push(`  Pain: ${r.pain}/10`);
+      if (r.medication)   lines.push(`  Medication: ${r.medication}`);
+      if (r.duration)     lines.push(`  Duration: ${r.duration}`);
+      if (r.bodyLocation) lines.push(`  Location: ${r.bodyLocation}`);
+      if (r.trigger)      lines.push(`  Trigger: ${r.trigger}`);
+      if (r.detailNotes)  lines.push(`  Notes: ${r.detailNotes}`);
+      if (r.custom) Object.entries(r.custom).forEach(([k, v]) => lines.push(`  ${k}: ${v}`));
+      return lines.join('\n');
+    }).join('\n\n');
+
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('📋 Copied to clipboard!');
+    }).catch(() => {
+      download('medical-log.txt', text, 'text/plain');
+    });
+    return;
+  }
+
+  if (format === 'csv') {
+    const allCustomKeys = new Set();
+    records.forEach(r => { if (r.custom) Object.keys(r.custom).forEach(k => allCustomKeys.add(k)); });
+    const customKeys = [...allCustomKeys];
+
+    const headers = ['Date', 'Time', 'Type', 'Note', 'Pain (1-10)', 'Medication', 'Duration', 'Body Location', 'Trigger', 'Detail Notes', ...customKeys];
+    const rows = records.map(r => {
+      const dt   = new Date(r.timestamp);
+      const base = [
+        dt.toLocaleDateString('en-CA'),
+        dt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}),
+        r.typeLabel,
+        r.note         || '',
+        r.pain         || '',
+        r.medication   || '',
+        r.duration     || '',
+        r.bodyLocation || '',
+        r.trigger      || '',
+        r.detailNotes  || '',
+      ];
+      customKeys.forEach(k => base.push((r.custom && r.custom[k]) || ''));
+      return base.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+    });
+
+    download('medical-log.csv', [headers.join(','), ...rows].join('\n'), 'text/csv');
+    showToast('📊 CSV downloaded!');
+    return;
+  }
+
+  if (format === 'json') {
+    download('medical-log-backup.json', JSON.stringify(records, null, 2), 'application/json');
+    showToast('💾 Backup downloaded!');
+  }
+}
+
+function download(filename, content, mime) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type: mime}));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function escAttr(s) {
+  return String(s || '').replace(/'/g, "\\'");
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// Close export modal on overlay click
+document.getElementById('export-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeExport();
+});
+
+// ─── GO ───────────────────────────────────────────────────────────────────────
+init();
+</script>
+<script src="privacy.js"></script>
+</body>
+</html>
