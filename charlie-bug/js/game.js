@@ -36,6 +36,7 @@ let state = {
 
 const CHARLIE_SPEED = 2.8;
 const COLLECT_RADIUS = 32;
+let deviceHasTouch = false;
 
 // ── Input ─────────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ function setupJoystick() {
   if (!base) return;
 
   function onStart(e) {
+    if (e.changedTouches) e.preventDefault();
     const t = e.changedTouches ? e.changedTouches[0] : e;
     joystick.active = true;
     joystick.id = t.identifier !== undefined ? t.identifier : 'mouse';
@@ -68,6 +70,7 @@ function setupJoystick() {
   }
   function onMove(e) {
     if (!joystick.active) return;
+    if (e.changedTouches) e.preventDefault();
     const t = e.changedTouches
       ? [...e.changedTouches].find(t2 => t2.identifier === joystick.id) || e.changedTouches[0]
       : e;
@@ -88,7 +91,6 @@ function setupJoystick() {
     joystick.dy = cy / JOY_RADIUS;
     const thumb = document.getElementById('joy-thumb');
     if (thumb) thumb.style.transform = `translate(calc(-50% + ${cx}px), calc(-50% + ${cy}px))`;
-    e && e.preventDefault && e.preventDefault();
   }
 
   base.addEventListener('touchstart', onStart, { passive: false });
@@ -346,9 +348,11 @@ function startDay() {
     state.collectCount = 0;
   }
 
-  updateTitleTheme();
-  updateHUD();
+  // Snap camera to Charlie before scatter begins
+  state.camera.x = Math.max(0, Math.min(WORLD_W - CANVAS_W, state.charlie.x - CANVAS_W / 2));
+  state.camera.y = Math.max(0, Math.min(WORLD_H - CANVAS_H, state.charlie.y - CANVAS_H / 2));
 
+  updateHUD();
   setScreen('scatter');
   state.scatterFrame = 0;
   spawnWindParticles();
@@ -372,7 +376,10 @@ function playAgain() {
   state.particles = [];
   state.floatTexts = [];
 
-  updateTitleTheme();
+  // Snap camera to Charlie before scatter begins
+  state.camera.x = Math.max(0, Math.min(WORLD_W - CANVAS_W, state.charlie.x - CANVAS_W / 2));
+  state.camera.y = Math.max(0, Math.min(WORLD_H - CANVAS_H, state.charlie.y - CANVAS_H / 2));
+
   updateHUD();
   setScreen('scatter');
   state.scatterFrame = 0;
@@ -694,9 +701,8 @@ function showEl(id, show, displayVal) {
 
 function setScreen(s) {
   state.screen = s;
-  showEl('title-overlay',    s === 'title',    'flex');
   showEl('celebrate-overlay', s === 'celebrate', 'flex');
-  showEl('joy-container',    s === 'game' || s === 'scatter');
+  showEl('joy-container',    deviceHasTouch && (s === 'game' || s === 'scatter'));
 
   if (s === 'celebrate') {
     const themeEl = document.getElementById('celebrate-theme');
@@ -734,24 +740,18 @@ function updateHUD() {
 function init() {
   setupJoystick();
 
-  // Show touch controls only for touch/coarse pointer devices
-  const hasTouch = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
-  const joy = document.getElementById('joy-container');
-  if (joy && !hasTouch) joy.style.display = 'none';
+  deviceHasTouch = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 
   state.screen = 'title';
-  showEl('title-overlay', true, 'flex');
   showEl('celebrate-overlay', false);
 
-  // If there's a saved day, show its theme on title
+  // Pre-load saved theme so the canvas title screen can render it immediately
   const saved = localStorage.getItem('charlie-bug-day');
   if (saved) {
     try {
       const data = JSON.parse(saved);
       state.theme = THEMES[data.themeIndex];
       state.themeIndex = data.themeIndex;
-      updateTitleTheme();
-      showEl('title-resume', true);
     } catch(e) { localStorage.removeItem('charlie-bug-day'); }
   }
 
