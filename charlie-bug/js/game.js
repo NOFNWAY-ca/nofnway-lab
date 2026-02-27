@@ -287,6 +287,11 @@ function loadOrPickTheme() {
         if (item.collected) applyCosmetic(item, false);
       });
       state.collectCount = state.items.filter(i => i.collected).length;
+      if (state.collectCount >= state.items.length) {
+        // Day was already completed — clear it and start fresh
+        localStorage.removeItem('charlie-bug-day');
+        return false;
+      }
       return true; // resume
     } catch(e) {
       localStorage.removeItem('charlie-bug-day');
@@ -745,13 +750,19 @@ function init() {
   state.screen = 'title';
   showEl('celebrate-overlay', false);
 
-  // Pre-load saved theme so the canvas title screen can render it immediately
+  // Pre-load saved theme so the canvas title screen can render it immediately.
+  // If the day was already completed, clear it — don't resume a finished game.
   const saved = localStorage.getItem('charlie-bug-day');
   if (saved) {
     try {
       const data = JSON.parse(saved);
-      state.theme = THEMES[data.themeIndex];
-      state.themeIndex = data.themeIndex;
+      const allDone = data.collected && data.collected.every(Boolean);
+      if (allDone) {
+        localStorage.removeItem('charlie-bug-day');
+      } else {
+        state.theme = THEMES[data.themeIndex];
+        state.themeIndex = data.themeIndex;
+      }
     } catch(e) { localStorage.removeItem('charlie-bug-day'); }
   }
 
