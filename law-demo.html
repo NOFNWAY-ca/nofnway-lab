@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G.E.R.R.Y. — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Laila:wght@400;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── VARIABLES ── */
+:root {
+  --navy:       #182059;
+  --gold:       #B8960C;
+  --gold-dark:  #9a7c08;
+  --white:      #ffffff;
+  --off-white:  #f5f6fa;
+  --border:     #dde1ee;
+  --text:       #1a1a2e;
+  --muted:      #6b7280;
+  --danger:     #dc2626;
+  --danger-bg:  #fee2e2;
+  --warn:       #d97706;
+  --warn-bg:    #fef3c7;
+  --success:    #166534;
+  --success-bg: #dcfce7;
+}
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--off-white);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+h1, h2, h3, h4 { font-family: 'Laila', serif; }
+button { cursor: pointer; font-family: 'DM Sans', sans-serif; }
+input, select, textarea { font-family: 'DM Sans', sans-serif; }
+
+/* ── PRINT AREA (hidden on screen) ── */
+#print-area { display: none; }
+
+/* ── HEADER ── */
+header {
+  background: var(--navy);
+  padding: .75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-shrink: 0;
+}
+.app-name {
+  font-family: 'Laila', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: .02em;
+}
+.demo-badge {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  background: var(--gold);
+  color: var(--white);
+  padding: .22rem .55rem;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+.header-spacer { flex: 1; }
+.btn-header-clear {
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.8);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 5px;
+  padding: .35rem .8rem;
+  font-size: .82rem;
+  font-weight: 600;
+}
+.btn-header-clear:hover { background: rgba(255,255,255,.18); color: #fff; }
+
+/* ── NAV ── */
+nav {
+  background: var(--white);
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.nav-btn {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: .72rem 1rem;
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  margin-bottom: -2px;
+  transition: color .12s;
+}
+.nav-btn:hover { color: var(--navy); }
+.nav-btn.active {
+  color: var(--navy);
+  border-bottom-color: var(--gold);
+  font-weight: 700;
+}
+
+/* ── MAIN ── */
+main {
+  flex: 1;
+  padding: 1.25rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── CARD ── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+.card-title { font-size: 1.05rem; color: var(--navy); }
+
+/* ── BUTTONS ── */
+.btn {
+  border: none;
+  border-radius: 5px;
+  padding: .45rem .9rem;
+  font-size: .88rem;
+  font-weight: 600;
+  transition: background .12s;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+.btn-primary { background: var(--navy); color: var(--white); }
+.btn-primary:hover { background: #1e2d6b; }
+.btn-danger { background: var(--danger-bg); color: var(--danger); }
+.btn-danger:hover { background: #fecaca; }
+.btn-ghost {
+  background: var(--off-white);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: #e9ebf3; }
+.btn-sm { padding: .3rem .65rem; font-size: .8rem; }
+
+/* ── FORMS ── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+  margin-bottom: .75rem;
+}
+.form-row.single { grid-template-columns: 1fr; }
+.form-group { display: flex; flex-direction: column; gap: .3rem; }
+.fl { font-size: .82rem; font-weight: 600; color: var(--muted); }
+input[type=text], input[type=number], input[type=date],
+input[type=time], select, textarea {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: .45rem .65rem;
+  font-size: .9rem;
+  width: 100%;
+  color: var(--text);
+  background: var(--white);
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 2px rgba(24,32,89,.1);
+}
+textarea { resize: vertical; min-height: 80px; }
+
+/* ── PILLS / FILTER ── */
+.pill-wrap { display: flex; gap: .4rem; flex-wrap: wrap; }
+.pill {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: .25rem .75rem;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--white);
+  color: var(--muted);
+  line-height: 1.4;
+}
+.pill:hover { border-color: var(--navy); color: var(--navy); }
+.pill.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+
+/* ── MODALS ── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--white);
+  border-radius: 10px;
+  padding: 1.5rem;
+  max-width: 580px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.modal-title { font-size: 1.15rem; color: var(--navy); }
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--muted);
+  line-height: 1;
+  padding: .1rem .3rem;
+}
+.modal-close:hover { color: var(--text); }
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ── BANNERS ── */
+.banner {
+  border-radius: 6px;
+  padding: .6rem .9rem;
+  font-size: .88rem;
+  font-weight: 600;
+  margin-bottom: .75rem;
+}
+.banner-warn  { background: var(--warn-bg);    color: #92400e; border-left: 4px solid var(--warn); }
+.banner-danger { background: var(--danger-bg); color: #991b1b; border-left: 4px solid var(--danger); }
+.banner-ok    { background: var(--success-bg); color: #14532d; border-left: 4px solid #16a34a; }
+
+/* ── TOOLBAR ── */
+.tab-toolbar {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.toolbar-right {
+  margin-left: auto;
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+}
+
+/* ── TAB 1: LIMITATION CALC ── */
+.calc-result {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1.25rem;
+}
+.calc-deadline-label {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: .2rem;
+}
+.calc-deadline-date {
+  font-family: 'Laila', serif;
+  font-size: 2.1rem;
+  color: var(--navy);
+  line-height: 1.15;
+  margin-bottom: .25rem;
+}
+.calc-deadline-date.expired { color: var(--danger); }
+.calc-days { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.calc-days.expired { color: var(--danger); }
+.calc-days.warn    { color: var(--warn); }
+.calc-rule {
+  font-size: .85rem;
+  color: var(--muted);
+  margin-top: .75rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+  line-height: 1.55;
+}
+.disclaimer {
+  font-size: .78rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 1.25rem;
+  line-height: 1.55;
+}
+
+/* ── TAB 2: COURT DATES ── */
+.dates-list { display: flex; flex-direction: column; gap: .5rem; }
+.date-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .85rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.date-item.overdue { border-left: 4px solid var(--danger); }
+.date-item.is-done { opacity: .52; }
+.di-date-block { text-align: center; min-width: 52px; flex-shrink: 0; }
+.di-month {
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.di-day {
+  font-family: 'Laila', serif;
+  font-size: 1.8rem;
+  color: var(--navy);
+  line-height: 1;
+}
+.date-item.overdue .di-day { color: var(--danger); }
+.di-year { font-size: .68rem; color: var(--muted); }
+.di-divider { width: 1px; background: var(--border); align-self: stretch; flex-shrink: 0; }
+.di-body { flex: 1; min-width: 0; }
+.di-matter { font-weight: 700; color: var(--navy); font-size: .95rem; }
+.di-matter.done-strike { text-decoration: line-through; }
+.di-sub { font-size: .8rem; color: var(--muted); margin-top: .1rem; }
+.di-location { font-size: .82rem; color: var(--text); margin-top: .2rem; }
+.di-notes { font-size: .78rem; color: var(--muted); font-style: italic; margin-top: .2rem; }
+.di-tags { display: flex; gap: .35rem; margin-top: .35rem; flex-wrap: wrap; }
+.tag {
+  display: inline-block;
+  font-size: .68rem;
+  font-weight: 700;
+  padding: .12rem .4rem;
+  border-radius: 3px;
+}
+.tag-overdue { background: var(--danger-bg); color: var(--danger); }
+.tag-done    { background: var(--success-bg); color: var(--success); }
+.di-actions { display: flex; gap: .35rem; align-items: flex-start; flex-shrink: 0; }
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  padding: 3rem 1rem;
+  font-size: .92rem;
+}
+
+/* ── TAB 3: FEE ESTIMATE ── */
+.billing-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  width: fit-content;
+}
+.billing-toggle button {
+  padding: .45rem 1.2rem;
+  border: none;
+  background: var(--off-white);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: .88rem;
+}
+.billing-toggle button.active { background: var(--navy); color: var(--white); }
+.disb-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
+.disb-row input[type=text]   { flex: 1; }
+.disb-row input[type=number] { width: 100px; flex-shrink: 0; }
+.estimate-panel {
+  background: var(--navy);
+  color: var(--white);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-top: 1.25rem;
+}
+.est-heading {
+  font-family: 'Laila', serif;
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  opacity: .55;
+  margin-bottom: .75rem;
+}
+.est-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: .3rem 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  font-size: .9rem;
+}
+.est-row.sub { font-size: .82rem; opacity: .7; padding-left: .75rem; }
+.est-row.grand {
+  font-family: 'Laila', serif;
+  font-size: 1.25rem;
+  border-top: 2px solid var(--gold);
+  border-bottom: none;
+  padding-top: .5rem;
+  color: var(--gold);
+  font-weight: 700;
+  margin-top: .15rem;
+}
+.est-label { opacity: .8; }
+.est-val   { font-weight: 700; white-space: nowrap; }
+.est-actions { margin-top: 1rem; display: flex; justify-content: flex-end; }
+/* Toggle switch */
+.tax-wrap { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; }
+.switch { position: relative; display: inline-block; width: 38px; height: 21px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  border-radius: 21px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.slider::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  width: 17px;
+  height: 17px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.switch input:checked + .slider { background: var(--navy); }
+.switch input:checked + .slider::before { transform: translateX(17px); }
+.switch-label { font-size: .88rem; font-weight: 600; color: var(--text); }
+
+/* ── TAB 4: UNDERTAKINGS ── */
+.ut-group { margin-bottom: 1.5rem; }
+.ut-group-title {
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: .35rem;
+  margin-bottom: .5rem;
+}
+.ut-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .85rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: .4rem;
+}
+.ut-item.fulfilled { opacity: .55; }
+.ut-item.waived    { opacity: .45; border-style: dashed; }
+.ut-flag {
+  font-size: .68rem;
+  font-weight: 700;
+  padding: .15rem .4rem;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: .15rem;
+}
+.ut-flag.amber { background: var(--warn-bg);   color: #92400e; }
+.ut-flag.red   { background: var(--danger-bg); color: var(--danger); }
+.ut-body { flex: 1; min-width: 0; }
+.ut-desc { font-weight: 600; color: var(--text); font-size: .93rem; line-height: 1.4; }
+.ut-meta { font-size: .8rem; color: var(--muted); margin-top: .2rem; }
+.ut-due { font-size: .78rem; margin-top: .2rem; }
+.ut-due.amber { color: #92400e; font-weight: 600; }
+.ut-due.red   { color: var(--danger); font-weight: 600; }
+.ut-notes { font-size: .78rem; color: var(--muted); font-style: italic; margin-top: .2rem; }
+.ut-actions { display: flex; gap: .35rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.dir-badge {
+  display: inline-block;
+  font-size: .68rem;
+  font-weight: 700;
+  padding: .1rem .38rem;
+  border-radius: 3px;
+}
+.dir-given    { background: #dbeafe; color: #1e40af; }
+.dir-received { background: #f3e8ff; color: #6b21a8; }
+
+/* ── PRINT STYLES (Tab 2 only) ── */
+@media print {
+  body > header,
+  body > nav,
+  body > main,
+  .overlay { display: none !important; }
+
+  #print-area {
+    display: block !important;
+    font-family: Georgia, 'DM Sans', serif;
+    font-size: 11pt;
+    color: #000;
+    padding: 1cm;
+  }
+  .print-hdr {
+    border-bottom: 2pt solid #000;
+    padding-bottom: .5rem;
+    margin-bottom: 1.5rem;
+  }
+  .print-hdr h1 {
+    font-size: 16pt;
+    margin-bottom: .2rem;
+    font-family: Georgia, serif;
+  }
+  .print-hdr p { font-size: 9pt; color: #555; }
+  .print-week { margin-bottom: 1.25rem; page-break-inside: avoid; }
+  .print-week-label {
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #555;
+    border-bottom: 1pt solid #aaa;
+    padding-bottom: .25rem;
+    margin-bottom: .5rem;
+  }
+  .print-entry {
+    padding: .3rem 0;
+    border-bottom: 1pt solid #ddd;
+  }
+  .print-entry:last-child { border-bottom: none; }
+  .print-entry-matter {
+    display: block;
+    font-weight: 700;
+    font-size: 11pt;
+  }
+  .print-entry-detail {
+    display: block;
+    font-size: 9.5pt;
+    color: #333;
+    margin-top: .1rem;
+  }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .form-row { grid-template-columns: 1fr; }
+  .date-item { flex-wrap: wrap; }
+  .di-date-block { display: flex; gap: .5rem; align-items: baseline; min-width: auto; }
+  .di-day { font-size: 1.1rem !important; }
+  .di-divider { display: none; }
+  .di-actions { width: 100%; justify-content: flex-start; }
+  .tab-toolbar { flex-direction: column; align-items: flex-start; }
+  .toolbar-right { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- Print area (shown only during print) -->
+<div id="print-area"></div>
+
+<!-- ── HEADER ── -->
+<header>
+  <span class="app-name">G.E.R.R.Y.</span>
+  <span class="demo-badge">Demo</span>
+  <span class="header-spacer"></span>
+  <button class="btn-header-clear" onclick="clearAllData()">Clear All Data</button>
+</header>
+
+<!-- ── NAV ── -->
+<nav>
+  <button class="nav-btn active" id="nav-calc"         onclick="showTab('calc')">Limitation Calculator</button>
+  <button class="nav-btn"        id="nav-dates"        onclick="showTab('dates')">Court Dates &amp; Deadlines</button>
+  <button class="nav-btn"        id="nav-fees"         onclick="showTab('fees')">Fee Estimate</button>
+  <button class="nav-btn"        id="nav-undertakings" onclick="showTab('undertakings')">Undertakings</button>
+</nav>
+
+<main>
+
+<!-- ═══ TAB 1: LIMITATION CALCULATOR ═══ -->
+<div id="tab-calc" class="panel active">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Limitation Period Calculator</h2>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="fl" for="calc-province">Province / Territory</label>
+        <select id="calc-province">
+          <option value="">— select —</option>
+          <option value="AB">Alberta (AB)</option>
+          <option value="BC">British Columbia (BC)</option>
+          <option value="MB">Manitoba (MB)</option>
+          <option value="NB">New Brunswick (NB)</option>
+          <option value="NL">Newfoundland and Labrador (NL)</option>
+          <option value="NS">Nova Scotia (NS)</option>
+          <option value="NT">Northwest Territories (NT)</option>
+          <option value="NU">Nunavut (NU)</option>
+          <option value="ON">Ontario (ON)</option>
+          <option value="PE">Prince Edward Island (PE)</option>
+          <option value="QC">Quebec (QC)</option>
+          <option value="SK">Saskatchewan (SK)</option>
+          <option value="YT">Yukon (YT)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="fl" for="calc-matter">Matter Type</label>
+        <select id="calc-matter">
+          <option value="">— select —</option>
+          <option value="general">General Civil</option>
+          <option value="employment">Employment Law</option>
+          <option value="realproperty">Real Property</option>
+          <option value="rental">Rental / Tenancy</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="fl" for="calc-event-date">Triggering Event Date</label>
+        <input type="date" id="calc-event-date">
+      </div>
+      <div class="form-group">
+        <label class="fl" for="calc-discovery-date">Date Client Became Aware <em style="font-weight:400">(if different)</em></label>
+        <input type="date" id="calc-discovery-date">
+      </div>
+    </div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="calcLimitation()">Calculate</button>
+      <button class="btn btn-ghost"   onclick="clearCalc()">Clear</button>
+    </div>
+    <div id="calc-result" class="calc-result" style="display:none"></div>
+    <p class="disclaimer">This tool is for internal reference only and does not constitute legal advice. Always verify limitation periods against the current text of the applicable statute before relying on any result.</p>
+  </div>
+</div>
+
+<!-- ═══ TAB 2: COURT DATES ═══ -->
+<div id="tab-dates" class="panel">
+  <div class="tab-toolbar">
+    <div class="pill-wrap" id="dates-filter">
+      <button class="pill active" data-filter="all"      onclick="setDatesFilter('all')">All</button>
+      <button class="pill"        data-filter="upcoming" onclick="setDatesFilter('upcoming')">Upcoming</button>
+      <button class="pill"        data-filter="overdue"  onclick="setDatesFilter('overdue')">Overdue</button>
+      <button class="pill"        data-filter="done"     onclick="setDatesFilter('done')">Done</button>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-ghost btn-sm"   onclick="printDates()">Print</button>
+      <button class="btn btn-primary btn-sm" onclick="openDateModal()">+ Add Entry</button>
+    </div>
+  </div>
+  <div id="dates-list" class="dates-list"></div>
+</div>
+
+<!-- ═══ TAB 3: FEE ESTIMATE ═══ -->
+<div id="tab-fees" class="panel">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Yield (Fee Estimate) Builder</h2>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="fl" for="fee-matter">Matter Type</label>
+        <select id="fee-matter">
+          <option value="">— select —</option>
+          <option value="general">General Civil</option>
+          <option value="employment">Employment Law</option>
+          <option value="realproperty">Real Property</option>
+          <option value="rental">Rental / Tenancy</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="fl" for="fee-province">Province / Territory <em style="font-weight:400">(for tax)</em></label>
+        <select id="fee-province" onchange="updateTaxLabel()">
+          <option value="AB">Alberta — GST 5%</option>
+          <option value="BC">British Columbia — GST 5%</option>
+          <option value="MB" selected>Manitoba — GST 5%</option>
+          <option value="NB">New Brunswick — HST 15%</option>
+          <option value="NL">Newfoundland — HST 15%</option>
+          <option value="NS">Nova Scotia — HST 15%</option>
+          <option value="NT">Northwest Territories — GST 5%</option>
+          <option value="NU">Nunavut — GST 5%</option>
+          <option value="ON">Ontario — HST 13%</option>
+          <option value="PE">Prince Edward Island — HST 15%</option>
+          <option value="QC">Quebec — GST + QST 14.975%</option>
+          <option value="SK">Saskatchewan — GST 5%</option>
+          <option value="YT">Yukon — GST 5%</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row single">
+      <div class="form-group">
+        <label class="fl" for="fee-scope">Scope Description</label>
+        <textarea id="fee-scope" placeholder="e.g. Draft purchase agreement, review title search, prepare transfer documents, attend closing"></textarea>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:.75rem">
+      <label class="fl" style="margin-bottom:.4rem">Billing Method</label>
+      <div class="billing-toggle">
+        <button id="billing-hourly" class="active" onclick="setBilling('hourly')">Hourly</button>
+        <button id="billing-flat"                  onclick="setBilling('flat')">Flat Fee</button>
+      </div>
+    </div>
+
+    <div id="hourly-fields" class="form-row">
+      <div class="form-group">
+        <label class="fl" for="fee-hours">Estimated Hours</label>
+        <input type="number" id="fee-hours" min="0" step="0.5" placeholder="0.0">
+      </div>
+      <div class="form-group">
+        <label class="fl" for="fee-rate">Hourly Rate ($)</label>
+        <input type="number" id="fee-rate" min="0" step="25" value="350">
+      </div>
+    </div>
+    <div id="flat-fields" class="form-row single" style="display:none">
+      <div class="form-group">
+        <label class="fl" for="fee-flat">Flat Fee Amount ($)</label>
+        <input type="number" id="fee-flat" min="0" step="50" placeholder="0.00">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:.75rem">
+      <label class="fl" style="margin-bottom:.4rem">Disbursements</label>
+      <div id="disb-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addDisb()" style="margin-top:.35rem">+ Add Disbursement</button>
+    </div>
+
+    <div class="tax-wrap">
+      <label class="switch">
+        <input type="checkbox" id="tax-toggle" checked>
+        <span class="slider"></span>
+      </label>
+      <span class="switch-label" id="tax-label">Apply GST (5%)</span>
+    </div>
+
+    <button class="btn btn-primary" onclick="buildEstimate()">Generate Estimate</button>
+
+    <div id="estimate-panel" class="estimate-panel" style="display:none">
+      <div class="est-heading">Yield (Fee Estimate)</div>
+      <div id="est-rows"></div>
+      <div class="est-actions">
+        <button class="btn btn-ghost btn-sm"
+          style="color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.08)"
+          onclick="copyEstimate()">Copy to Clipboard</button>
+      </div>
+    </div>
+
+    <p class="disclaimer">This tool is for internal reference only and does not constitute legal advice or a retainer agreement. Verify all estimates independently before providing to a client.</p>
+  </div>
+</div>
+
+<!-- ═══ TAB 4: UNDERTAKINGS ═══ -->
+<div id="tab-undertakings" class="panel">
+  <div class="tab-toolbar">
+    <h2 style="font-family:'Laila',serif;color:var(--navy);font-size:1.1rem;margin:0">Undertaking Tracker</h2>
+    <div class="toolbar-right">
+      <button class="btn btn-primary btn-sm" onclick="openUndertakingModal()">+ Add Undertaking</button>
+    </div>
+  </div>
+  <div id="undertakings-list"></div>
+</div>
+
+</main>
+
+<!-- ══ MODAL: COURT DATE ══ -->
+<div class="overlay" id="modal-courtdate">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="courtdate-modal-title">Add Court Date</h3>
+      <button class="modal-close" onclick="closeModal('modal-courtdate')">&times;</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="fl">Matter Name</label>
+        <input type="text" id="cd-matter" placeholder="e.g. Kowalski v. Tremblay">
+      </div>
+      <div class="form-group">
+        <label class="fl">Matter Type</label>
+        <select id="cd-mattertype">
+          <option value="general">General Civil</option>
+          <option value="employment">Employment Law</option>
+          <option value="realproperty">Real Property</option>
+          <option value="rental">Rental / Tenancy</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="fl">Event Type</label>
+        <select id="cd-eventtype">
+          <option>Hearing</option>
+          <option>Trial</option>
+          <option>Mediation</option>
+          <option>Discovery</option>
+          <option>Filing Deadline</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="fl">Date</label>
+        <input type="date" id="cd-date">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="fl">Time <em style="font-weight:400">(optional)</em></label>
+        <input type="time" id="cd-time">
+      </div>
+      <div class="form-group">
+        <label class="fl">Location / Court</label>
+        <input type="text" id="cd-location" placeholder="e.g. Court of King's Bench, Winnipeg">
+      </div>
+    </div>
+    <div class="form-row single">
+      <div class="form-group">
+        <label class="fl">Notes <em style="font-weight:400">(optional)</em></label>
+        <textarea id="cd-notes" style="min-height:60px" placeholder="Additional context"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost"   onclick="closeModal('modal-courtdate')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCourtDate()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: UNDERTAKING ══ -->
+<div class="overlay" id="modal-undertaking">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="undertaking-modal-title">Add Undertaking</h3>
+      <button class="modal-close" onclick="closeModal('modal-undertaking')">&times;</button>
+    </div>
+    <div class="form-row single">
+      <div class="form-group">
+        <label class="fl">Description</label>
+        <textarea id="ut-description" placeholder="e.g. Provide executed transfer documents for Lot 42"></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="fl">Direction</label>
+        <select id="ut-direction">
+          <option value="given">Given (by us)</option>
+          <option value="received">Received (from counterparty)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="fl">Counterparty</label>
+        <input type="text" id="ut-counterparty" placeholder="e.g. J. Okafor, Okafor & Blaine LLP">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="fl">Date Given</label>
+        <input type="date" id="ut-date-given">
+      </div>
+      <div class="form-group">
+        <label class="fl">Due Date <em style="font-weight:400">(optional)</em></label>
+        <input type="date" id="ut-due">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="fl">Status</label>
+        <select id="ut-status">
+          <option value="outstanding">Outstanding</option>
+          <option value="fulfilled">Fulfilled</option>
+          <option value="waived">Waived</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="fl">Notes <em style="font-weight:400">(optional)</em></label>
+        <input type="text" id="ut-notes" placeholder="Optional notes">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost"   onclick="closeModal('modal-undertaking')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUndertaking()">Save Undertaking</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: CONFIRM ══ -->
+<div class="overlay" id="modal-confirm">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="confirm-title">Confirm</h3>
+      <button class="modal-close" onclick="closeModal('modal-confirm')">&times;</button>
+    </div>
+    <p id="confirm-msg" style="font-size:.95rem;line-height:1.5;color:var(--text)"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost"  onclick="closeModal('modal-confirm')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+
+const MATTER_LABELS = {
+  general:      'General Civil',
+  employment:   'Employment Law',
+  realproperty: 'Real Property',
+  rental:       'Rental / Tenancy',
+};
+
+const LIMITS = {
+  AB: {
+    general:      { years: 2,  note: 'Alberta Limitations Act, RSA 2000 c L-12 — 2-year discoverability period' },
+    contract:     { years: 2,  note: 'Alberta Limitations Act — 2-year period for contract claims' },
+    tort:         { years: 2,  note: 'Alberta Limitations Act — 2-year period for personal injury / tort' },
+    realproperty: { years: 10, note: 'Alberta Limitations Act — 10-year period for recovery of real property' },
+    employment:   { years: 2,  note: 'Alberta Limitations Act — 2-year period for employment claims' },
+    family:       { years: 2,  note: 'Alberta Limitations Act — 2-year period; family property claims under ALRTA may differ. Verify applicable statute.' },
+    defamation:   { years: 2,  note: 'Alberta Limitations Act — 2-year period for defamation claims' },
+    crown:        { years: 2,  note: 'Alberta Limitations Act & Crown Proceedings Act — 2-year limitation. Pre-action notice requirements to Crown should be verified.' },
+    rental:       { years: 2,  note: 'Alberta Limitations Act — 2-year period for tenancy-related civil claims. The Residential Tenancies Act provides separate dispute resolution (RTDRS) with different procedures.' },
+  },
+  BC: {
+    general:      { years: 2,  note: 'BC Limitation Act, SBC 2012 c 13 — 2-year basic limitation (15-year ultimate)' },
+    contract:     { years: 2,  note: 'BC Limitation Act — 2-year basic limitation for contract claims (15-year ultimate)' },
+    tort:         { years: 2,  note: 'BC Limitation Act — 2-year basic limitation for tort / personal injury (15-year ultimate)' },
+    realproperty: { years: 2,  note: 'BC Limitation Act — 2-year basic period (15-year ultimate). Land Title Act and Property Law Act impose additional limits on specific real property claims.' },
+    employment:   { years: 2,  note: 'BC Limitation Act — 2-year period for employment claims' },
+    family:       { years: 2,  note: 'BC Limitation Act — 2-year period; Family Law Act s.198 applies different timelines for some property orders after separation. Verify.' },
+    defamation:   { years: 2,  note: 'BC Limitation Act — 2-year period for defamation' },
+    crown:        { years: 2,  note: 'BC Limitation Act & Crown Proceeding Act — 2-year limitation; 2-month advance notice to Crown required (Crown Proceeding Act s.7)' },
+    rental:       { years: 2,  note: 'BC Limitation Act — 2-year period for tenancy-related civil claims. Most residential tenancy disputes are handled through the Residential Tenancy Branch under the Residential Tenancy Act.' },
+  },
+  MB: {
+    general:      { years: 2,  note: 'Manitoba Limitations of Actions Act, CCSM c L150 — general 2-year discoverability period' },
+    contract:     { years: 2,  note: 'Manitoba Limitations of Actions Act — 2-year period for contract claims' },
+    tort:         { years: 2,  note: 'Manitoba Limitations of Actions Act — 2-year period for tort / personal injury' },
+    realproperty: { years: 10, note: 'Manitoba Limitations of Actions Act — 10-year period for real property claims' },
+    employment:   { years: 2,  note: 'Manitoba Limitations of Actions Act — 2-year period for employment claims' },
+    family:       { years: 2,  note: 'Manitoba Limitations of Actions Act — 2-year period; family property claims under MFPA should be verified independently' },
+    defamation:   { years: 2,  note: 'Manitoba Limitations of Actions Act — 2-year period for defamation' },
+    crown:        { years: 2,  note: 'Manitoba Proceedings Against the Crown Act & Limitations of Actions Act — 2-year limitation; 3-month advance notice to Crown typically required' },
+    rental:       { years: 2,  note: 'Manitoba Limitations of Actions Act — 2-year period for tenancy-related civil claims. The Residential Tenancies Act provides separate dispute resolution procedures for landlord-tenant matters.' },
+  },
+  NB: {
+    general:      { years: 2,  note: 'New Brunswick Limitation of Actions Act, SNB 2009 c L-8.5 — 2-year basic limitation' },
+    contract:     { years: 2,  note: 'NB Limitation of Actions Act — 2-year period for contract claims' },
+    tort:         { years: 2,  note: 'NB Limitation of Actions Act — 2-year period for tort / personal injury' },
+    realproperty: { years: 10, note: 'NB Limitation of Actions Act — 10-year ultimate limitation for real property actions' },
+    employment:   { years: 2,  note: 'NB Limitation of Actions Act — 2-year period for employment claims' },
+    family:       { years: 2,  note: 'NB Limitation of Actions Act — 2-year period; Marital Property Act may apply to property-specific claims' },
+    defamation:   { years: 2,  note: 'NB Limitation of Actions Act — 2-year period for defamation' },
+    crown:        { years: 2,  note: 'NB Proceedings Against the Crown Act — 2-year limitation. Verify notice requirements.' },
+    rental:       { years: 2,  note: 'NB Limitation of Actions Act — 2-year period for tenancy-related civil claims. The Residential Tenancies Act provides separate dispute resolution procedures.' },
+  },
+  NL: {
+    general:      { years: 2,  note: 'Newfoundland and Labrador Limitations Act, SNL 1995 c L-16.1 — 2-year basic limitation' },
+    contract:     { years: 2,  note: 'NL Limitations Act — 2-year period for contract claims' },
+    tort:         { years: 2,  note: 'NL Limitations Act — 2-year period for tort / personal injury' },
+    realproperty: { years: 10, note: 'NL Limitations Act — 10-year limitation for real property recovery' },
+    employment:   { years: 2,  note: 'NL Limitations Act — 2-year period for employment claims' },
+    family:       { years: 2,  note: 'NL Limitations Act — 2-year period; verify applicable family law statutes' },
+    defamation:   { years: 2,  note: 'NL Limitations Act — 2-year period for defamation' },
+    crown:        { years: 2,  note: 'NL Limitations Act & Proceedings Against the Crown Act — 2-year limitation; advance notice may be required. Verify.' },
+    rental:       { years: 2,  note: 'NL Limitations Act — 2-year period for tenancy-related civil claims. The Residential Tenancies Act provides separate dispute resolution procedures.' },
+  },
+  NS: {
+    general:      { years: 2,  note: 'Nova Scotia Limitation of Actions Act, SNS 2014 c 35 — 2-year basic limitation' },
+    contract:     { years: 2,  note: 'NS Limitation of Actions Act — 2-year period for contract claims' },
+    tort:         { years: 2,  note: 'NS Limitation of Actions Act — 2-year period for tort / personal injury' },
+    realproperty: { years: 10, note: 'NS Limitation of Actions Act — 10-year ultimate limitation for real property claims' },
+    employment:   { years: 2,  note: 'NS Limitation of Actions Act — 2-year period for employment claims' },
+    family:       { years: 2,  note: 'NS Limitation of Actions Act — 2-year period; Matrimonial Property Act may affect property-specific orders' },
+    defamation:   { years: 2,  note: 'NS Limitation of Actions Act — 2-year period for defamation' },
+    crown:        { years: 2,  note: 'NS Limitation of Actions Act & Proceedings Against the Crown Act — 2-year limitation. Verify notice requirements.' },
+    rental:       { years: 2,  note: 'NS Limitation of Actions Act — 2-year period for tenancy-related civil claims. The Residential Tenancies Act provides separate dispute resolution procedures.' },
+  },
+  NT: {
+    general:      { years: 2,  note: 'NWT Limitation of Actions Act, SNWT 2011 c 13 — 2-year basic limitation' },
+    contract:     { years: 2,  note: 'NWT Limitation of Actions Act — 2-year period for contract claims' },
+    tort:         { years: 2,  note: 'NWT Limitation of Actions Act — 2-year period for tort / personal injury' },
+    realproperty: { years: 6,  note: 'NWT Limitation of Actions Act — 6-year period for real property claims' },
+    employment:   { years: 2,  note: 'NWT Limitation of Actions Act — 2-year period for employment claims' },
+    family:       { years: 2,  note: 'NWT Limitation of Actions Act — 2-year period; verify applicable family statutes' },
+    defamation:   { years: 2,  note: 'NWT Limitation of Actions Act — 2-year period for defamation' },
+    crown:        { years: 2,  note: 'NWT Limitation of Actions Act — 2-year limitation; verify Crown proceedings requirements' },
+    rental:       { years: 2,  note: 'NWT Limitation of Actions Act — 2-year period for tenancy-related civil claims. The Residential Tenancies Act provides separate dispute resolution procedures.' },
+  },
+  NU: {
+    general:      { years: 2,  note: 'Nunavut Limitation of Actions Act (derived from SNWT) — 2-year basic limitation' },
+    contract:     { years: 2,  note: 'NU Limitation of Actions Act — 2-year period for contract claims' },
+    tort:         { years: 2,  note: 'NU Limitation of Actions Act — 2-year period for tort / personal injury' },
+    realproperty: { years: 6,  note: 'NU Limitation of Actions Act — 6-year period for real property claims' },
+    employment:   { years: 2,  note: 'NU Limitation of Actions Act — 2-year period for employment claims' },
+    family:       { years: 2,  note: 'NU Limitation of Actions Act — 2-year period; verify applicable statutes' },
+    defamation:   { years: 2,  note: 'NU Limitation of Actions Act — 2-year period for defamation' },
+    crown:        { years: 2,  note: 'NU Limitation of Actions Act — 2-year limitation; verify Crown proceedings requirements' },
+    rental:       { years: 2,  note: 'NU Limitation of Actions Act — 2-year period for tenancy-related civil claims. The Residential Tenancies Act provides separate dispute resolution procedures.' },
+  },
+  ON: {
+    general:      { years: 2,  note: 'Ontario Limitations Act, 2002, SO 2002 c 24 B — 2-year basic limitation period (15-year ultimate)' },
+    contract:     { years: 2,  note: 'Ontario Limitations Act, 2002 — 2-year period for contract claims (15-year ultimate)' },
+    tort:         { years: 2,  note: 'Ontario Limitations Act, 2002 — 2-year period for tort / personal injury (15-year ultimate)' },
+    realproperty: { years: 10, note: 'Ontario Limitations Act, 2002, s.4 & s.15 — 10-year period for recovery of real property' },
+    employment:   { years: 2,  note: 'Ontario Limitations Act, 2002 — 2-year period; Employment Standards Act complaints have separate shorter timelines' },
+    family:       { years: 2,  note: 'Ontario Limitations Act, 2002 — 2-year period; Family Law Act s.7 also imposes a 6-year limit on equalization applications from date of separation' },
+    defamation:   { years: 2,  note: 'Ontario Limitations Act, 2002 — 2-year period; Libel and Slander Act notice requirements (as short as 6 weeks for broadcast) may also apply' },
+    crown:        { years: 2,  note: 'Ontario Limitations Act, 2002 & Crown Liability and Proceedings Act — 2-year limitation; 60-day advance notice to Crown required (CLPA s.7)' },
+    rental:       { years: 2,  note: 'Ontario Limitations Act, 2002 — 2-year period for tenancy-related civil claims. The Landlord and Tenant Board (LTB) has exclusive jurisdiction over most residential tenancy disputes under the Residential Tenancies Act, 2006.' },
+  },
+  PE: {
+    general:      { years: 6,  note: 'PEI Statute of Limitations, RSPEI 1988 c S-7 — 6-year general period (older-style statute; PEI has not adopted a modern 2-year discoverability framework for most claims)' },
+    contract:     { years: 6,  note: 'PEI Statute of Limitations — 6-year period for contract claims' },
+    tort:         { years: 2,  note: 'PEI Statute of Limitations — 2-year period for personal injury / tort (actions for trespass to the person)' },
+    realproperty: { years: 10, note: 'PEI Statute of Limitations — 10-year period for recovery of land' },
+    employment:   { years: 6,  note: 'PEI Statute of Limitations — 6-year period for employment claims (treated as general / contract)' },
+    family:       { years: 6,  note: 'PEI Statute of Limitations — 6-year general period; verify under Matrimonial Property Act for specific family property claims' },
+    defamation:   { years: 2,  note: 'PEI Statute of Limitations — 2-year period for defamation (personal action)' },
+    crown:        { years: 2,  note: 'PEI Crown Proceedings Act — 2-year limitation. Verify notice requirements.' },
+    rental:       { years: 6,  note: 'PEI Statute of Limitations — 6-year general period applies to tenancy-related civil claims. The Island Regulatory and Appeals Commission (IRAC) handles most residential tenancy disputes.' },
+  },
+  QC: {
+    general:      { years: 3,  note: 'Quebec Civil Code, art. 2925 CCQ — 3-year general prescription (Quebec is a civil law jurisdiction; discoverability principles apply)' },
+    contract:     { years: 3,  note: 'Quebec Civil Code, art. 2925 CCQ — 3-year prescription for personal actions including contractual claims' },
+    tort:         { years: 3,  note: 'Quebec Civil Code, art. 2925 CCQ — 3-year prescription for extracontractual liability (tort equivalent)' },
+    realproperty: { years: 10, note: 'Quebec Civil Code, art. 2923 CCQ — 10-year prescription for real rights in immovables' },
+    employment:   { years: 3,  note: 'Quebec Civil Code — 3-year prescription for employment claims; Act respecting labour standards has separate timelines (often 1–2 years). Verify.' },
+    family:       { years: 3,  note: 'Quebec Civil Code — 3-year prescription for patrimonial (family property) claims; verify rules specific to dissolution proceedings under CCQ' },
+    defamation:   { years: 3,  note: 'Quebec Civil Code, art. 2925 CCQ — 3-year prescription for defamation (extracontractual liability)' },
+    crown:        { years: 3,  note: 'Quebec Civil Code & Act respecting Crown liability — 3-year prescription. Verify applicable Crown immunity provisions.' },
+    rental:       { years: 3,  note: 'Quebec Civil Code, art. 2925 CCQ — 3-year prescription for tenancy-related civil claims. The Tribunal administratif du logement (TAL) has jurisdiction over most residential lease disputes.' },
+  },
+  SK: {
+    general:      { years: 2,  note: 'Saskatchewan Limitations Act, SS 2004 c L-16.1 — 2-year basic limitation period' },
+    contract:     { years: 2,  note: 'Saskatchewan Limitations Act — 2-year period for contract claims' },
+    tort:         { years: 2,  note: 'Saskatchewan Limitations Act — 2-year period for tort / personal injury' },
+    realproperty: { years: 10, note: 'Saskatchewan Limitations Act — 10-year ultimate limitation for real property claims' },
+    employment:   { years: 2,  note: 'Saskatchewan Limitations Act — 2-year period for employment claims' },
+    family:       { years: 2,  note: 'Saskatchewan Limitations Act — 2-year period; family property claims under Family Property Act may differ. Verify.' },
+    defamation:   { years: 2,  note: 'Saskatchewan Limitations Act — 2-year period for defamation' },
+    crown:        { years: 2,  note: 'Saskatchewan Limitations Act & Crown Proceedings Act — 2-year limitation; 3-month advance notice to Crown required' },
+    rental:       { years: 2,  note: 'Saskatchewan Limitations Act — 2-year period for tenancy-related civil claims. The Office of Residential Tenancies handles most residential landlord-tenant disputes.' },
+  },
+  YT: {
+    general:      { years: 2,  note: 'Yukon Limitations Act, RSY 2002 c 139 — 2-year basic limitation period' },
+    contract:     { years: 2,  note: 'Yukon Limitations Act — 2-year period for contract claims' },
+    tort:         { years: 2,  note: 'Yukon Limitations Act — 2-year period for tort / personal injury' },
+    realproperty: { years: 6,  note: 'Yukon Limitations Act — 6-year period for real property claims' },
+    employment:   { years: 2,  note: 'Yukon Limitations Act — 2-year period for employment claims' },
+    family:       { years: 2,  note: 'Yukon Limitations Act — 2-year period; verify applicable family statutes' },
+    defamation:   { years: 2,  note: 'Yukon Limitations Act — 2-year period for defamation' },
+    crown:        { years: 2,  note: 'Yukon Limitations Act & Crown Proceedings Act — 2-year limitation; verify notice requirements' },
+    rental:       { years: 2,  note: 'Yukon Limitations Act — 2-year period for tenancy-related civil claims. The Residential Landlord and Tenant Act provides separate dispute resolution procedures.' },
+  },
+};
+
+const TAX_RATES = {
+  AB: { label: 'GST',       rate: 0.05    },
+  BC: { label: 'GST',       rate: 0.05    },
+  MB: { label: 'GST',       rate: 0.05    },
+  NB: { label: 'HST',       rate: 0.15    },
+  NL: { label: 'HST',       rate: 0.15    },
+  NS: { label: 'HST',       rate: 0.15    },
+  NT: { label: 'GST',       rate: 0.05    },
+  NU: { label: 'GST',       rate: 0.05    },
+  ON: { label: 'HST',       rate: 0.13    },
+  PE: { label: 'HST',       rate: 0.15    },
+  QC: { label: 'GST + QST', rate: 0.14975 },
+  SK: { label: 'GST',       rate: 0.05    },
+  YT: { label: 'GST',       rate: 0.05    },
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let courtDates        = [];
+let undertakings      = [];
+let datesFilter       = 'all';
+let billingMethod     = 'hourly';
+let editingDateId     = null;
+let editingUndId      = null;
+let disbursements     = [];
+
+// ─── UTILITY ─────────────────────────────────────────────────────────────────
+
+const el = id => document.getElementById(id);
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function parseLocalDate(str) {
+  if (!str) return null;
+  const [y, m, d] = str.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+
+function todayDate() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function daysBetween(a, b) {
+  return Math.round((b.getTime() - a.getTime()) / 86400000);
+}
+
+function addYearsTo(date, years) {
+  const d = new Date(date);
+  d.setFullYear(d.getFullYear() + years);
+  return d;
+}
+
+function formatFullDate(str) {
+  const d = parseLocalDate(str);
+  if (!d) return '';
+  return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function formatShortDate(str) {
+  const d = parseLocalDate(str);
+  if (!d) return '';
+  return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function dateParts(str) {
+  const d = parseLocalDate(str);
+  if (!d) return { month: '---', day: '--', year: '----' };
+  return {
+    month: d.toLocaleDateString('en-CA', { month: 'short' }).toUpperCase(),
+    day:   d.getDate(),
+    year:  d.getFullYear(),
+  };
+}
+
+function fmtMoney(n) {
+  return '$' + Number(n || 0).toLocaleString('en-CA', {
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
+  });
+}
+
+function fmtTime(str) {
+  if (!str) return '';
+  const [h, m] = str.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12  = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function toLocalDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+}
+
+function openModal(id)  { el(id).classList.add('open'); }
+function closeModal(id) { el(id).classList.remove('open'); }
+
+function showConfirm(title, msg, cb) {
+  el('confirm-title').textContent = title;
+  el('confirm-msg').textContent   = msg;
+  el('confirm-ok-btn').onclick    = () => { closeModal('modal-confirm'); cb(); };
+  openModal('modal-confirm');
+}
+
+// ─── TAB SWITCHING ───────────────────────────────────────────────────────────
+
+function showTab(tab) {
+  ['calc', 'dates', 'fees', 'undertakings'].forEach(t => {
+    el('tab-' + t).classList.toggle('active', t === tab);
+    el('nav-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+
+function saveCourtDates() {
+  localStorage.setItem('lawdemo_courtDates', JSON.stringify(courtDates));
+}
+
+function loadCourtDates() {
+  const raw = localStorage.getItem('lawdemo_courtDates');
+  if (raw) { try { courtDates = JSON.parse(raw); return; } catch { /**/ } }
+  courtDates = defaultCourtDates();
+  saveCourtDates();
+}
+
+function saveUndertakings() {
+  localStorage.setItem('lawdemo_undertakings', JSON.stringify(undertakings));
+}
+
+function loadUndertakings() {
+  const raw = localStorage.getItem('lawdemo_undertakings');
+  if (raw) { try { undertakings = JSON.parse(raw); return; } catch { /**/ } }
+  undertakings = defaultUndertakings();
+  saveUndertakings();
+}
+
+function clearAllData() {
+  showConfirm(
+    'Clear All Data',
+    'Reset all court dates and undertakings to the preloaded sample data. The calculator and fee estimate have no persistent data to clear.',
+    () => {
+      localStorage.removeItem('lawdemo_courtDates');
+      localStorage.removeItem('lawdemo_undertakings');
+      courtDates   = defaultCourtDates();
+      undertakings = defaultUndertakings();
+      saveCourtDates();
+      saveUndertakings();
+      renderDates();
+      renderUndertakings();
+    }
+  );
+}
+
+// ─── SAMPLE DATA ─────────────────────────────────────────────────────────────
+
+function defaultCourtDates() {
+  return [
+    {
+      id: uid(), matter: 'Kowalski v. Tremblay', matterType: 'general',
+      eventType: 'Trial', date: '2026-05-14', time: '09:30',
+      location: "Court of King's Bench, Winnipeg MB",
+      notes: 'Jury trial, three days estimated. Expert witness subpoenas served.', done: false,
+    },
+    {
+      id: uid(), matter: 'Estate of Henrietta Voss', matterType: 'general',
+      eventType: 'Hearing', date: '2026-04-22', time: '14:00',
+      location: "Court of King's Bench, Brandon MB",
+      notes: 'Variation application by Voss stepchildren re: estate distribution.', done: false,
+    },
+    {
+      id: uid(), matter: 'Pemberton Holdings Ltd. re: Easement', matterType: 'realproperty',
+      eventType: 'Mediation', date: '2026-03-18', time: '10:00',
+      location: 'ADRIC Offices, 123 Main St, Winnipeg',
+      notes: 'Mediator: D. Sawatsky. Matter resolved — consent order pending execution.', done: true,
+    },
+    {
+      id: uid(), matter: 'Nguyen v. Fairview Auto', matterType: 'general',
+      eventType: 'Discovery', date: '2026-06-03', time: '13:00',
+      location: 'Plaintiff counsel offices, 400 St. Mary Ave',
+      notes: 'Examination of K. Nguyen; estimated 4 hours.', done: false,
+    },
+    {
+      id: uid(), matter: 'Osei Employment Matter', matterType: 'employment',
+      eventType: 'Filing Deadline', date: '2026-03-30', time: '',
+      location: 'Manitoba Human Rights Commission',
+      notes: 'Human rights complaint — file by 5:00 PM.', done: false,
+    },
+    {
+      id: uid(), matter: 'Beaumont Family Separation', matterType: 'general',
+      eventType: 'Hearing', date: '2026-07-08', time: '09:00',
+      location: "Court of King's Bench — Family Division, Winnipeg",
+      notes: 'Property division application. Client availability confirmed.', done: false,
+    },
+  ];
+}
+
+function defaultUndertakings() {
+  return [
+    {
+      id: uid(),
+      description: 'Provide executed transfer documents for Lot 42, Plan 51234',
+      direction: 'given', counterparty: 'J. Okafor, Okafor & Blaine LLP',
+      dateGiven: '2026-03-15', due: '2026-04-15', status: 'outstanding',
+      notes: 'Transfer re: Pemberton Holdings parcel.',
+    },
+    {
+      id: uid(),
+      description: 'Confirm discharge of mortgage registered as instrument #2021-4872',
+      direction: 'received', counterparty: 'M. Lessard, Lessard & Partners',
+      dateGiven: '2026-02-28', due: '2026-03-31', status: 'outstanding',
+      notes: 'Overdue — follow up required immediately.',
+    },
+    {
+      id: uid(),
+      description: 'Provide certified copies of executed will and codicil dated June 14, 2023',
+      direction: 'received', counterparty: 'R. Blaine, Okafor & Blaine LLP',
+      dateGiven: '2026-01-20', due: '2026-02-20', status: 'fulfilled',
+      notes: 'Received via courier on 2026-02-18.',
+    },
+    {
+      id: uid(),
+      description: 'Hold $12,500 in trust pending resolution of disputed chattels',
+      direction: 'given', counterparty: 'T. Sandhu, Sandhu Dispute Resolution Ltd.',
+      dateGiven: '2026-03-05', due: '', status: 'outstanding',
+      notes: 'Per mediation agreement dated March 5, 2026.',
+    },
+    {
+      id: uid(),
+      description: 'Withdraw costs application filed 2025-11-12',
+      direction: 'given', counterparty: 'N. Beaumont (self-represented)',
+      dateGiven: '2026-02-10', due: '', status: 'waived',
+      notes: 'Matter settled; undertaking released by consent at settlement conference.',
+    },
+  ];
+}
+
+// ─── TAB 1: LIMITATION CALCULATOR ────────────────────────────────────────────
+
+function calcLimitation() {
+  const province   = el('calc-province').value;
+  const matter     = el('calc-matter').value;
+  const eventStr   = el('calc-event-date').value;
+  const discStr    = el('calc-discovery-date').value;
+
+  if (!province || !matter || !eventStr) {
+    alert('Please select a province, matter type, and triggering event date.');
+    return;
+  }
+
+  const limit      = LIMITS[province][matter];
+  const eventDate  = parseLocalDate(eventStr);
+  const discDate   = discStr ? parseLocalDate(discStr) : null;
+
+  // Use the later of event date and discovery date as the period start
+  let startDate    = eventDate;
+  let usedDisc     = false;
+  if (discDate && discDate > eventDate) {
+    startDate = discDate;
+    usedDisc  = true;
+  }
+
+  const deadline   = addYearsTo(startDate, limit.years);
+  const now        = todayDate();
+  const daysLeft   = daysBetween(now, deadline);
+  const expired    = daysLeft < 0;
+  const warnSoon   = !expired && daysLeft <= 90;
+
+  let html = '';
+
+  if (expired) {
+    html += `<div class="banner banner-danger">EXPIRED — This limitation period has passed.</div>`;
+  } else if (warnSoon) {
+    html += `<div class="banner banner-warn">Deadline within ${daysLeft} day${daysLeft === 1 ? '' : 's'} — urgent action may be required.</div>`;
+  } else {
+    html += `<div class="banner banner-ok">Limitation period is currently active.</div>`;
+  }
+
+  const deadlineStr = toLocalDateStr(deadline);
+  html += `<div class="calc-deadline-label">Limitation Deadline</div>`;
+  html += `<div class="calc-deadline-date${expired ? ' expired' : ''}">${formatFullDate(deadlineStr)}</div>`;
+
+  if (expired) {
+    const ago = Math.abs(daysLeft);
+    html += `<div class="calc-days expired">EXPIRED — ${ago} day${ago === 1 ? '' : 's'} ago</div>`;
+  } else {
+    html += `<div class="calc-days${warnSoon ? ' warn' : ''}">${daysLeft} day${daysLeft === 1 ? '' : 's'} remaining</div>`;
+  }
+
+  if (usedDisc) {
+    html += `<div style="font-size:.82rem;color:var(--muted);margin-top:.4rem">Period calculated from discovery date (${formatShortDate(discStr)}), which is later than the triggering event.</div>`;
+  }
+
+  html += `<div class="calc-rule"><strong>Rule applied:</strong> ${limit.note}</div>`;
+
+  const res = el('calc-result');
+  res.innerHTML    = html;
+  res.style.display = 'block';
+}
+
+function clearCalc() {
+  el('calc-province').value      = '';
+  el('calc-matter').value        = '';
+  el('calc-event-date').value    = '';
+  el('calc-discovery-date').value = '';
+  el('calc-result').style.display = 'none';
+}
+
+// ─── TAB 2: COURT DATES ───────────────────────────────────────────────────────
+
+function isOverdue(item) {
+  if (item.done) return false;
+  const d = parseLocalDate(item.date);
+  return d && d < todayDate();
+}
+
+function setDatesFilter(f) {
+  datesFilter = f;
+  el('dates-filter').querySelectorAll('.pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.filter === f);
+  });
+  renderDates();
+}
+
+function filteredDates() {
+  const sorted = [...courtDates].sort((a, b) => {
+    const da = parseLocalDate(a.date) || new Date(0);
+    const db = parseLocalDate(b.date) || new Date(0);
+    return da - db;
+  });
+  switch (datesFilter) {
+    case 'upcoming': return sorted.filter(x => !x.done && !isOverdue(x));
+    case 'overdue':  return sorted.filter(x => isOverdue(x));
+    case 'done':     return sorted.filter(x => x.done);
+    default:         return sorted;
+  }
+}
+
+function renderDates() {
+  const list      = filteredDates();
+  const container = el('dates-list');
+
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state">No entries match this filter.</div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(item => {
+    const overdue  = isOverdue(item);
+    const parts    = dateParts(item.date);
+    const timeStr  = item.time ? fmtTime(item.time) : '';
+    const itemCls  = overdue ? ' overdue' : item.done ? ' is-done' : '';
+    const mattCls  = item.done ? ' done-strike' : '';
+
+    let tags = '';
+    if (overdue)   tags += `<span class="tag tag-overdue">OVERDUE</span>`;
+    if (item.done) tags += `<span class="tag tag-done">Done</span>`;
+
+    const subParts = [
+      MATTER_LABELS[item.matterType] || item.matterType,
+      item.eventType,
+      timeStr,
+    ].filter(Boolean);
+
+    return `<div class="date-item${itemCls}">
+      <div class="di-date-block">
+        <div class="di-month">${esc(parts.month)}</div>
+        <div class="di-day">${esc(parts.day)}</div>
+        <div class="di-year">${esc(parts.year)}</div>
+      </div>
+      <div class="di-divider"></div>
+      <div class="di-body">
+        <div class="di-matter${mattCls}">${esc(item.matter)}</div>
+        <div class="di-sub">${esc(subParts.join(' \u00b7 '))}</div>
+        ${item.location ? `<div class="di-location">${esc(item.location)}</div>` : ''}
+        ${item.notes    ? `<div class="di-notes">${esc(item.notes)}</div>`    : ''}
+        ${tags          ? `<div class="di-tags">${tags}</div>`                : ''}
+      </div>
+      <div class="di-actions">
+        <button class="btn btn-ghost btn-sm" onclick="toggleDone('${esc(item.id)}')">${item.done ? 'Undo' : 'Done'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="openDateModal('${esc(item.id)}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteDateEntry('${esc(item.id)}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDateModal(id) {
+  editingDateId = id || null;
+  if (id) {
+    const item = courtDates.find(x => x.id === id);
+    if (!item) return;
+    el('courtdate-modal-title').textContent = 'Edit Court Date';
+    el('cd-matter').value     = item.matter;
+    el('cd-mattertype').value = item.matterType;
+    el('cd-eventtype').value  = item.eventType;
+    el('cd-date').value       = item.date;
+    el('cd-time').value       = item.time || '';
+    el('cd-location').value   = item.location || '';
+    el('cd-notes').value      = item.notes || '';
+  } else {
+    el('courtdate-modal-title').textContent = 'Add Court Date';
+    el('cd-matter').value     = '';
+    el('cd-mattertype').value = 'general';
+    el('cd-eventtype').value  = 'Hearing';
+    el('cd-date').value       = '';
+    el('cd-time').value       = '';
+    el('cd-location').value   = '';
+    el('cd-notes').value      = '';
+  }
+  openModal('modal-courtdate');
+}
+
+function saveCourtDate() {
+  const matter  = el('cd-matter').value.trim();
+  const dateVal = el('cd-date').value;
+  if (!matter || !dateVal) { alert('Matter name and date are required.'); return; }
+
+  const entry = {
+    id:         editingDateId || uid(),
+    matter,
+    matterType: el('cd-mattertype').value,
+    eventType:  el('cd-eventtype').value,
+    date:       dateVal,
+    time:       el('cd-time').value,
+    location:   el('cd-location').value.trim(),
+    notes:      el('cd-notes').value.trim(),
+    done:       false,
+  };
+
+  if (editingDateId) {
+    const idx = courtDates.findIndex(x => x.id === editingDateId);
+    if (idx !== -1) { entry.done = courtDates[idx].done; courtDates[idx] = entry; }
+  } else {
+    courtDates.push(entry);
+  }
+
+  saveCourtDates();
+  renderDates();
+  closeModal('modal-courtdate');
+}
+
+function deleteDateEntry(id) {
+  const item = courtDates.find(x => x.id === id);
+  if (!item) return;
+  showConfirm('Delete Entry', `Delete "${item.matter}"? This cannot be undone.`, () => {
+    courtDates = courtDates.filter(x => x.id !== id);
+    saveCourtDates();
+    renderDates();
+  });
+}
+
+function toggleDone(id) {
+  const item = courtDates.find(x => x.id === id);
+  if (!item) return;
+  item.done = !item.done;
+  saveCourtDates();
+  renderDates();
+}
+
+// Print support
+
+function weekMondayOf(dateStr) {
+  const d   = parseLocalDate(dateStr);
+  if (!d) return null;
+  const day = d.getDay();
+  const off = day === 0 ? -6 : 1 - day;
+  const mon = new Date(d);
+  mon.setDate(d.getDate() + off);
+  return mon;
+}
+
+function buildPrintArea() {
+  const todayLabel = new Date().toLocaleDateString('en-CA', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  });
+
+  const active = courtDates
+    .filter(x => !x.done)
+    .sort((a, b) => (parseLocalDate(a.date) || new Date(0)) - (parseLocalDate(b.date) || new Date(0)));
+
+  // Group by week
+  const weeks = [];
+  const weekMap = {};
+  active.forEach(item => {
+    const mon = weekMondayOf(item.date);
+    if (!mon) return;
+    const key = toLocalDateStr(mon);
+    if (!weekMap[key]) {
+      weekMap[key] = { start: mon, items: [] };
+      weeks.push(weekMap[key]);
+    }
+    weekMap[key].items.push(item);
+  });
+
+  let html = `<div class="print-hdr">
+    <h1>Court Dates &amp; Deadlines</h1>
+    <p>Printed ${todayLabel}</p>
+  </div>`;
+
+  if (!weeks.length) {
+    html += '<p>No upcoming entries.</p>';
+  } else {
+    weeks.forEach(wk => {
+      const sun = new Date(wk.start);
+      sun.setDate(sun.getDate() + 6);
+      const label = `Week of ${wk.start.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' })} \u2013 ${sun.toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+      html += `<div class="print-week"><div class="print-week-label">${label}</div>`;
+      wk.items.forEach(item => {
+        const p       = dateParts(item.date);
+        const dateStr = `${p.month} ${p.day}, ${p.year}`;
+        const timeStr = item.time ? ` at ${fmtTime(item.time)}` : '';
+        const loc     = item.location ? ` \u2014 ${item.location}` : '';
+        html += `<div class="print-entry">
+          <span class="print-entry-matter">${esc(item.matter)}</span>
+          <span class="print-entry-detail">${esc(item.eventType)} &middot; ${dateStr}${esc(timeStr)}${esc(loc)}</span>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+  }
+
+  el('print-area').innerHTML = html;
+}
+
+function printDates() {
+  buildPrintArea();
+  window.print();
+}
+
+// ─── TAB 3: FEE ESTIMATE ──────────────────────────────────────────────────────
+
+function setBilling(method) {
+  billingMethod = method;
+  el('billing-hourly').classList.toggle('active', method === 'hourly');
+  el('billing-flat').classList.toggle('active',   method === 'flat');
+  el('hourly-fields').style.display = method === 'hourly' ? '' : 'none';
+  el('flat-fields').style.display   = method === 'flat'   ? '' : 'none';
+}
+
+function addDisb(desc, amt) {
+  disbursements.push({ id: uid(), desc: desc || '', amt: amt != null ? String(amt) : '' });
+  renderDisb();
+}
+
+function removeDisb(id) {
+  disbursements = disbursements.filter(x => x.id !== id);
+  renderDisb();
+}
+
+function renderDisb() {
+  el('disb-list').innerHTML = disbursements.map(row => `
+    <div class="disb-row" data-id="${esc(row.id)}">
+      <input type="text"   value="${esc(row.desc)}" placeholder="Description"
+             oninput="updateDisbDesc('${esc(row.id)}', this.value)">
+      <input type="number" value="${esc(row.amt)}"  placeholder="0.00" min="0" step="0.01"
+             oninput="updateDisbAmt('${esc(row.id)}', this.value)">
+      <button class="btn btn-ghost btn-sm" onclick="removeDisb('${esc(row.id)}')">Remove</button>
+    </div>`).join('');
+}
+
+function updateDisbDesc(id, val) {
+  const row = disbursements.find(x => x.id === id);
+  if (row) row.desc = val;
+}
+
+function updateDisbAmt(id, val) {
+  const row = disbursements.find(x => x.id === id);
+  if (row) row.amt = val;
+}
+
+function updateTaxLabel() {
+  const prov = el('fee-province').value;
+  const tax  = TAX_RATES[prov];
+  const pct  = (tax.rate * 100).toFixed(3).replace(/\.?0+$/, '');
+  el('tax-label').textContent = `Apply ${tax.label} (${pct}%)`;
+}
+
+function buildEstimate() {
+  const province = el('fee-province').value;
+  const matterKey = el('fee-matter').value;
+  const scope    = el('fee-scope').value.trim();
+  const applyTax = el('tax-toggle').checked;
+  const tax      = TAX_RATES[province];
+
+  let legalFees = 0;
+  let billingDesc = '';
+  if (billingMethod === 'hourly') {
+    const hrs  = parseFloat(el('fee-hours').value) || 0;
+    const rate = parseFloat(el('fee-rate').value)  || 0;
+    legalFees   = hrs * rate;
+    billingDesc = `${hrs} hrs @ ${fmtMoney(rate)}/hr`;
+  } else {
+    legalFees   = parseFloat(el('fee-flat').value) || 0;
+    billingDesc = 'flat fee';
+  }
+
+  // Sync disb values from DOM (handles typing without blur)
+  document.querySelectorAll('#disb-list .disb-row').forEach(row => {
+    const d = disbursements.find(x => x.id === row.dataset.id);
+    if (d) {
+      d.desc = row.querySelector('input[type=text]').value;
+      d.amt  = row.querySelector('input[type=number]').value;
+    }
+  });
+
+  const disbItems = disbursements
+    .filter(x => (parseFloat(x.amt) || 0) > 0 || x.desc.trim())
+    .map(x => ({ desc: x.desc.trim() || 'Disbursement', amt: parseFloat(x.amt) || 0 }));
+
+  const disbTotal = disbItems.reduce((s, x) => s + x.amt, 0);
+  const subtotal  = legalFees + disbTotal;
+  const taxAmt    = applyTax ? subtotal * tax.rate : 0;
+  const total     = subtotal + taxAmt;
+  const pct       = (tax.rate * 100).toFixed(3).replace(/\.?0+$/, '');
+
+  let rows = '';
+  rows += `<div class="est-row"><span class="est-label">Legal fees (${billingDesc})</span><span class="est-val">${fmtMoney(legalFees)}</span></div>`;
+
+  if (disbItems.length) {
+    disbItems.forEach(d => {
+      rows += `<div class="est-row sub"><span class="est-label">${esc(d.desc)}</span><span class="est-val">${fmtMoney(d.amt)}</span></div>`;
+    });
+    rows += `<div class="est-row"><span class="est-label">Disbursements subtotal</span><span class="est-val">${fmtMoney(disbTotal)}</span></div>`;
+  }
+
+  if (applyTax) {
+    rows += `<div class="est-row"><span class="est-label">${esc(tax.label)} (${pct}%)</span><span class="est-val">${fmtMoney(taxAmt)}</span></div>`;
+  }
+
+  rows += `<div class="est-row grand"><span class="est-label">Total</span><span class="est-val">${fmtMoney(total)}</span></div>`;
+
+  el('est-rows').innerHTML = rows;
+  el('estimate-panel').style.display = 'block';
+
+  // Stash for clipboard
+  const panel = el('estimate-panel');
+  panel.dataset.matter    = matterKey ? MATTER_LABELS[matterKey] : 'Not specified';
+  panel.dataset.scope     = scope;
+  panel.dataset.fees      = legalFees;
+  panel.dataset.billing   = billingDesc;
+  panel.dataset.disbJson  = JSON.stringify(disbItems);
+  panel.dataset.disbTotal = disbTotal;
+  panel.dataset.taxLabel  = tax.label;
+  panel.dataset.taxRate   = tax.rate;
+  panel.dataset.taxAmt    = taxAmt;
+  panel.dataset.total     = total;
+  panel.dataset.applyTax  = applyTax;
+}
+
+function copyEstimate() {
+  const p        = el('estimate-panel').dataset;
+  const disbItems = JSON.parse(p.disbJson || '[]');
+  const applyTax = p.applyTax === 'true';
+  const pct      = (parseFloat(p.taxRate) * 100).toFixed(3).replace(/\.?0+$/, '');
+
+  let text = `FEE ESTIMATE\n${'='.repeat(40)}\n`;
+  text += `Matter type: ${p.matter}\n`;
+  if (p.scope) text += `Scope: ${p.scope}\n`;
+  text += '\n';
+  text += `Legal fees (${p.billing}): ${fmtMoney(p.fees)}\n`;
+  if (disbItems.length) {
+    text += `Disbursements:\n`;
+    disbItems.forEach(d => { text += `  ${d.desc}: ${fmtMoney(d.amt)}\n`; });
+    text += `  Subtotal: ${fmtMoney(p.disbTotal)}\n`;
+  }
+  if (applyTax) text += `${p.taxLabel} (${pct}%): ${fmtMoney(p.taxAmt)}\n`;
+  text += `${'─'.repeat(40)}\nTOTAL: ${fmtMoney(p.total)}\n\n`;
+  text += `This estimate is for internal reference only and does not constitute a retainer agreement or legal advice.`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el('estimate-panel').querySelector('.est-actions button');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1800);
+  }).catch(() => {
+    alert('Copy failed — please select and copy the estimate manually.');
+  });
+}
+
+// ─── TAB 4: UNDERTAKINGS ──────────────────────────────────────────────────────
+
+function utDueStatus(item) {
+  if (item.status !== 'outstanding' || !item.due) return null;
+  const dueDate = parseLocalDate(item.due);
+  if (!dueDate) return null;
+  const diff = daysBetween(todayDate(), dueDate);
+  if (diff < 0)  return 'red';
+  if (diff <= 14) return 'amber';
+  return null;
+}
+
+function renderUndertakings() {
+  const groups = [
+    { key: 'outstanding', label: 'Outstanding', items: [] },
+    { key: 'fulfilled',   label: 'Fulfilled',   items: [] },
+    { key: 'waived',      label: 'Waived',      items: [] },
+  ];
+  undertakings.forEach(u => {
+    const g = groups.find(g => g.key === u.status);
+    if (g) g.items.push(u);
+  });
+
+  let html = '';
+  groups.forEach(group => {
+    if (!group.items.length) return;
+    html += `<div class="ut-group"><div class="ut-group-title">${esc(group.label)} (${group.items.length})</div>`;
+
+    group.items.forEach(u => {
+      const ds  = utDueStatus(u);
+      let flagHtml = '';
+      if (ds === 'red') {
+        const days = Math.abs(daysBetween(todayDate(), parseLocalDate(u.due)));
+        flagHtml = `<span class="ut-flag red">OVERDUE ${days}d</span>`;
+      } else if (ds === 'amber') {
+        const days = daysBetween(todayDate(), parseLocalDate(u.due));
+        flagHtml = `<span class="ut-flag amber">DUE IN ${days}d</span>`;
+      }
+
+      let dueHtml = '';
+      if (u.due) {
+        const cls = ds ? ` ${ds}` : '';
+        dueHtml = `<div class="ut-due${cls}">Due: ${esc(formatShortDate(u.due))}</div>`;
+      }
+
+      const dirCls   = u.direction === 'given' ? 'dir-given' : 'dir-received';
+      const dirLabel = u.direction === 'given' ? 'Given' : 'Received';
+      const itemCls  = u.status === 'fulfilled' ? ' fulfilled' : u.status === 'waived' ? ' waived' : '';
+      const fulfillBtn = u.status === 'outstanding'
+        ? `<button class="btn btn-ghost btn-sm" onclick="markFulfilled('${esc(u.id)}')">Mark Fulfilled</button>`
+        : '';
+
+      html += `<div class="ut-item${itemCls}">
+        ${flagHtml}
+        <div class="ut-body">
+          <div class="ut-desc">${esc(u.description)}</div>
+          <div class="ut-meta">
+            <span class="dir-badge ${dirCls}">${dirLabel}</span>
+            &nbsp;${esc(u.counterparty)}
+            &nbsp;&middot;&nbsp;Given: ${esc(formatShortDate(u.dateGiven))}
+          </div>
+          ${dueHtml}
+          ${u.notes ? `<div class="ut-notes">${esc(u.notes)}</div>` : ''}
+        </div>
+        <div class="ut-actions">
+          ${fulfillBtn}
+          <button class="btn btn-ghost btn-sm" onclick="openUndertakingModal('${esc(u.id)}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUndertaking('${esc(u.id)}')">Delete</button>
+        </div>
+      </div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  el('undertakings-list').innerHTML = html || `<div class="empty-state">No undertakings recorded.</div>`;
+}
+
+function openUndertakingModal(id) {
+  editingUndId = id || null;
+  if (id) {
+    const item = undertakings.find(x => x.id === id);
+    if (!item) return;
+    el('undertaking-modal-title').textContent = 'Edit Undertaking';
+    el('ut-description').value  = item.description;
+    el('ut-direction').value    = item.direction;
+    el('ut-counterparty').value = item.counterparty;
+    el('ut-date-given').value   = item.dateGiven;
+    el('ut-due').value          = item.due || '';
+    el('ut-status').value       = item.status;
+    el('ut-notes').value        = item.notes || '';
+  } else {
+    el('undertaking-modal-title').textContent = 'Add Undertaking';
+    el('ut-description').value  = '';
+    el('ut-direction').value    = 'given';
+    el('ut-counterparty').value = '';
+    el('ut-date-given').value   = '';
+    el('ut-due').value          = '';
+    el('ut-status').value       = 'outstanding';
+    el('ut-notes').value        = '';
+  }
+  openModal('modal-undertaking');
+}
+
+function saveUndertaking() {
+  const description  = el('ut-description').value.trim();
+  const counterparty = el('ut-counterparty').value.trim();
+  const dateGiven    = el('ut-date-given').value;
+  if (!description || !dateGiven) { alert('Description and date given are required.'); return; }
+
+  const entry = {
+    id:          editingUndId || uid(),
+    description,
+    direction:   el('ut-direction').value,
+    counterparty,
+    dateGiven,
+    due:         el('ut-due').value,
+    status:      el('ut-status').value,
+    notes:       el('ut-notes').value.trim(),
+  };
+
+  if (editingUndId) {
+    const idx = undertakings.findIndex(x => x.id === editingUndId);
+    if (idx !== -1) undertakings[idx] = entry;
+  } else {
+    undertakings.push(entry);
+  }
+
+  saveUndertakings();
+  renderUndertakings();
+  closeModal('modal-undertaking');
+}
+
+function deleteUndertaking(id) {
+  if (!undertakings.find(x => x.id === id)) return;
+  showConfirm('Delete Undertaking', 'Delete this undertaking? This cannot be undone.', () => {
+    undertakings = undertakings.filter(x => x.id !== id);
+    saveUndertakings();
+    renderUndertakings();
+  });
+}
+
+function markFulfilled(id) {
+  const item = undertakings.find(x => x.id === id);
+  if (!item) return;
+  item.status = 'fulfilled';
+  saveUndertakings();
+  renderUndertakings();
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+(function init() {
+  loadCourtDates();
+  loadUndertakings();
+  renderDates();
+  renderUndertakings();
+  updateTaxLabel();
+
+  // Default disbursements for fee tab
+  addDisb('Filing fee', 200);
+  addDisb('Title search', 150);
+  addDisb('Courier / delivery', 35);
+
+  // Tax toggle updates label without regenerating
+  el('tax-toggle').addEventListener('change', updateTaxLabel);
+})();
+</script>
+</body>
+</html>
