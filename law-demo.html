@@ -5,37 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>G.E.R.R.Y. — Demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Laila:wght@400;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 /* ── VARIABLES ── */
 :root {
-  --navy:       #182059;
-  --gold:       #B8960C;
-  --gold-dark:  #9a7c08;
-  --white:      #ffffff;
-  --off-white:  #f5f6fa;
-  --border:     #dde1ee;
-  --text:       #1a1a2e;
-  --muted:      #6b7280;
-  --danger:     #dc2626;
-  --danger-bg:  #fee2e2;
-  --warn:       #d97706;
-  --warn-bg:    #fef3c7;
-  --success:    #166534;
-  --success-bg: #dcfce7;
+  --navy:        #1a2433;
+  --gold:        #9d8123;
+  --gold-dark:   #7d6518;
+  --white:       #ffffff;
+  --off-white:   #f5f6fa;
+  --legal-cream: #fdfcf9;
+  --border:      #d1d5db;
+  --text:        #111827;
+  --muted:       #6b7280;
+  --danger:      #dc2626;
+  --danger-bg:   #fee2e2;
+  --warn:        #d97706;
+  --warn-bg:     #fef3c7;
+  --success:     #166534;
+  --success-bg:  #dcfce7;
 }
 
 /* ── RESET ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'DM Sans', sans-serif;
-  background: var(--off-white);
+  background: var(--legal-cream);
   color: var(--text);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
-h1, h2, h3, h4 { font-family: 'Laila', serif; }
+h1, h2, h3, h4 { font-family: 'Cormorant Garamond', serif; }
 button { cursor: pointer; font-family: 'DM Sans', sans-serif; }
 input, select, textarea { font-family: 'DM Sans', sans-serif; }
 
@@ -45,105 +46,119 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 /* ── HEADER ── */
 header {
   background: var(--navy);
-  padding: .75rem 1.25rem;
+  padding: 0 1.25rem;
   display: flex;
   align-items: center;
   gap: .75rem;
   flex-shrink: 0;
+  height: 50px;
+  border-bottom: 3px solid var(--gold);
 }
 .app-name {
-  font-family: 'Laila', serif;
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.35rem;
+  font-weight: 600;
   color: var(--white);
-  letter-spacing: .02em;
-}
-.demo-badge {
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  background: var(--gold);
-  color: var(--white);
-  padding: .22rem .55rem;
-  border-radius: 4px;
-  line-height: 1.4;
+  letter-spacing: .12em;
 }
 .header-spacer { flex: 1; }
-.btn-header-clear {
-  background: rgba(255,255,255,.1);
-  color: rgba(255,255,255,.8);
-  border: 1px solid rgba(255,255,255,.25);
-  border-radius: 5px;
-  padding: .35rem .8rem;
-  font-size: .82rem;
-  font-weight: 600;
+.autosave-indicator {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: .7rem;
+  font-weight: 500;
+  color: rgba(255,255,255,.3);
+  letter-spacing: .04em;
+  transition: color .3s;
+  min-width: 72px;
+  text-align: right;
 }
-.btn-header-clear:hover { background: rgba(255,255,255,.18); color: #fff; }
+.autosave-indicator.flash { color: rgba(255,255,255,.75); }
+.btn-header-clear {
+  background: transparent;
+  color: rgba(255,255,255,.5);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 2px;
+  padding: .28rem .75rem;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.btn-header-clear:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); }
 
-/* ── NAV ── */
-nav {
-  background: var(--white);
-  border-bottom: 2px solid var(--border);
+/* ── LAYOUT ── */
+.layout-body {
   display: flex;
-  align-items: center;
-  padding: 0 1rem;
-  overflow-x: auto;
+  flex: 1;
+  min-height: 0;
+}
+.sidebar {
+  width: 192px;
   flex-shrink: 0;
+  background: #101924;
+  border-right: 1px solid rgba(255,255,255,.06);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
 }
 .nav-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
   background: none;
   border: none;
-  border-bottom: 3px solid transparent;
-  padding: .72rem 1rem;
-  font-size: .9rem;
-  font-weight: 500;
-  color: var(--muted);
-  white-space: nowrap;
-  margin-bottom: -2px;
-  transition: color .12s;
+  border-left: 3px solid transparent;
+  padding: .6rem 1rem .6rem 1.1rem;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.38);
+  white-space: normal;
+  line-height: 1.4;
+  transition: color .12s, background .12s, border-left-color .12s;
 }
-.nav-btn:hover { color: var(--navy); }
+.nav-btn:hover { color: rgba(255,255,255,.75); background: rgba(255,255,255,.04); }
 .nav-btn.active {
-  color: var(--navy);
-  border-bottom-color: var(--gold);
+  color: #fff;
+  border-left-color: var(--gold);
+  background: rgba(255,255,255,.07);
   font-weight: 700;
+}
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
 }
 
-/* ── TITLE CARD ── */
-.title-card {
-  background: var(--navy);
-  color: var(--white);
-  padding: 2.5rem 1.5rem 2rem;
-  text-align: center;
-  border-bottom: 4px solid var(--gold);
+/* ── MATTER HEADER ── */
+.matter-header {
+  background: #1a2433;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  padding: .5rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  flex-shrink: 0;
 }
-.title-card-name {
-  font-family: 'Laila', serif;
-  font-size: clamp(2.4rem, 6vw, 4rem);
-  font-weight: 700;
-  color: var(--white);
-  letter-spacing: .08em;
-  line-height: 1;
-}
-.title-card-name span {
-  color: var(--gold);
-}
-.title-card-expand {
-  font-size: .8rem;
-  font-weight: 500;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.55);
-  margin-top: .6rem;
-}
-.title-card-tagline {
+.mh-brand {
+  font-family: 'Cormorant Garamond', serif;
   font-size: 1rem;
-  color: rgba(255,255,255,.75);
-  margin-top: .9rem;
-  max-width: 520px;
-  margin-left: auto;
-  margin-right: auto;
+  font-weight: 600;
+  color: rgba(255,255,255,.65);
+  letter-spacing: .1em;
+}
+.mh-sep { color: rgba(255,255,255,.18); font-size: .85rem; }
+.mh-section {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: .72rem;
+  font-weight: 500;
+  color: #c4a84a;
+  letter-spacing: .04em;
 }
 
 /* ── MAIN ── */
@@ -161,9 +176,9 @@ main {
 .card {
   background: var(--white);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.25rem;
-  margin-bottom: 1.25rem;
+  border-radius: 2px;
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
 .card-header {
   display: flex;
@@ -330,7 +345,7 @@ textarea { resize: vertical; min-height: 80px; }
   margin-bottom: .2rem;
 }
 .calc-deadline-date {
-  font-family: 'Laila', serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 2.1rem;
   color: var(--navy);
   line-height: 1.15;
@@ -361,8 +376,10 @@ textarea { resize: vertical; min-height: 80px; }
 .date-item {
   background: var(--white);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: .85rem 1rem;
+  border-radius: 0;
+  border-left: 3px solid var(--navy);
+  padding: .5rem 1rem;
+  margin-bottom: 2px;
   display: flex;
   align-items: flex-start;
   gap: 1rem;
@@ -378,7 +395,7 @@ textarea { resize: vertical; min-height: 80px; }
   letter-spacing: .05em;
 }
 .di-day {
-  font-family: 'Laila', serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 1.8rem;
   color: var(--navy);
   line-height: 1;
@@ -510,12 +527,13 @@ textarea { resize: vertical; min-height: 80px; }
 .ut-item {
   background: var(--white);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: .85rem 1rem;
+  border-radius: 0;
+  border-left: 3px solid var(--navy);
+  padding: .5rem 1rem;
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: .4rem;
+  margin-bottom: 2px;
 }
 .ut-item.fulfilled { opacity: .55; }
 .ut-item.waived    { opacity: .45; border-style: dashed; }
@@ -551,8 +569,7 @@ textarea { resize: vertical; min-height: 80px; }
 /* ── PRINT STYLES (Tab 2 only) ── */
 @media print {
   body > header,
-  body > nav,
-  body > main,
+  body > .layout-body,
   .overlay { display: none !important; }
 
   #print-area {
@@ -604,6 +621,10 @@ textarea { resize: vertical; min-height: 80px; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
+  .layout-body { flex-direction: column; }
+  .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: .4rem 0; border-right: none; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .nav-btn { white-space: nowrap; padding: .5rem .85rem; border-left: none; border-bottom: 3px solid transparent; }
+  .nav-btn.active { border-left-color: transparent; border-bottom-color: var(--gold); }
   .form-row { grid-template-columns: 1fr; }
   .date-item { flex-wrap: wrap; }
   .di-date-block { display: flex; gap: .5rem; align-items: baseline; min-width: auto; }
@@ -623,25 +644,31 @@ textarea { resize: vertical; min-height: 80px; }
 <!-- ── HEADER ── -->
 <header>
   <span class="app-name">G.E.R.R.Y.</span>
-  <span class="demo-badge">Demo</span>
   <span class="header-spacer"></span>
-  <button class="btn-header-clear" onclick="clearAllData()">Clear All Data</button>
+  <span class="autosave-indicator" id="autosave-indicator">Saved</span>
+  <button class="btn-header-clear" onclick="clearAllData()">Purge Session Cache</button>
 </header>
 
-<!-- ── NAV ── -->
-<nav>
-  <button class="nav-btn active" id="nav-calc"         onclick="showTab('calc')">Limitation Calculator</button>
-  <button class="nav-btn"        id="nav-dates"        onclick="showTab('dates')">Court Dates &amp; Deadlines</button>
-  <button class="nav-btn"        id="nav-fees"         onclick="showTab('fees')">Fee Estimate</button>
-  <button class="nav-btn"        id="nav-undertakings" onclick="showTab('undertakings')">Undertakings</button>
-</nav>
+<!-- ── LAYOUT BODY ── -->
+<div class="layout-body">
 
-<!-- ── TITLE CARD ── -->
-<section class="title-card">
-  <div class="title-card-name"><span>G</span>.<span>E</span>.<span>R</span>.<span>R</span>.<span>Y</span>.</div>
-  <div class="title-card-expand">General Entry &mdash; Records, Reporting &amp; Yield</div>
-  <p class="title-card-tagline">Limitation periods. Court dates. Fee estimates. Undertakings. One tool.</p>
-</section>
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <button class="nav-btn active" id="nav-calc"         onclick="showTab('calc')">Limitation Calculator</button>
+    <button class="nav-btn"        id="nav-dates"        onclick="showTab('dates')">Docket &amp; Deadlines</button>
+    <button class="nav-btn"        id="nav-fees"         onclick="showTab('fees')">Statement of Account</button>
+    <button class="nav-btn"        id="nav-undertakings" onclick="showTab('undertakings')">Undertakings</button>
+  </nav>
+
+  <!-- ── CONTENT AREA ── -->
+  <div class="content-area">
+
+    <!-- ── MATTER HEADER ── -->
+    <div class="matter-header">
+      <span class="mh-brand">G.E.R.R.Y.</span>
+      <span class="mh-sep">/</span>
+      <span class="mh-section" id="mh-section">Limitation Calculator</span>
+    </div>
 
 <main>
 
@@ -658,7 +685,7 @@ textarea { resize: vertical; min-height: 80px; }
           <option value="">— select —</option>
           <option value="AB">Alberta (AB)</option>
           <option value="BC">British Columbia (BC)</option>
-          <option value="MB">Manitoba (MB)</option>
+          <option value="MB" selected>Manitoba (MB)</option>
           <option value="NB">New Brunswick (NB)</option>
           <option value="NL">Newfoundland and Labrador (NL)</option>
           <option value="NS">Nova Scotia (NS)</option>
@@ -712,7 +739,7 @@ textarea { resize: vertical; min-height: 80px; }
     </div>
     <div class="toolbar-right">
       <button class="btn btn-ghost btn-sm"   onclick="printDates()">Print</button>
-      <button class="btn btn-primary btn-sm" onclick="openDateModal()">+ Add Entry</button>
+      <button class="btn btn-primary btn-sm" onclick="openDateModal()">File New Record</button>
     </div>
   </div>
   <div id="dates-list" class="dates-list"></div>
@@ -722,7 +749,7 @@ textarea { resize: vertical; min-height: 80px; }
 <div id="tab-fees" class="panel">
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Yield (Fee Estimate) Builder</h2>
+      <h2 class="card-title">Statement of Account</h2>
     </div>
 
     <div class="form-row">
@@ -805,7 +832,7 @@ textarea { resize: vertical; min-height: 80px; }
     <button class="btn btn-primary" onclick="buildEstimate()">Generate Estimate</button>
 
     <div id="estimate-panel" class="estimate-panel" style="display:none">
-      <div class="est-heading">Yield (Fee Estimate)</div>
+      <div class="est-heading">Statement of Account</div>
       <div id="est-rows"></div>
       <div class="est-actions">
         <button class="btn btn-ghost btn-sm"
@@ -830,6 +857,9 @@ textarea { resize: vertical; min-height: 80px; }
 </div>
 
 </main>
+
+  </div><!-- /.content-area -->
+</div><!-- /.layout-body -->
 
 <!-- ══ MODAL: COURT DATE ══ -->
 <div class="overlay" id="modal-courtdate">
@@ -1240,17 +1270,38 @@ function showConfirm(title, msg, cb) {
 
 // ─── TAB SWITCHING ───────────────────────────────────────────────────────────
 
+const TAB_LABELS = {
+  calc: 'Limitation Calculator',
+  dates: 'Docket \u0026 Deadlines',
+  fees: 'Statement of Account',
+  undertakings: 'Undertakings'
+};
+
 function showTab(tab) {
   ['calc', 'dates', 'fees', 'undertakings'].forEach(t => {
     el('tab-' + t).classList.toggle('active', t === tab);
     el('nav-' + t).classList.toggle('active', t === tab);
   });
+  el('mh-section').textContent = TAB_LABELS[tab] || '';
+}
+
+function flashAutosave() {
+  const ind = el('autosave-indicator');
+  if (!ind) return;
+  ind.textContent = 'Auto-saving\u2026';
+  ind.classList.add('flash');
+  clearTimeout(flashAutosave._t);
+  flashAutosave._t = setTimeout(() => {
+    ind.textContent = 'Saved';
+    ind.classList.remove('flash');
+  }, 1400);
 }
 
 // ─── STORAGE ─────────────────────────────────────────────────────────────────
 
 function saveCourtDates() {
   localStorage.setItem('lawdemo_courtDates', JSON.stringify(courtDates));
+  flashAutosave();
 }
 
 function loadCourtDates() {
@@ -1262,6 +1313,7 @@ function loadCourtDates() {
 
 function saveUndertakings() {
   localStorage.setItem('lawdemo_undertakings', JSON.stringify(undertakings));
+  flashAutosave();
 }
 
 function loadUndertakings() {
