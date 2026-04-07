@@ -110,6 +110,42 @@ nav {
   font-weight: 700;
 }
 
+/* ── TITLE CARD ── */
+.title-card {
+  background: var(--navy);
+  color: var(--white);
+  padding: 2.5rem 1.5rem 2rem;
+  text-align: center;
+  border-bottom: 4px solid var(--gold);
+}
+.title-card-name {
+  font-family: 'Laila', serif;
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: .08em;
+  line-height: 1;
+}
+.title-card-name span {
+  color: var(--gold);
+}
+.title-card-expand {
+  font-size: .8rem;
+  font-weight: 500;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+  margin-top: .6rem;
+}
+.title-card-tagline {
+  font-size: 1rem;
+  color: rgba(255,255,255,.75);
+  margin-top: .9rem;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* ── MAIN ── */
 main {
   flex: 1;
@@ -599,6 +635,13 @@ textarea { resize: vertical; min-height: 80px; }
   <button class="nav-btn"        id="nav-fees"         onclick="showTab('fees')">Fee Estimate</button>
   <button class="nav-btn"        id="nav-undertakings" onclick="showTab('undertakings')">Undertakings</button>
 </nav>
+
+<!-- ── TITLE CARD ── -->
+<section class="title-card">
+  <div class="title-card-name"><span>G</span>.<span>E</span>.<span>R</span>.<span>R</span>.<span>Y</span>.</div>
+  <div class="title-card-expand">General Entry &mdash; Records, Reporting &amp; Yield</div>
+  <p class="title-card-tagline">Limitation periods. Court dates. Fee estimates. Undertakings. One tool.</p>
+</section>
 
 <main>
 
