@@ -1170,48 +1170,40 @@ async function searchBGG() {
       return;
     }
 
-    // Not in catalog — try live fetch (may fail if BGG blocks the proxy)
-    // Extract a name from the URL slug as a fallback (e.g. .../boardgame/13/catan -> "Catan")
+    // Not in catalog. Extract a name from the URL slug if present
+    // (e.g. boardgamegeek.com/boardgame/13/catan -> "Catan").
+    // No live BGG fetch — BGG blocks Cloudflare IPs.
     const slugMatch = raw.match(/boardgamegeek\.com\/boardgame\/\d+\/([^/?#]+)/i);
     const slugName = slugMatch
       ? slugMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
       : null;
 
-    resultsEl.innerHTML = '<div class="loading-msg"><span class="spinner"></span> Looking up game...</div>';
-    try {
-      const details = await fetchBGGDetails(parsed.id);
-      if (!details) { resultsEl.innerHTML = '<div class="loading-msg">Game not found.</div>'; return; }
-      showSingleResult(resultsEl, parsed.id, details._name, details._year, details);
-    } catch (err) {
-      // Network failed. If we have a name from the URL slug, offer to add it without details.
-      if (slugName) {
-        resultsEl.innerHTML = '';
-        const row = document.createElement('div');
-        row.className = 'search-result-item';
-        const nameDiv = document.createElement('div');
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'result-name';
-        nameSpan.textContent = slugName;
-        const warnSpan = document.createElement('span');
-        warnSpan.className = 'result-year';
-        warnSpan.style.color = 'var(--warn)';
-        warnSpan.textContent = ' (no details — BGG unreachable)';
-        nameDiv.appendChild(nameSpan);
-        nameDiv.appendChild(warnSpan);
-        const inLib = library.some(g => String(g.id) === String(parsed.id));
-        const btn = document.createElement('button');
-        btn.className = 'result-add-btn' + (inLib ? ' saved' : '');
-        btn.textContent = inLib ? 'Saved' : '+ Add';
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          addToLibraryWithDetails(String(parsed.id), slugName, '', null, btn);
-        });
-        row.appendChild(nameDiv);
-        row.appendChild(btn);
-        resultsEl.appendChild(row);
-      } else {
-        resultsEl.innerHTML = `<div class="loading-msg">Game not in catalog. Paste the full BGG URL to add it.</div>`;
-      }
+    if (slugName) {
+      resultsEl.innerHTML = '';
+      const row = document.createElement('div');
+      row.className = 'search-result-item';
+      const nameDiv = document.createElement('div');
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'result-name';
+      nameSpan.textContent = slugName;
+      const noteSpan = document.createElement('span');
+      noteSpan.className = 'result-year';
+      noteSpan.textContent = ' (name only — not in catalog)';
+      nameDiv.appendChild(nameSpan);
+      nameDiv.appendChild(noteSpan);
+      const inLib = library.some(g => String(g.id) === String(parsed.id));
+      const btn = document.createElement('button');
+      btn.className = 'result-add-btn' + (inLib ? ' saved' : '');
+      btn.textContent = inLib ? 'Saved' : '+ Add';
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        addToLibraryWithDetails(String(parsed.id), slugName, '', null, btn);
+      });
+      row.appendChild(nameDiv);
+      row.appendChild(btn);
+      resultsEl.appendChild(row);
+    } else {
+      resultsEl.innerHTML = `<div class="loading-msg">Not in catalog. Paste the full BGG URL (boardgamegeek.com/boardgame/…) to add it.</div>`;
     }
     return;
   }
