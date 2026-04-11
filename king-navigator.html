@@ -972,24 +972,17 @@ mark {
 // ============================================================
 // STATE
 // ============================================================
-// Proxy chain — tried in order until one succeeds.
-// /api/bgg is our own CF function (best option).
-// allorigins /get returns JSON wrapper { contents }; needs different parsing.
-const BGG_PROXIES = [
-  { url: bgg => '/api/bgg?url=' + encodeURIComponent(bgg), raw: true,  timeout: 20000 },
-  { url: bgg => 'https://api.allorigins.win/get?url=' + encodeURIComponent(bgg), raw: false, timeout: 25000 },
-];
-
+// BGG fetch via /api/bgg — our own CF function.
+// Retry + backoff + empty body handling are all inside the Worker.
+// Frontend timeout is generous (35s) to give the Worker room to retry.
 async function bggFetch(bggUrl) {
-  for (const proxy of BGG_PROXIES) {
-    try {
-      const res = await fetch(proxy.url(bggUrl), { signal: AbortSignal.timeout(proxy.timeout) });
-      if (!res.ok) continue;
-      const text = proxy.raw ? await res.text() : (await res.json()).contents;
-      if (text && text.includes('<')) return text;
-    } catch (_) { /* try next */ }
-  }
-  throw new Error('BGG is not responding. Check your connection or try again in a moment.');
+  const res = await fetch('/api/bgg?url=' + encodeURIComponent(bggUrl), {
+    signal: AbortSignal.timeout(35000)
+  });
+  if (!res.ok) throw new Error('BGG is not responding. Try again in a moment.');
+  const text = await res.text();
+  if (!text || !text.includes('<')) throw new Error('BGG returned an empty response. Try again.');
+  return text;
 }
 const BGG_SEARCH = 'https://boardgamegeek.com/xmlapi2/search?query=';
 const BGG_THING  = 'https://boardgamegeek.com/xmlapi2/thing?stats=1&id=';
