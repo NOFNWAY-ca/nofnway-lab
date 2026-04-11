@@ -973,6 +973,8 @@ mark {
 // STATE
 // ============================================================
 const CORS = 'https://corsproxy.io/?';
+// Build a proxied BGG URL. corsproxy.io expects the raw target URL appended directly.
+function proxyUrl(bggUrl) { return CORS + bggUrl; }
 const BGG_SEARCH = 'https://boardgamegeek.com/xmlapi2/search?query=';
 const BGG_THING  = 'https://boardgamegeek.com/xmlapi2/thing?stats=1&id=';
 const PLAYER_COLORS = ['#5b8dee','#4fa86a','#c4931a','#c84040','#9b72cf','#4fb8d4'];
@@ -1136,7 +1138,7 @@ async function searchBGG() {
   resultsEl.innerHTML = '<div class="loading-msg"><span class="spinner"></span> Searching BGG...</div>';
 
   try {
-    const url = CORS + encodeURIComponent(BGG_SEARCH + encodeURIComponent(q));
+    const url = proxyUrl(BGG_SEARCH + encodeURIComponent(q));
     const res = await fetch(url);
     const text = await res.text();
     const xml = new DOMParser().parseFromString(text, 'text/xml');
@@ -1207,7 +1209,7 @@ async function addToLibrary(id, name, year, btnEl) {
 }
 
 async function fetchBGGDetails(id) {
-  const url = CORS + encodeURIComponent(BGG_THING + id);
+  const url = proxyUrl(BGG_THING + id);
   const res = await fetch(url);
   const text = await res.text();
   const xml = new DOMParser().parseFromString(text, 'text/xml');
