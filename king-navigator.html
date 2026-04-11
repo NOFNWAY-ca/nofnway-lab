@@ -973,23 +973,23 @@ mark {
 // STATE
 // ============================================================
 // Proxy chain — tried in order until one succeeds.
-// allorigins /get returns JSON wrapper { contents, status }; others return raw XML.
+// /api/bgg is our own CF function (best option).
+// allorigins /get returns JSON wrapper { contents }; needs different parsing.
 const BGG_PROXIES = [
-  { url: bgg => '/api/bgg?url=' + encodeURIComponent(bgg), raw: true },
-  { url: bgg => 'https://thingproxy.freeboard.io/fetch/' + bgg, raw: true },
-  { url: bgg => 'https://api.allorigins.win/get?url=' + encodeURIComponent(bgg), raw: false },
+  { url: bgg => '/api/bgg?url=' + encodeURIComponent(bgg), raw: true,  timeout: 20000 },
+  { url: bgg => 'https://api.allorigins.win/get?url=' + encodeURIComponent(bgg), raw: false, timeout: 25000 },
 ];
 
 async function bggFetch(bggUrl) {
   for (const proxy of BGG_PROXIES) {
     try {
-      const res = await fetch(proxy.url(bggUrl), { signal: AbortSignal.timeout(8000) });
+      const res = await fetch(proxy.url(bggUrl), { signal: AbortSignal.timeout(proxy.timeout) });
       if (!res.ok) continue;
       const text = proxy.raw ? await res.text() : (await res.json()).contents;
       if (text && text.includes('<')) return text;
     } catch (_) { /* try next */ }
   }
-  throw new Error('All BGG proxies failed or were blocked.');
+  throw new Error('BGG is not responding. Check your connection or try again in a moment.');
 }
 const BGG_SEARCH = 'https://boardgamegeek.com/xmlapi2/search?query=';
 const BGG_THING  = 'https://boardgamegeek.com/xmlapi2/thing?stats=1&id=';
