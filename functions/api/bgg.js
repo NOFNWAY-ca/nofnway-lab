@@ -16,9 +16,15 @@ export async function onRequest(context) {
     const res = await fetch(target, {
       headers: { 'User-Agent': 'KING-Navigator/1.0' }
     });
+    if (!res.ok) {
+      return new Response(`Upstream returned ${res.status}`, {
+        status: 502,
+        headers: { 'Access-Control-Allow-Origin': '*' }
+      });
+    }
     const text = await res.text();
     return new Response(text, {
-      status: res.status,
+      status: 200,
       headers: {
         'Content-Type': 'text/xml; charset=utf-8',
         'Access-Control-Allow-Origin': '*',
