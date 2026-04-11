@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K.I.N.G. — Kelly's Infinite Navigator for Games</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface2: #222;
+  --border: #2a2a2a;
+  --border2: #333;
+  --text: #e0e0e0;
+  --dim: #888;
+  --accent: #5b8dee;
+  --accent-dim: #3a5fa8;
+  --danger: #c0392b;
+  --success: #27ae60;
+  --warn: #e67e22;
+  --radius: 6px;
+}
+
+/* ---- THEMES ---- */
+body[data-theme="tavern"] {
+  --bg: #100d08;
+  --surface: #1c1610;
+  --surface2: #241e16;
+  --border: #2e2419;
+  --border2: #3c2e20;
+  --accent: #c4931a;
+  --accent-dim: #8f6c12;
+}
+body[data-theme="forest"] {
+  --bg: #09100b;
+  --surface: #131c14;
+  --surface2: #192419;
+  --border: #1e2e1f;
+  --border2: #283a28;
+  --accent: #4fa86a;
+  --accent-dim: #337a4a;
+}
+body[data-theme="crimson"] {
+  --bg: #0f0909;
+  --surface: #1c1212;
+  --surface2: #231818;
+  --border: #2e1c1c;
+  --border2: #3c2424;
+  --accent: #c84040;
+  --accent-dim: #962020;
+}
+body[data-theme="frost"] {
+  --bg: #0a0d12;
+  --surface: #141820;
+  --surface2: #1b2029;
+  --border: #242a36;
+  --border2: #303a4a;
+  --accent: #70a0d4;
+  --accent-dim: #4a7aaa;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- APP HEADER ---- */
+#app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+#app-title {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+#app-title span {
+  color: var(--dim);
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 10px;
+  letter-spacing: 0.01em;
+}
+
+#header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#theme-select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  border-radius: var(--radius);
+  padding: 3px 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+#theme-select:hover { border-color: var(--accent); color: var(--text); }
+
+
+/* ---- MAIN NAV ---- */
+#main-nav {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.nav-btn {
+  padding: 10px 24px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  color: var(--dim);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color 0.15s, border-color 0.15s;
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- SECTIONS ---- */
+#main-content {
+  flex: 1;
+  overflow: auto;
+}
+
+.section { display: none; padding: 20px; max-width: 900px; margin: 0 auto; }
+.section.active { display: block; }
+
+/* ---- LIBRARY ---- */
+#search-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+input[type=text], input[type=password], select, textarea {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input[type=text]:focus, input[type=password]:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+input[type=text]::placeholder, textarea::placeholder { color: var(--dim); }
+
+#search-input { flex: 1; }
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+button:hover { background: var(--accent-dim); }
+button:disabled { background: var(--border2); color: var(--dim); cursor: not-allowed; }
+button.danger { background: var(--danger); }
+button.danger:hover { background: #a93226; }
+button.ghost {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--dim);
+}
+button.ghost:hover { border-color: var(--accent); color: var(--accent); background: none; }
+button.ghost.danger { background: none; border-color: var(--danger); color: var(--danger); }
+button.ghost.danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+button.small { padding: 4px 10px; font-size: 12px; }
+
+#search-results {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  display: none;
+}
+
+#search-results.visible { display: block; }
+
+.search-result-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.1s;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: var(--surface2); }
+.result-name { font-weight: 500; }
+.result-year { color: var(--dim); font-size: 13px; }
+.result-add-btn {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 3px 10px;
+  font-size: 12px;
+  border-radius: var(--radius);
+}
+.result-add-btn:hover { background: var(--accent); color: #fff; }
+.result-add-btn.saved { border-color: var(--success); color: var(--success); }
+.result-add-btn.saved:hover { background: var(--success); color: #fff; }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  margin-bottom: 10px;
+  padding-left: 8px;
+  border-left: 3px solid var(--accent);
+}
+
+#library-list { display: flex; flex-direction: column; gap: 8px; }
+
+.lib-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+
+.lib-card:hover {
+  background: var(--surface2);
+  border-color: var(--border2);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.lib-card-info { flex: 1; min-width: 0; }
+.lib-card-name { font-weight: 600; font-size: 15px; }
+.lib-card-meta { color: var(--dim); font-size: 12px; margin-top: 2px; }
+.lib-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.bgg-weight {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--border);
+  color: var(--dim);
+  margin-left: 6px;
+}
+.bgg-weight.complex { background: #4a2a0a; color: var(--warn); }
+
+#library-empty {
+  color: var(--dim);
+  text-align: center;
+  padding: 48px 20px;
+  font-size: 14px;
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius);
+  margin-top: 4px;
+}
+
+/* ---- GAME DETAIL OVERLAY ---- */
+#game-detail-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#game-detail-overlay.open { display: flex; }
+#game-detail-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-top: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+#game-detail-panel h2 { margin-bottom: 4px; font-size: 18px; }
+#game-detail-panel .meta { color: var(--dim); font-size: 13px; margin-bottom: 12px; }
+#game-detail-panel .desc {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.6;
+  max-height: 120px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  position: relative;
+}
+.detail-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+.history-row {
+  font-size: 13px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+}
+.history-label { color: var(--dim); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 10px 0 4px; }
+
+/* ---- RULES (offline reference viewer) ---- */
+#rules-stats {
+  font-size: 12px;
+  color: var(--dim);
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.rules-stat strong { color: var(--text); }
+
+#rules-search-row { margin-bottom: 8px; }
+#rules-search { width: 100%; margin-bottom: 8px; }
+#rules-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-height: 24px;
+}
+
+.filter-chip {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--dim);
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+  white-space: nowrap;
+  font-family: inherit;
+  font-weight: 400;
+}
+.filter-chip:hover { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+.filter-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.filter-chip.on:hover { background: var(--accent-dim); }
+
+#rules-body {
+  display: flex;
+  gap: 16px;
+  min-height: 400px;
+  align-items: flex-start;
+}
+#rules-results-col {
+  width: 210px;
+  flex-shrink: 0;
+}
+#rules-results { display: flex; flex-direction: column; gap: 4px; }
+#rules-empty {
+  color: var(--dim);
+  font-size: 13px;
+  padding: 24px 12px;
+  text-align: center;
+}
+
+.rules-result-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, box-shadow 0.1s;
+}
+.rules-result-item:hover {
+  background: var(--surface2);
+  border-color: var(--border2);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.rules-result-item.selected {
+  background: var(--surface2);
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.rules-result-name { font-weight: 600; font-size: 13px; }
+.rules-result-meta { color: var(--dim); font-size: 11px; margin-top: 2px; }
+
+#rules-detail {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 600px;
+}
+#rules-detail-placeholder {
+  color: var(--dim);
+  font-size: 14px;
+  text-align: center;
+  padding: 40px 20px;
+}
+.rules-detail-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.rules-detail-meta { color: var(--dim); font-size: 12px; margin-bottom: 12px; }
+.rules-detail-desc {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.rules-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  margin: 12px 0 6px;
+  padding-left: 8px;
+  border-left: 3px solid var(--accent);
+}
+.rules-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.rules-tag {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--dim);
+  transition: border-color 0.1s, color 0.1s;
+}
+.rules-tag.clickable { cursor: pointer; }
+.rules-tag.clickable:hover { border-color: var(--accent); color: var(--accent); }
+.rules-tag.active-filter { border-color: var(--accent); color: var(--accent); }
+
+.rules-notes-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  margin: 16px 0 6px;
+  padding-left: 8px;
+  border-left: 3px solid var(--accent-dim);
+}
+#rules-notes-area {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+mark {
+  background: var(--accent-dim);
+  color: #fff;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* ---- SESSIONS ---- */
+#sessions-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+#session-tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.session-tab {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--dim);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 0.1s, color 0.1s;
+}
+.session-tab:hover { border-color: var(--accent); color: var(--text); }
+.session-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.session-tab .tab-close {
+  opacity: 0.6;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+.session-tab .tab-close:hover { opacity: 1; }
+.session-tab.active .tab-close { opacity: 0.7; }
+.session-tab.active .tab-close:hover { opacity: 1; }
+
+#session-content {
+  display: none;
+}
+#session-content.visible { display: block; }
+
+#session-empty {
+  color: var(--dim);
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 14px;
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius);
+}
+
+/* ---- SESSION PANEL ---- */
+.session-panel { }
+
+.session-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.session-title { font-size: 18px; font-weight: 700; }
+.session-actions { display: flex; gap: 6px; }
+
+.players-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.player-chip {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.player-chip:hover { opacity: 0.75; }
+.player-chip.editing input {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  width: 80px;
+}
+
+/* ---- FIELDS ---- */
+.fields-section {
+  margin-bottom: 20px;
+}
+
+.fields-section-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  margin-bottom: 8px;
+  padding-left: 8px;
+  border-left: 3px solid var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  transition: background 0.1s, border-color 0.1s, box-shadow 0.1s;
+}
+.field-row:hover {
+  background: var(--surface2);
+  border-color: var(--border2);
+  box-shadow: inset 3px 0 0 var(--accent-dim);
+}
+
+.field-label {
+  font-size: 13px;
+  color: var(--dim);
+  min-width: 100px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.field-label:hover { color: var(--text); }
+.field-label input {
+  background: none;
+  border: none;
+  border-bottom: 1px dashed var(--border2);
+  color: var(--text);
+  font-size: 13px;
+  width: 120px;
+  padding: 0 2px;
+  outline: none;
+}
+
+.field-values {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.player-field-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.player-field-label {
+  font-size: 10px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Counter */
+.counter-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.counter-val {
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 42px;
+  text-align: center;
+  color: var(--accent);
+  cursor: pointer;
+}
+.counter-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  padding: 0;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.1s, border-color 0.1s;
+}
+.counter-btn:hover { background: var(--border); border-color: var(--accent); }
+
+/* Toggle */
+.toggle-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--dim);
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.toggle-btn:hover { background: var(--border); border-color: var(--border2); color: var(--text); }
+.toggle-btn.on {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+.toggle-btn.on:hover { background: var(--success); opacity: 0.85; }
+
+/* Token pool */
+.token-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
+.token {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1px solid var(--border2);
+  cursor: pointer;
+}
+.token.empty { background: var(--surface2); }
+.token-pool-add {
+  background: none;
+  border: 1px dashed var(--border2);
+  color: var(--dim);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.token-pool-add:hover { border-color: var(--accent); color: var(--accent); background: none; }
+
+/* Text field in session */
+.session-text-input {
+  flex: 1;
+  min-width: 120px;
+  font-size: 13px;
+  padding: 5px 8px;
+}
+
+.field-del {
+  background: none;
+  border: none;
+  color: var(--border2);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 16px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.field-del:hover { color: var(--danger); background: none; }
+
+/* Add field row */
+.add-field-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  align-items: center;
+}
+.add-field-row label { color: var(--dim); font-size: 13px; }
+.add-field-row select { font-size: 13px; padding: 5px 8px; }
+.add-field-row input[type=text] { font-size: 13px; padding: 5px 8px; }
+
+/* ---- NEW SESSION DIALOG ---- */
+#new-session-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#new-session-overlay.open { display: flex; }
+#new-session-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-top: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 440px;
+  width: 100%;
+}
+#new-session-panel h3 { margin-bottom: 16px; font-size: 16px; }
+.form-row { margin-bottom: 12px; }
+.form-row label { display: block; font-size: 12px; color: var(--dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+.form-row select, .form-row input[type=text] { width: 100%; }
+.dialog-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+
+/* ---- END SESSION DIALOG ---- */
+#end-session-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#end-session-overlay.open { display: flex; }
+#end-session-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-top: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+}
+#end-session-panel h3 { margin-bottom: 14px; }
+#winner-select { width: 100%; margin-bottom: 8px; }
+
+/* ---- SPINNER ---- */
+.spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- LOADING ---- */
+.loading-msg {
+  color: var(--dim);
+  font-size: 13px;
+  padding: 12px;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div id="app-header">
+  <div id="app-title">K.I.N.G. <span>Kelly's Infinite Navigator for Games</span></div>
+  <div id="header-controls">
+    <select id="theme-select" onchange="setTheme(this.value)" title="Color theme">
+      <option value="midnight">Midnight</option>
+      <option value="tavern">Tavern</option>
+      <option value="forest">Forest</option>
+      <option value="crimson">Crimson</option>
+      <option value="frost">Frost</option>
+    </select>
+  </div>
+</div>
+
+<nav id="main-nav">
+  <button class="nav-btn active" onclick="showSection('library')">Library</button>
+  <button class="nav-btn" onclick="showSection('rules')">Rules</button>
+  <button class="nav-btn" onclick="showSection('sessions')">Sessions</button>
+</nav>
+
+<div id="main-content">
+
+  <!-- LIBRARY -->
+  <div id="section-library" class="section active">
+    <div id="search-row">
+      <input type="text" id="search-input" placeholder="Search BoardGameGeek..." />
+      <button onclick="searchBGG()">Search</button>
+    </div>
+    <div id="search-results"></div>
+    <div class="section-label">Your Library</div>
+    <div id="library-list"></div>
+    <div id="library-empty">No games yet. Search above to add games to your library.</div>
+  </div>
+
+  <!-- RULES -->
+  <div id="section-rules" class="section">
+    <div id="rules-stats"></div>
+    <div id="rules-search-row">
+      <input type="text" id="rules-search" placeholder="Search games, mechanics, categories... ( / )" />
+      <div id="rules-filters"></div>
+    </div>
+    <div id="rules-body">
+      <div id="rules-results-col">
+        <div id="rules-results"></div>
+        <div id="rules-empty" style="display:none">Add games to your library to browse their reference.</div>
+      </div>
+      <div id="rules-detail"><div id="rules-detail-placeholder">Select a game to view its reference.</div></div>
+    </div>
+  </div>
+
+  <!-- SESSIONS -->
+  <div id="section-sessions" class="section">
+    <div id="sessions-top">
+      <div id="session-tabs"></div>
+      <button onclick="openNewSession()">+ New Session</button>
+    </div>
+    <div id="session-empty">No open sessions. Start one by clicking + New Session.</div>
+    <div id="session-content"></div>
+  </div>
+
+</div>
+
+<!-- GAME DETAIL OVERLAY -->
+<div id="game-detail-overlay" onclick="closeDetailIfBg(event)">
+  <div id="game-detail-panel">
+    <div id="gdp-content"></div>
+  </div>
+</div>
+
+<!-- NEW SESSION OVERLAY -->
+<div id="new-session-overlay" onclick="closeOverlayIfBg(event, 'new-session-overlay')">
+  <div id="new-session-panel">
+    <h3>New Session</h3>
+    <div class="form-row">
+      <label>Game</label>
+      <select id="ns-game-select"></select>
+    </div>
+    <div class="form-row">
+      <label>Player Count</label>
+      <select id="ns-player-count">
+        <option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+      </select>
+    </div>
+    <div class="dialog-actions">
+      <button class="ghost" onclick="closeOverlay('new-session-overlay')">Cancel</button>
+      <button onclick="createSession()">Start</button>
+    </div>
+  </div>
+</div>
+
+<!-- END SESSION OVERLAY -->
+<div id="end-session-overlay" onclick="closeOverlayIfBg(event, 'end-session-overlay')">
+  <div id="end-session-panel">
+    <h3>End Session</h3>
+    <div class="form-row">
+      <label>Winner (optional)</label>
+      <select id="winner-select"></select>
+    </div>
+    <div class="dialog-actions">
+      <button class="ghost" onclick="closeOverlay('end-session-overlay')">Cancel</button>
+      <button onclick="confirmEndSession()">End &amp; Save</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const CORS = 'https://api.allorigins.win/raw?url=';
+const BGG_SEARCH = 'https://boardgamegeek.com/xmlapi2/search?query=';
+const BGG_THING  = 'https://boardgamegeek.com/xmlapi2/thing?stats=1&id=';
+const PLAYER_COLORS = ['#5b8dee','#4fa86a','#c4931a','#c84040','#9b72cf','#4fb8d4'];
+const LIBRARY_LIMIT = 50;
+
+let library = [];          // [{id, name, year, details}]
+let sessions = [];         // session objects
+let activeSessionId = null;
+let rulesQuery = '';
+let rulesActiveFilters = new Set();
+let rulesSelectedId = null;
+let endingSessionId = null;
+
+// ============================================================
+// THEME
+// ============================================================
+function setTheme(name) {
+  if (name === 'midnight') {
+    document.body.removeAttribute('data-theme');
+  } else {
+    document.body.setAttribute('data-theme', name);
+  }
+  localStorage.setItem('king_theme', name);
+  document.getElementById('theme-select').value = name;
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('king_theme') || 'midnight';
+  setTheme(saved);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  loadTheme();
+  library = JSON.parse(localStorage.getItem('king_library') || '[]');
+  sessions = JSON.parse(localStorage.getItem('king_sessions') || '[]');
+  renderLibrary();
+  renderRulesSection();
+  renderSessionTabs();
+  if (sessions.length > 0) {
+    activateSession(sessions[0].id);
+  }
+  document.getElementById('search-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchBGG();
+  });
+
+  // Rules search: debounced real-time + / shortcut
+  let rulesDebounce;
+  document.getElementById('rules-search').addEventListener('input', e => {
+    rulesQuery = e.target.value;
+    clearTimeout(rulesDebounce);
+    rulesDebounce = setTimeout(() => renderRulesResults(), 150);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      const rulesSection = document.getElementById('section-rules');
+      if (rulesSection.classList.contains('active')) {
+        e.preventDefault();
+        document.getElementById('rules-search').focus();
+      }
+    }
+  });
+}
+
+// ============================================================
+// SECTION SWITCHING
+// ============================================================
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  const idx = ['library', 'rules', 'sessions'].indexOf(name);
+  if (btns[idx]) btns[idx].classList.add('active');
+}
+
+// ============================================================
+// OVERLAYS
+// ============================================================
+function closeOverlay(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function closeOverlayIfBg(e, id) {
+  if (e.target === document.getElementById(id)) closeOverlay(id);
+}
+function closeDetailIfBg(e) {
+  if (e.target === document.getElementById('game-detail-overlay')) {
+    document.getElementById('game-detail-overlay').classList.remove('open');
+  }
+}
+
+// ============================================================
+// LIBRARY
+// ============================================================
+function saveLibrary() {
+  localStorage.setItem('king_library', JSON.stringify(library));
+}
+
+function getGame(id) {
+  return library.find(g => g.id === id);
+}
+
+function renderLibrary() {
+  const el = document.getElementById('library-list');
+  const empty = document.getElementById('library-empty');
+  el.innerHTML = '';
+  if (library.length === 0) {
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+  library.forEach(game => {
+    const card = document.createElement('div');
+    card.className = 'lib-card';
+
+    const weight = game.details ? parseFloat(game.details.weight) : 0;
+    const weightLabel = weight > 0
+      ? `<span class="bgg-weight${weight >= 4 ? ' complex' : ''}">Weight ${weight.toFixed(1)}</span>`
+      : '';
+
+    const players = game.details
+      ? `${game.details.minplayers}–${game.details.maxplayers}p &bull; ${game.details.minplaytime}–${game.details.maxplaytime} min`
+      : '';
+
+    card.innerHTML = `
+      <div class="lib-card-info">
+        <div class="lib-card-name">${esc(game.name)} ${weightLabel}</div>
+        <div class="lib-card-meta">${game.year ? game.year : ''}${players ? ' &bull; ' + players : ''}</div>
+      </div>
+      <div class="lib-card-actions">
+        <button class="ghost small" onclick="openGameDetail('${game.id}')">Details</button>
+        <button class="small" onclick="startSessionForGame('${game.id}')">Play</button>
+        <button class="ghost small danger" onclick="removeFromLibrary('${game.id}')">Remove</button>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function removeFromLibrary(id) {
+  library = library.filter(g => g.id !== id);
+  saveLibrary();
+  renderLibrary();
+  if (rulesSelectedId === id) {
+    rulesSelectedId = null;
+    const detailEl = document.getElementById('rules-detail');
+    if (detailEl) detailEl.innerHTML = '<div id="rules-detail-placeholder">Select a game to view its reference.</div>';
+  }
+  renderRulesSection();
+  populateNewSessionGames();
+}
+
+async function searchBGG() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  const resultsEl = document.getElementById('search-results');
+  resultsEl.className = 'visible';
+  resultsEl.innerHTML = '<div class="loading-msg"><span class="spinner"></span> Searching BGG...</div>';
+
+  try {
+    const url = CORS + encodeURIComponent(BGG_SEARCH + encodeURIComponent(q) + '&type=boardgame');
+    const res = await fetch(url);
+    const text = await res.text();
+    const xml = new DOMParser().parseFromString(text, 'text/xml');
+    const items = Array.from(xml.querySelectorAll('item')).slice(0, 15);
+
+    if (items.length === 0) {
+      resultsEl.innerHTML = '<div class="loading-msg">No results found.</div>';
+      return;
+    }
+
+    resultsEl.innerHTML = '';
+    items.forEach(item => {
+      const id = item.getAttribute('id');
+      const nameEl = item.querySelector('name[type="primary"]') || item.querySelector('name');
+      const name = nameEl ? nameEl.getAttribute('value') : 'Unknown';
+      const yearEl = item.querySelector('yearpublished');
+      const year = yearEl ? yearEl.getAttribute('value') : '';
+      const inLib = library.some(g => g.id === id);
+
+      const row = document.createElement('div');
+      row.className = 'search-result-item';
+      row.innerHTML = `
+        <div>
+          <span class="result-name">${esc(name)}</span>
+          ${year ? `<span class="result-year"> (${year})</span>` : ''}
+        </div>
+        <button class="result-add-btn${inLib ? ' saved' : ''}" data-id="${id}" data-name="${esc(name)}" data-year="${year}">
+          ${inLib ? 'Saved' : '+ Add'}
+        </button>
+      `;
+      row.querySelector('.result-add-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        addToLibrary(btn.dataset.id, btn.dataset.name, btn.dataset.year, btn);
+      });
+      resultsEl.appendChild(row);
+    });
+  } catch (err) {
+    resultsEl.innerHTML = `<div class="loading-msg">Error: ${esc(err.message)}</div>`;
+  }
+}
+
+async function addToLibrary(id, name, year, btnEl) {
+  if (library.some(g => g.id === id)) return;
+  if (library.length >= LIBRARY_LIMIT) {
+    if (btnEl) { btnEl.textContent = 'Full'; btnEl.disabled = false; }
+    alert(`Library is full (${LIBRARY_LIMIT} games max). Remove a game first.`);
+    return;
+  }
+  if (btnEl) { btnEl.textContent = '...'; btnEl.disabled = true; }
+
+  let details = null;
+  try {
+    details = await fetchBGGDetails(id);
+  } catch(e) { /* proceed without details */ }
+
+  library.push({ id, name, year, details });
+  saveLibrary();
+  renderLibrary();
+  renderRulesSection();
+  populateNewSessionGames();
+
+  if (btnEl) {
+    btnEl.textContent = 'Saved';
+    btnEl.classList.add('saved');
+    btnEl.disabled = false;
+  }
+}
+
+async function fetchBGGDetails(id) {
+  const url = CORS + encodeURIComponent(BGG_THING + id);
+  const res = await fetch(url);
+  const text = await res.text();
+  const xml = new DOMParser().parseFromString(text, 'text/xml');
+  const item = xml.querySelector('item');
+  if (!item) return null;
+
+  const get = (sel, attr) => {
+    const el = item.querySelector(sel);
+    return el ? el.getAttribute(attr) || el.textContent.trim() : '';
+  };
+  const getAll = (sel, attr) => Array.from(item.querySelectorAll(sel)).map(e => attr ? e.getAttribute(attr) : e.textContent.trim());
+
+  const descRaw = get('description', null) || '';
+  const desc = descRaw.replace(/\n/g, ' ').replace(/\s+/g, ' ').replace(/<[^>]+>/g, '').trim().substring(0, 600);
+
+  const categories = getAll('link[type="boardgamecategory"]', 'value');
+  const mechanics = getAll('link[type="boardgamemechanic"]', 'value');
+  const weight = get('averageweight', 'value') || '0';
+
+  return {
+    description: desc,
+    minplayers: get('minplayers', 'value'),
+    maxplayers: get('maxplayers', 'value'),
+    minplaytime: get('minplaytime', 'value'),
+    maxplaytime: get('maxplaytime', 'value'),
+    categories,
+    mechanics,
+    weight,
+    image: get('image', null)
+  };
+}
+
+function openGameDetail(id) {
+  const game = getGame(id);
+  if (!game) return;
+  const d = game.details;
+  const history = getGameHistory(id);
+  const weight = d ? parseFloat(d.weight) : 0;
+
+  let histHTML = '';
+  if (history.length > 0) {
+    histHTML = '<div class="history-label">Play History</div>';
+    history.slice(-10).reverse().forEach(h => {
+      histHTML += `<div class="history-row"><span>${esc(h.date)} &bull; ${esc(h.players.join(', '))}</span><span>${h.winner ? esc(h.winner) : 'No winner recorded'}</span></div>`;
+    });
+  }
+
+  document.getElementById('gdp-content').innerHTML = `
+    <h2>${esc(game.name)}</h2>
+    <div class="meta">
+      ${game.year ? game.year : ''}
+      ${d ? ` &bull; ${d.minplayers}–${d.maxplayers} players &bull; ${d.minplaytime}–${d.maxplaytime} min` : ''}
+      ${weight > 0 ? ` &bull; Weight ${weight.toFixed(1)}` : ''}
+    </div>
+    ${d && d.description ? `<div class="desc">${esc(d.description)}</div>` : ''}
+    ${d && d.categories && d.categories.length ? `<div style="font-size:12px;color:var(--dim);margin-bottom:4px">${d.categories.map(c => esc(c)).join(' &bull; ')}</div>` : ''}
+    ${histHTML}
+    <div class="detail-actions">
+      <button onclick="startSessionForGame('${id}'); document.getElementById('game-detail-overlay').classList.remove('open')">Play Session</button>
+      <button class="ghost" onclick="document.getElementById('game-detail-overlay').classList.remove('open')">Close</button>
+    </div>
+  `;
+  document.getElementById('game-detail-overlay').classList.add('open');
+}
+
+function getGameHistory(gameId) {
+  const all = JSON.parse(localStorage.getItem('king_history') || '[]');
+  return all.filter(h => h.gameId === gameId);
+}
+
+function saveHistoryEntry(entry) {
+  const all = JSON.parse(localStorage.getItem('king_history') || '[]');
+  all.push(entry);
+  localStorage.setItem('king_history', JSON.stringify(all));
+}
+
+// ============================================================
+// RULES — offline BGG reference viewer
+// ============================================================
+function getNotes() {
+  return JSON.parse(localStorage.getItem('king_notes') || '{}');
+}
+function getNote(gameId) {
+  return getNotes()[gameId] || '';
+}
+function saveNote(gameId, text) {
+  const notes = getNotes();
+  if (text) {
+    notes[gameId] = text;
+  } else {
+    delete notes[gameId];
+  }
+  localStorage.setItem('king_notes', JSON.stringify(notes));
+}
+
+function renderRulesSection() {
+  renderRulesStats();
+  renderRulesFilters();
+  renderRulesResults();
+}
+
+function renderRulesStats() {
+  const el = document.getElementById('rules-stats');
+  if (library.length === 0) {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = 'flex';
+  const mechSet = new Set();
+  const catSet = new Set();
+  library.forEach(g => {
+    if (g.details) {
+      (g.details.mechanics || []).forEach(m => mechSet.add(m));
+      (g.details.categories || []).forEach(c => catSet.add(c));
+    }
+  });
+  const slotsLeft = LIBRARY_LIMIT - library.length;
+  const slotsEl = slotsLeft === 0
+    ? `<span class="rules-stat" style="margin-left:auto;color:var(--warn)">Library full</span>`
+    : `<span class="rules-stat" style="margin-left:auto">${slotsLeft} slot${slotsLeft !== 1 ? 's' : ''} open</span>`;
+
+  el.innerHTML = `
+    <span class="rules-stat"><strong>${library.length}</strong> games</span>
+    ${mechSet.size ? `<span class="rules-stat"><strong>${mechSet.size}</strong> mechanics</span>` : ''}
+    ${catSet.size ? `<span class="rules-stat"><strong>${catSet.size}</strong> categories</span>` : ''}
+    ${slotsEl}
+  `;
+}
+
+function renderRulesFilters() {
+  const el = document.getElementById('rules-filters');
+  const mechCount = {};
+  library.forEach(g => {
+    if (g.details) {
+      (g.details.mechanics || []).forEach(m => {
+        mechCount[m] = (mechCount[m] || 0) + 1;
+      });
+    }
+  });
+  const topMechs = Object.entries(mechCount)
+    .filter(([_, n]) => n >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([m]) => m);
+
+  el.innerHTML = '';
+  topMechs.forEach(mech => {
+    const chip = document.createElement('button');
+    chip.className = 'filter-chip' + (rulesActiveFilters.has(mech) ? ' on' : '');
+    chip.textContent = mech;
+    chip.addEventListener('click', () => {
+      if (rulesActiveFilters.has(mech)) {
+        rulesActiveFilters.delete(mech);
+      } else {
+        rulesActiveFilters.add(mech);
+      }
+      renderRulesFilters();
+      renderRulesResults();
+    });
+    el.appendChild(chip);
+  });
+}
+
+function getFilteredGames() {
+  let games = library;
+  const q = rulesQuery.toLowerCase().trim();
+  if (q) {
+    games = games.filter(g => {
+      const inName = g.name.toLowerCase().includes(q);
+      const inMechs = g.details && (g.details.mechanics || []).some(m => m.toLowerCase().includes(q));
+      const inCats = g.details && (g.details.categories || []).some(c => c.toLowerCase().includes(q));
+      return inName || inMechs || inCats;
+    });
+  }
+  if (rulesActiveFilters.size > 0) {
+    games = games.filter(g => {
+      const mechs = g.details ? (g.details.mechanics || []) : [];
+      return [...rulesActiveFilters].every(f => mechs.includes(f));
+    });
+  }
+  return games;
+}
+
+function renderRulesResults() {
+  const resultsEl = document.getElementById('rules-results');
+  const emptyEl = document.getElementById('rules-empty');
+  const games = getFilteredGames();
+  resultsEl.innerHTML = '';
+
+  if (library.length === 0) {
+    emptyEl.style.display = '';
+    emptyEl.textContent = 'Add games to your library to browse their reference.';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  if (games.length === 0) {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'color:var(--dim);font-size:13px;padding:16px 8px';
+    msg.textContent = 'No games match.';
+    resultsEl.appendChild(msg);
+    return;
+  }
+
+  games.forEach(game => {
+    const item = document.createElement('div');
+    item.className = 'rules-result-item' + (game.id === rulesSelectedId ? ' selected' : '');
+    item.dataset.id = game.id;
+
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'rules-result-name';
+    if (rulesQuery.trim()) {
+      nameDiv.appendChild(highlightText(game.name, rulesQuery));
+    } else {
+      nameDiv.textContent = game.name;
+    }
+
+    const metaDiv = document.createElement('div');
+    metaDiv.className = 'rules-result-meta';
+    if (game.details) {
+      const w = parseFloat(game.details.weight);
+      metaDiv.textContent = `${game.details.minplayers}–${game.details.maxplayers}p` +
+        (w > 0 ? ` · W${w.toFixed(1)}` : '');
+    }
+
+    item.appendChild(nameDiv);
+    item.appendChild(metaDiv);
+    item.addEventListener('click', () => selectRulesGame(game.id));
+    resultsEl.appendChild(item);
+  });
+}
+
+function selectRulesGame(id) {
+  rulesSelectedId = id;
+  document.querySelectorAll('.rules-result-item').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id === id);
+  });
+  const game = library.find(g => g.id === id);
+  if (game) renderRulesDetail(game);
+}
+
+function renderRulesDetail(game) {
+  const el = document.getElementById('rules-detail');
+  el.innerHTML = '';
+  const d = game.details;
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'rules-detail-name';
+  nameEl.textContent = game.name;
+  el.appendChild(nameEl);
+
+  if (d) {
+    const metaEl = document.createElement('div');
+    metaEl.className = 'rules-detail-meta';
+    const w = parseFloat(d.weight);
+    const parts = [];
+    if (game.year) parts.push(game.year);
+    if (d.minplayers && d.maxplayers) parts.push(`${d.minplayers}–${d.maxplayers} players`);
+    if (d.minplaytime && d.maxplaytime) parts.push(`${d.minplaytime}–${d.maxplaytime} min`);
+    if (w > 0) parts.push(`Weight ${w.toFixed(1)}/5`);
+    metaEl.textContent = parts.join(' · ');
+    el.appendChild(metaEl);
+  }
+
+  if (d && d.description) {
+    const lbl = document.createElement('div');
+    lbl.className = 'rules-section-label';
+    lbl.textContent = 'About';
+    el.appendChild(lbl);
+    const desc = document.createElement('div');
+    desc.className = 'rules-detail-desc';
+    desc.textContent = d.description;
+    el.appendChild(desc);
+  }
+
+  if (d && d.categories && d.categories.length) {
+    const lbl = document.createElement('div');
+    lbl.className = 'rules-section-label';
+    lbl.textContent = 'Categories';
+    el.appendChild(lbl);
+    const tags = document.createElement('div');
+    tags.className = 'rules-tags';
+    d.categories.forEach(c => {
+      const tag = document.createElement('div');
+      tag.className = 'rules-tag';
+      tag.textContent = c;
+      tags.appendChild(tag);
+    });
+    el.appendChild(tags);
+  }
+
+  if (d && d.mechanics && d.mechanics.length) {
+    const lbl = document.createElement('div');
+    lbl.className = 'rules-section-label';
+    lbl.textContent = 'Mechanics';
+    el.appendChild(lbl);
+    const tags = document.createElement('div');
+    tags.className = 'rules-tags';
+    d.mechanics.forEach(m => {
+      const tag = document.createElement('div');
+      tag.className = 'rules-tag clickable' + (rulesActiveFilters.has(m) ? ' active-filter' : '');
+      tag.textContent = m;
+      tag.title = 'Filter by this mechanic';
+      tag.addEventListener('click', () => {
+        if (rulesActiveFilters.has(m)) {
+          rulesActiveFilters.delete(m);
+        } else {
+          rulesActiveFilters.add(m);
+        }
+        renderRulesFilters();
+        renderRulesResults();
+        renderRulesDetail(game);
+      });
+      tags.appendChild(tag);
+    });
+    el.appendChild(tags);
+  }
+
+  const notesLbl = document.createElement('div');
+  notesLbl.className = 'rules-notes-label';
+  notesLbl.textContent = 'Notes';
+  el.appendChild(notesLbl);
+
+  const notesArea = document.createElement('textarea');
+  notesArea.id = 'rules-notes-area';
+  notesArea.placeholder = 'Your notes for this game — persists even if removed from library.';
+  notesArea.value = getNote(game.id);
+  notesArea.addEventListener('input', () => saveNote(game.id, notesArea.value));
+  el.appendChild(notesArea);
+}
+
+function highlightText(text, query) {
+  const frag = document.createDocumentFragment();
+  if (!query) {
+    frag.appendChild(document.createTextNode(text));
+    return frag;
+  }
+  const lower = text.toLowerCase();
+  const lowerQ = query.toLowerCase().trim();
+  let pos = 0;
+  let idx;
+  while ((idx = lower.indexOf(lowerQ, pos)) !== -1) {
+    if (idx > pos) frag.appendChild(document.createTextNode(text.slice(pos, idx)));
+    const mark = document.createElement('mark');
+    mark.textContent = text.slice(idx, idx + lowerQ.length);
+    frag.appendChild(mark);
+    pos = idx + lowerQ.length;
+  }
+  if (pos < text.length) frag.appendChild(document.createTextNode(text.slice(pos)));
+  return frag;
+}
+
+// ============================================================
+// SESSIONS
+// ============================================================
+function saveSessions() {
+  localStorage.setItem('king_sessions', JSON.stringify(sessions));
+}
+
+function populateNewSessionGames() {
+  const sel = document.getElementById('ns-game-select');
+  sel.innerHTML = '';
+  if (library.length === 0) {
+    sel.innerHTML = '<option value="">No games in library</option>';
+    return;
+  }
+  library.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g.id;
+    opt.textContent = g.name;
+    sel.appendChild(opt);
+  });
+}
+
+function openNewSession() {
+  if (library.length === 0) {
+    alert('Add some games to your library first.');
+    showSection('library');
+    return;
+  }
+  populateNewSessionGames();
+  document.getElementById('new-session-overlay').classList.add('open');
+}
+
+function startSessionForGame(gameId) {
+  if (library.length === 0) return;
+  populateNewSessionGames();
+  document.getElementById('ns-game-select').value = gameId;
+  document.getElementById('new-session-overlay').classList.add('open');
+  showSection('sessions');
+}
+
+function generateFields(game) {
+  const d = game.details || {};
+  const cats = (d.categories || []).map(c => c.toLowerCase());
+  const mechs = (d.mechanics || []).map(m => m.toLowerCase());
+  const weight = parseFloat(d.weight || '0');
+  const maxtime = parseInt(d.maxplaytime || '0');
+  const fields = [];
+  let fid = 1;
+
+  const mkField = (type, label, perPlayer, opts = {}) => ({
+    id: 'f' + (fid++),
+    type, label, perPlayer,
+    deleteable: true,
+    renameable: true,
+    ...opts
+  });
+
+  // Always: score per player, turn tracker
+  fields.push(mkField('counter', 'Score', true, { deleteable: false }));
+  fields.push(mkField('counter', 'Turn', false, { deleteable: false }));
+
+  // Complexity >= 4: resource counters
+  if (weight >= 4) {
+    fields.push(mkField('counter', 'Resource A', true));
+    fields.push(mkField('counter', 'Resource B', true));
+  }
+
+  // Deck Building: hand size + deck counter
+  if (cats.some(c => c.includes('deck building')) || mechs.some(m => m.includes('deck'))) {
+    fields.push(mkField('counter', 'Hand Size', true));
+    fields.push(mkField('counter', 'Deck Size', true));
+  }
+
+  // Worker Placement: worker token counter
+  if (mechs.some(m => m.includes('worker placement'))) {
+    fields.push(mkField('counter', 'Workers', true));
+  }
+
+  // Area Control: territory counter
+  if (mechs.some(m => m.includes('area control')) || cats.some(c => c.includes('area'))) {
+    fields.push(mkField('counter', 'Territories', true));
+  }
+
+  // Play time > 90: round/phase tracker
+  if (maxtime > 90) {
+    fields.push(mkField('counter', 'Round', false));
+    fields.push(mkField('text', 'Phase', false));
+  }
+
+  return fields;
+}
+
+function createSession() {
+  const gameId = document.getElementById('ns-game-select').value;
+  const playerCount = parseInt(document.getElementById('ns-player-count').value);
+  if (!gameId) return;
+
+  const game = getGame(gameId);
+  const d = game.details || {};
+  const cats = (d.categories || []).map(c => c.toLowerCase());
+  const isTeam = cats.some(c => c.includes('team') || c.includes('cooperative'));
+
+  const players = [];
+  for (let i = 0; i < playerCount; i++) players.push('Player ' + (i + 1));
+
+  const fields = generateFields(game);
+
+  // Initialize field values
+  fields.forEach(f => {
+    if (f.perPlayer) {
+      f.values = {};
+      players.forEach((_, i) => {
+        f.values[i] = f.type === 'counter' ? 0 : f.type === 'toggle' ? false : f.type === 'token' ? 0 : '';
+      });
+    } else {
+      f.value = f.type === 'counter' ? 0 : f.type === 'toggle' ? false : f.type === 'token' ? 0 : '';
+    }
+  });
+
+  // Team grouping
+  let teams = null;
+  if (isTeam && playerCount >= 4) {
+    teams = [];
+    const half = Math.floor(playerCount / 2);
+    teams.push(players.slice(0, half));
+    teams.push(players.slice(half));
+  }
+
+  const session = {
+    id: 'sess_' + Date.now(),
+    gameId,
+    gameName: game.name,
+    created: new Date().toLocaleDateString(),
+    players,
+    teams,
+    fields,
+    customFields: [],
+    ended: false
+  };
+
+  sessions.push(session);
+  saveSessions();
+  closeOverlay('new-session-overlay');
+  renderSessionTabs();
+  activateSession(session.id);
+  showSection('sessions');
+}
+
+function renderSessionTabs() {
+  const tabsEl = document.getElementById('session-tabs');
+  tabsEl.innerHTML = '';
+  sessions.forEach(sess => {
+    const tab = document.createElement('div');
+    tab.className = 'session-tab' + (sess.id === activeSessionId ? ' active' : '');
+    tab.dataset.id = sess.id;
+    tab.innerHTML = `<span>${esc(sess.gameName)}</span><span class="tab-close" title="Close">×</span>`;
+    tab.addEventListener('click', e => {
+      if (e.target.classList.contains('tab-close')) {
+        closeSessionTab(sess.id);
+      } else {
+        activateSession(sess.id);
+      }
+    });
+    tabsEl.appendChild(tab);
+  });
+}
+
+function closeSessionTab(id) {
+  sessions = sessions.filter(s => s.id !== id);
+  saveSessions();
+  if (activeSessionId === id) {
+    activeSessionId = sessions.length > 0 ? sessions[sessions.length - 1].id : null;
+  }
+  renderSessionTabs();
+  if (activeSessionId) {
+    renderSessionPanel(activeSessionId);
+  } else {
+    document.getElementById('session-content').classList.remove('visible');
+    document.getElementById('session-empty').style.display = '';
+  }
+}
+
+function activateSession(id) {
+  activeSessionId = id;
+  renderSessionTabs();
+  renderSessionPanel(id);
+  document.getElementById('session-empty').style.display = 'none';
+  document.getElementById('session-content').classList.add('visible');
+}
+
+function renderSessionPanel(id) {
+  const sess = sessions.find(s => s.id === id);
+  if (!sess) return;
+  const el = document.getElementById('session-content');
+  el.innerHTML = '';
+
+  const panel = document.createElement('div');
+  panel.className = 'session-panel';
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'session-header';
+  hdr.innerHTML = `
+    <div class="session-title">${esc(sess.gameName)}</div>
+    <div class="session-actions">
+      <button class="ghost small" onclick="exportSession('${id}')">Export</button>
+      <button class="ghost small" onclick="importSessionClick()">Import</button>
+      <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSession(event)">
+      <button class="small danger" onclick="openEndSession('${id}')">End Session</button>
+    </div>
+  `;
+  panel.appendChild(hdr);
+
+  // Players row
+  const playersRow = document.createElement('div');
+  playersRow.className = 'players-row';
+  playersRow.innerHTML = '<span style="color:var(--dim);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-right:4px">Players:</span>';
+  sess.players.forEach((pname, i) => {
+    const color = PLAYER_COLORS[i % PLAYER_COLORS.length];
+    const chip = document.createElement('div');
+    chip.className = 'player-chip';
+    chip.title = 'Click to rename';
+    chip.style.borderColor = color;
+    chip.style.color = color;
+    chip.innerHTML = `<span>${esc(pname)}</span>`;
+    chip.addEventListener('click', () => renamePlayer(id, i, chip));
+    playersRow.appendChild(chip);
+  });
+  panel.appendChild(playersRow);
+
+  // Teams display
+  if (sess.teams) {
+    const teamsDiv = document.createElement('div');
+    teamsDiv.style.cssText = 'margin-bottom:12px;font-size:13px;color:var(--dim)';
+    teamsDiv.textContent = 'Teams: ' + sess.teams.map((t, i) => `Team ${i+1}: ${t.join(', ')}`).join(' | ');
+    panel.appendChild(teamsDiv);
+  }
+
+  // All fields (generated + custom)
+  const allFields = [...sess.fields, ...sess.customFields];
+
+  if (allFields.length > 0) {
+    const globalFields = allFields.filter(f => !f.perPlayer);
+    const playerFields = allFields.filter(f => f.perPlayer);
+
+    if (globalFields.length > 0) {
+      const sec = document.createElement('div');
+      sec.className = 'fields-section';
+      sec.innerHTML = '<div class="fields-section-header">Game Trackers</div>';
+      globalFields.forEach(f => sec.appendChild(buildFieldRow(id, f, sess)));
+      panel.appendChild(sec);
+    }
+
+    if (playerFields.length > 0) {
+      const sec = document.createElement('div');
+      sec.className = 'fields-section';
+      sec.innerHTML = '<div class="fields-section-header">Per Player</div>';
+      playerFields.forEach(f => sec.appendChild(buildFieldRow(id, f, sess)));
+      panel.appendChild(sec);
+    }
+  }
+
+  // Add custom field zone
+  panel.appendChild(buildAddFieldZone(id, sess));
+
+  el.appendChild(panel);
+}
+
+function buildFieldRow(sessionId, field, sess) {
+  const row = document.createElement('div');
+  row.className = 'field-row';
+  row.dataset.fieldId = field.id;
+
+  // Label
+  const labelDiv = document.createElement('div');
+  labelDiv.className = 'field-label';
+  if (field.renameable) {
+    labelDiv.title = 'Click to rename';
+    labelDiv.textContent = field.label;
+    labelDiv.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = field.label;
+      input.onblur = () => {
+        const newLabel = input.value.trim() || field.label;
+        field.label = newLabel;
+        saveSessions();
+        renderSessionPanel(sessionId);
+      };
+      input.onkeydown = e => { if (e.key === 'Enter') input.blur(); };
+      labelDiv.innerHTML = '';
+      labelDiv.appendChild(input);
+      input.focus();
+      input.select();
+    });
+  } else {
+    labelDiv.textContent = field.label;
+  }
+  row.appendChild(labelDiv);
+
+  // Values
+  const valDiv = document.createElement('div');
+  valDiv.className = 'field-values';
+
+  if (field.perPlayer) {
+    sess.players.forEach((pname, pi) => {
+      const color = PLAYER_COLORS[pi % PLAYER_COLORS.length];
+      const grp = document.createElement('div');
+      grp.className = 'player-field-group';
+      const lbl = document.createElement('div');
+      lbl.className = 'player-field-label';
+      lbl.textContent = pname;
+      lbl.style.color = color;
+      grp.appendChild(lbl);
+      grp.appendChild(buildFieldControl(sessionId, field, pi));
+      valDiv.appendChild(grp);
+    });
+  } else {
+    valDiv.appendChild(buildFieldControl(sessionId, field, null));
+  }
+
+  row.appendChild(valDiv);
+
+  // Delete button
+  if (field.deleteable) {
+    const del = document.createElement('button');
+    del.className = 'field-del';
+    del.title = 'Remove field';
+    del.textContent = '×';
+    del.addEventListener('click', () => {
+      const isCustom = sess.customFields.some(f => f.id === field.id);
+      if (isCustom) {
+        sess.customFields = sess.customFields.filter(f => f.id !== field.id);
+      } else {
+        sess.fields = sess.fields.filter(f => f.id !== field.id);
+      }
+      saveSessions();
+      renderSessionPanel(sessionId);
+    });
+    row.appendChild(del);
+  }
+
+  return row;
+}
+
+function buildFieldControl(sessionId, field, playerIndex) {
+  const pi = playerIndex;
+  const isPerPlayer = pi !== null;
+
+  const getValue = () => isPerPlayer ? (field.values || {})[pi] : field.value;
+  const setValue = v => {
+    if (isPerPlayer) {
+      if (!field.values) field.values = {};
+      field.values[pi] = v;
+    } else {
+      field.value = v;
+    }
+    saveSessions();
+  };
+
+  if (field.type === 'counter') {
+    const wrap = document.createElement('div');
+    wrap.className = 'counter-group';
+
+    const dec = document.createElement('button');
+    dec.className = 'counter-btn';
+    dec.textContent = '−';
+    const val = document.createElement('div');
+    val.className = 'counter-val';
+    val.textContent = getValue() ?? 0;
+    const inc = document.createElement('button');
+    inc.className = 'counter-btn';
+    inc.textContent = '+';
+
+    dec.addEventListener('click', () => { setValue((getValue() ?? 0) - 1); val.textContent = getValue(); });
+    inc.addEventListener('click', () => { setValue((getValue() ?? 0) + 1); val.textContent = getValue(); });
+
+    // Direct edit on click
+    val.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.value = getValue() ?? 0;
+      input.style.cssText = 'width:50px;text-align:center;background:var(--surface2);border:1px solid var(--accent);color:var(--text);border-radius:4px;padding:2px;font-size:15px;font-weight:700';
+      input.onblur = () => {
+        const n = parseInt(input.value);
+        setValue(isNaN(n) ? 0 : n);
+        val.textContent = getValue();
+        input.replaceWith(val);
+      };
+      input.onkeydown = e => { if (e.key === 'Enter') input.blur(); };
+      val.replaceWith(input);
+      input.focus(); input.select();
+    });
+
+    wrap.appendChild(dec);
+    wrap.appendChild(val);
+    wrap.appendChild(inc);
+    return wrap;
+
+  } else if (field.type === 'toggle') {
+    const btn = document.createElement('button');
+    btn.className = 'toggle-btn' + ((getValue() ?? false) ? ' on' : '');
+    btn.textContent = (getValue() ?? false) ? 'ON' : 'OFF';
+    btn.addEventListener('click', () => {
+      setValue(!(getValue() ?? false));
+      btn.className = 'toggle-btn' + (getValue() ? ' on' : '');
+      btn.textContent = getValue() ? 'ON' : 'OFF';
+    });
+    return btn;
+
+  } else if (field.type === 'token') {
+    const pool = document.createElement('div');
+    pool.className = 'token-pool';
+    const count = getValue() ?? 0;
+
+    const redraw = (n) => {
+      pool.innerHTML = '';
+      for (let i = 0; i < n; i++) {
+        const tok = document.createElement('div');
+        tok.className = 'token';
+        tok.title = 'Click to remove';
+        tok.addEventListener('click', () => { setValue((getValue() ?? 1) - 1); redraw(getValue()); });
+        pool.appendChild(tok);
+      }
+      const addBtn = document.createElement('button');
+      addBtn.className = 'token-pool-add';
+      addBtn.textContent = '+';
+      addBtn.title = 'Add token';
+      addBtn.addEventListener('click', () => { setValue((getValue() ?? 0) + 1); redraw(getValue()); });
+      pool.appendChild(addBtn);
+    };
+
+    redraw(count);
+    return pool;
+
+  } else if (field.type === 'text') {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'session-text-input';
+    input.value = getValue() ?? '';
+    input.placeholder = field.label;
+    input.addEventListener('input', () => setValue(input.value));
+    return input;
+  }
+
+  return document.createElement('span');
+}
+
+function buildAddFieldZone(sessionId, sess) {
+  const zone = document.createElement('div');
+  zone.className = 'fields-section';
+  zone.innerHTML = '<div class="fields-section-header">Add Field</div>';
+
+  const row = document.createElement('div');
+  row.className = 'add-field-row';
+
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.placeholder = 'Field name';
+  nameInput.style.width = '140px';
+
+  const typeSelect = document.createElement('select');
+  ['counter', 'text', 'toggle', 'token'].forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+    typeSelect.appendChild(opt);
+  });
+
+  const ppSelect = document.createElement('select');
+  [{v:'true',l:'Per Player'},{v:'false',l:'Global'}].forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o.v;
+    opt.textContent = o.l;
+    ppSelect.appendChild(opt);
+  });
+
+  const addBtn = document.createElement('button');
+  addBtn.textContent = 'Add';
+  addBtn.className = 'small';
+  addBtn.addEventListener('click', () => {
+    const label = nameInput.value.trim() || typeSelect.value;
+    const type = typeSelect.value;
+    const perPlayer = ppSelect.value === 'true';
+    const fid = 'cf_' + Date.now();
+
+    const newField = {
+      id: fid,
+      type,
+      label,
+      perPlayer,
+      deleteable: true,
+      renameable: true
+    };
+
+    if (perPlayer) {
+      newField.values = {};
+      sess.players.forEach((_, i) => {
+        newField.values[i] = type === 'counter' ? 0 : type === 'toggle' ? false : type === 'token' ? 0 : '';
+      });
+    } else {
+      newField.value = type === 'counter' ? 0 : type === 'toggle' ? false : type === 'token' ? 0 : '';
+    }
+
+    sess.customFields.push(newField);
+    saveSessions();
+    nameInput.value = '';
+    renderSessionPanel(sessionId);
+  });
+
+  row.appendChild(nameInput);
+  row.appendChild(typeSelect);
+  row.appendChild(ppSelect);
+  row.appendChild(addBtn);
+  zone.appendChild(row);
+  return zone;
+}
+
+function renamePlayer(sessionId, playerIndex, chipEl) {
+  const sess = sessions.find(s => s.id === sessionId);
+  if (!sess) return;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = sess.players[playerIndex];
+  input.style.cssText = 'background:var(--surface2);border:1px solid var(--accent);color:var(--text);border-radius:3px;padding:2px 6px;font-size:13px;width:90px';
+  input.onblur = () => {
+    const newName = input.value.trim() || sess.players[playerIndex];
+    sess.players[playerIndex] = newName;
+    saveSessions();
+    renderSessionPanel(sessionId);
+  };
+  input.onkeydown = e => { if (e.key === 'Enter') input.blur(); };
+  chipEl.innerHTML = '';
+  chipEl.appendChild(input);
+  input.focus(); input.select();
+}
+
+function openEndSession(id) {
+  const sess = sessions.find(s => s.id === id);
+  if (!sess) return;
+  endingSessionId = id;
+  const sel = document.getElementById('winner-select');
+  sel.innerHTML = '<option value="">No winner / tie</option>';
+  sess.players.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    sel.appendChild(opt);
+  });
+  document.getElementById('end-session-overlay').classList.add('open');
+}
+
+function confirmEndSession() {
+  if (!endingSessionId) return;
+  const sess = sessions.find(s => s.id === endingSessionId);
+  if (!sess) return;
+  const winner = document.getElementById('winner-select').value;
+  saveHistoryEntry({
+    gameId: sess.gameId,
+    gameName: sess.gameName,
+    date: new Date().toLocaleDateString(),
+    players: sess.players,
+    winner: winner || null
+  });
+  closeOverlay('end-session-overlay');
+  closeSessionTab(endingSessionId);
+  endingSessionId = null;
+}
+
+function exportSession(id) {
+  const sess = sessions.find(s => s.id === id);
+  if (!sess) return;
+  const json = JSON.stringify(sess, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'king-session-' + sess.gameName.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importSessionClick() {
+  document.getElementById('import-file-input').click();
+}
+
+function importSession(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const sess = JSON.parse(ev.target.result);
+      if (!sess.id || !sess.gameName || !sess.players) throw new Error('Invalid session file');
+      sess.id = 'sess_' + Date.now(); // new id to avoid collision
+      sessions.push(sess);
+      saveSessions();
+      renderSessionTabs();
+      activateSession(sess.id);
+    } catch (err) {
+      alert('Could not import session: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+init();
+</script>
+</body>
+</html>
