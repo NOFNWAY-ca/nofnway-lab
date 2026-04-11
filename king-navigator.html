@@ -891,7 +891,7 @@ mark {
       <button onclick="searchBGG()">Search</button>
     </div>
     <div id="search-hint" style="font-size:12px;color:var(--dim);margin-bottom:12px;padding-left:2px">
-      Tip: if search is slow, paste a BoardGameGeek URL (e.g. boardgamegeek.com/boardgame/13/catan) for instant results.
+      Search works offline against a built-in game list. To add a game not in the list, paste its BoardGameGeek URL (e.g. boardgamegeek.com/boardgame/13/catan).
     </div>
     <div id="search-results"></div>
     <div class="section-label">Your Library</div>
@@ -971,13 +971,16 @@ mark {
 </div>
 
 
+<script src="bgg-catalog.js"></script>
 <script>
 // ============================================================
 // STATE
 // ============================================================
-// BGG fetch via /api/bgg — our own CF function.
-// Retry + backoff + empty body handling are all inside the Worker.
-// Frontend timeout is generous (35s) to give the Worker room to retry.
+// Catalog-based search: text queries search window.BGG_CATALOG client-side (offline, instant).
+// BGG URL / bare-ID inputs check the catalog first; fall back to a live BGG fetch
+// via /api/bgg only when the game isn't in the catalog.
+if (typeof window.BGG_CATALOG === 'undefined') window.BGG_CATALOG = [];
+
 async function bggFetch(bggUrl) {
   const res = await fetch('/api/bgg?url=' + encodeURIComponent(bggUrl), {
     signal: AbortSignal.timeout(35000)
@@ -987,8 +990,7 @@ async function bggFetch(bggUrl) {
   if (!text || !text.includes('<')) throw new Error('BGG returned an empty response. Try again.');
   return text;
 }
-const BGG_SEARCH = 'https://boardgamegeek.com/xmlapi2/search?query=';
-const BGG_THING  = 'https://boardgamegeek.com/xmlapi2/thing?stats=1&id=';
+const BGG_THING = 'https://boardgamegeek.com/xmlapi2/thing?stats=1&id=';
 const PLAYER_COLORS = ['#5b8dee','#4fa86a','#c4931a','#c84040','#9b72cf','#4fb8d4'];
 const LIBRARY_LIMIT = 50;
 
@@ -1159,81 +1161,132 @@ async function searchBGG() {
 
   const parsed = parseBGGInput(raw);
 
-  // --- ID path: user pasted a BGG URL or bare ID ---
-  // Hits /xmlapi2/thing directly — skips search, more reliable.
+  // --- ID/URL path ---
   if (parsed.type === 'id') {
+    // Check catalog first (instant, no network)
+    const catalogEntry = window.BGG_CATALOG.find(g => String(g.id) === String(parsed.id));
+    if (catalogEntry) {
+      showSingleResult(resultsEl, catalogEntry.id, catalogEntry.name, catalogEntry.year, catalogToDetails(catalogEntry));
+      return;
+    }
+
+    // Not in catalog — try live fetch (may fail if BGG blocks the proxy)
+    // Extract a name from the URL slug as a fallback (e.g. .../boardgame/13/catan -> "Catan")
+    const slugMatch = raw.match(/boardgamegeek\.com\/boardgame\/\d+\/([^/?#]+)/i);
+    const slugName = slugMatch
+      ? slugMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      : null;
+
     resultsEl.innerHTML = '<div class="loading-msg"><span class="spinner"></span> Looking up game...</div>';
     try {
       const details = await fetchBGGDetails(parsed.id);
       if (!details) { resultsEl.innerHTML = '<div class="loading-msg">Game not found.</div>'; return; }
-
-      const inLib = library.some(g => g.id === parsed.id);
-      resultsEl.innerHTML = '';
-      const row = document.createElement('div');
-      row.className = 'search-result-item';
-      row.innerHTML = `
-        <div>
-          <span class="result-name">${esc(details._name)}</span>
-          ${details._year ? `<span class="result-year"> (${details._year})</span>` : ''}
-        </div>
-        <button class="result-add-btn${inLib ? ' saved' : ''}" data-id="${parsed.id}">
-          ${inLib ? 'Saved' : '+ Add'}
-        </button>
-      `;
-      row.querySelector('.result-add-btn').addEventListener('click', e => {
-        e.stopPropagation();
-        const btn = e.currentTarget;
-        addToLibraryWithDetails(parsed.id, details._name, details._year, details, btn);
-      });
-      resultsEl.appendChild(row);
+      showSingleResult(resultsEl, parsed.id, details._name, details._year, details);
     } catch (err) {
-      resultsEl.innerHTML = `<div class="loading-msg">Error: ${esc(err.message)}</div>`;
+      // Network failed. If we have a name from the URL slug, offer to add it without details.
+      if (slugName) {
+        resultsEl.innerHTML = '';
+        const row = document.createElement('div');
+        row.className = 'search-result-item';
+        const nameDiv = document.createElement('div');
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'result-name';
+        nameSpan.textContent = slugName;
+        const warnSpan = document.createElement('span');
+        warnSpan.className = 'result-year';
+        warnSpan.style.color = 'var(--warn)';
+        warnSpan.textContent = ' (no details — BGG unreachable)';
+        nameDiv.appendChild(nameSpan);
+        nameDiv.appendChild(warnSpan);
+        const inLib = library.some(g => String(g.id) === String(parsed.id));
+        const btn = document.createElement('button');
+        btn.className = 'result-add-btn' + (inLib ? ' saved' : '');
+        btn.textContent = inLib ? 'Saved' : '+ Add';
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          addToLibraryWithDetails(String(parsed.id), slugName, '', null, btn);
+        });
+        row.appendChild(nameDiv);
+        row.appendChild(btn);
+        resultsEl.appendChild(row);
+      } else {
+        resultsEl.innerHTML = `<div class="loading-msg">Game not in catalog. Paste the full BGG URL to add it.</div>`;
+      }
     }
     return;
   }
 
-  // --- Search path: text query ---
-  resultsEl.innerHTML = '<div class="loading-msg"><span class="spinner"></span> Searching BGG...</div>';
-  try {
-    const text = await bggFetch(BGG_SEARCH + encodeURIComponent(parsed.query));
-    const xml = new DOMParser().parseFromString(text, 'text/xml');
-    const items = Array.from(xml.querySelectorAll('item')).slice(0, 15);
+  // --- Text search path — client-side catalog search (instant, works offline) ---
+  const q = parsed.query.toLowerCase().trim();
+  const matches = window.BGG_CATALOG
+    .filter(g => g.name.toLowerCase().includes(q))
+    .slice(0, 15);
 
-    if (items.length === 0) {
-      resultsEl.innerHTML = '<div class="loading-msg">No results. Try pasting the BGG URL instead.</div>';
-      return;
-    }
-
-    resultsEl.innerHTML = '';
-    items.forEach(item => {
-      const id = item.getAttribute('id');
-      const nameEl = item.querySelector('name[type="primary"]') || item.querySelector('name');
-      const name = nameEl ? nameEl.getAttribute('value') : 'Unknown';
-      const yearEl = item.querySelector('yearpublished');
-      const year = yearEl ? yearEl.getAttribute('value') : '';
-      const inLib = library.some(g => g.id === id);
-
-      const row = document.createElement('div');
-      row.className = 'search-result-item';
-      row.innerHTML = `
-        <div>
-          <span class="result-name">${esc(name)}</span>
-          ${year ? `<span class="result-year"> (${year})</span>` : ''}
-        </div>
-        <button class="result-add-btn${inLib ? ' saved' : ''}" data-id="${id}" data-name="${esc(name)}" data-year="${year}">
-          ${inLib ? 'Saved' : '+ Add'}
-        </button>
-      `;
-      row.querySelector('.result-add-btn').addEventListener('click', e => {
-        e.stopPropagation();
-        const btn = e.currentTarget;
-        addToLibrary(btn.dataset.id, btn.dataset.name, btn.dataset.year, btn);
-      });
-      resultsEl.appendChild(row);
-    });
-  } catch (err) {
-    resultsEl.innerHTML = `<div class="loading-msg">Error: ${esc(err.message)}</div>`;
+  resultsEl.innerHTML = '';
+  if (matches.length === 0) {
+    resultsEl.innerHTML = '<div class="loading-msg">No results. Try a different name or paste the BGG URL.</div>';
+    return;
   }
+  matches.forEach(entry => {
+    const id = String(entry.id);
+    const inLib = library.some(g => String(g.id) === id);
+    const row = document.createElement('div');
+    row.className = 'search-result-item';
+    row.innerHTML = `
+      <div>
+        <span class="result-name">${esc(entry.name)}</span>
+        ${entry.year ? `<span class="result-year"> (${entry.year})</span>` : ''}
+      </div>
+      <button class="result-add-btn${inLib ? ' saved' : ''}">
+        ${inLib ? 'Saved' : '+ Add'}
+      </button>
+    `;
+    row.querySelector('.result-add-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      const btn = e.currentTarget;
+      addToLibraryWithDetails(id, entry.name, entry.year, catalogToDetails(entry), btn);
+    });
+    resultsEl.appendChild(row);
+  });
+}
+
+// Convert a BGG_CATALOG entry to the `details` format used in the library.
+function catalogToDetails(entry) {
+  return {
+    description: entry.description || '',
+    minplayers: entry.minplayers || '',
+    maxplayers: entry.maxplayers || '',
+    minplaytime: entry.minplaytime || '',
+    maxplaytime: entry.maxplaytime || '',
+    categories: entry.categories || [],
+    mechanics: entry.mechanics || [],
+    weight: entry.weight || '0',
+    image: entry.image || ''
+  };
+}
+
+// Render a single-row result panel (used for ID/URL lookups).
+function showSingleResult(resultsEl, id, name, year, details) {
+  const sid = String(id);
+  const inLib = library.some(g => String(g.id) === sid);
+  resultsEl.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'search-result-item';
+  row.innerHTML = `
+    <div>
+      <span class="result-name">${esc(name)}</span>
+      ${year ? `<span class="result-year"> (${year})</span>` : ''}
+    </div>
+    <button class="result-add-btn${inLib ? ' saved' : ''}">
+      ${inLib ? 'Saved' : '+ Add'}
+    </button>
+  `;
+  row.querySelector('.result-add-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    addToLibraryWithDetails(sid, name, year, details, btn);
+  });
+  resultsEl.appendChild(row);
 }
 
 async function addToLibrary(id, name, year, btnEl) {
