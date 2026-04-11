@@ -1,327 +1,284 @@
 #!/usr/bin/env node
 // generate-catalog.js
-// Run this on your local machine (not via Cloudflare) to build bgg-catalog.js.
-// BGG blocks Cloudflare IPs; your home IP works fine.
+// Run on your local machine to build bgg-catalog.js.
 //
-// Setup (one time):
-//   cd scripts
-//   npm init -y
-//   npm install jsdom
-//   cd ..
+// Usage:
+//   BGG_USER=yourname BGG_PASS=yourpassword node scripts/generate-catalog.js
 //
-// Run:
+// Or just run it and it'll ask:
 //   node scripts/generate-catalog.js
 //
-// Output: bgg-catalog.js in the repo root — commit this file.
-// Time:   ~3-5 minutes (rate-limited fetching, ~150-200 games).
-//
-// Requires Node 18+.
+// Output: bgg-catalog.js in the repo root. Commit that file.
+// Requires Node 18+. No dependencies.
 
 import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { createInterface } from 'readline';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT = join(__dirname, '..', 'bgg-catalog.js');
 
 const BATCH_SIZE = 20;
-const DELAY_MS   = 2000; // between batches, be polite to BGG
+const DELAY_MS   = 2000;
 
-// ── Hardcoded popular game IDs ─────────────────────────────────────────────
-// Add or remove IDs here to adjust the catalog.
+// ── Popular game IDs ────────────────────────────────────────────────────────
 const POPULAR_IDS = [
-  174430, // Gloomhaven
-  161936, // Pandemic Legacy: Season 1
-  224517, // Brass: Birmingham
-  167791, // Terraforming Mars
-  233078, // Spirit Island
-  237182, // Root
-  266192, // Wingspan
-  169786, // Scythe
-  316554, // Dune: Imperium
-  342942, // Ark Nova
-  291457, // Everdell
-  266830, // Clank! In! Space!
-  220308, // Gaia Project
-  187645, // Dead of Winter: A Crossroads Game
-  180263, // The Castles of Burgundy (2019 reprint)
-  182028, // Through the Ages: A New Story of Civilization
-  183394, // Viticulture Essential Edition
-  187645, // Dead of Winter
-  220308, // Gaia Project
-  162886, // Blood Rage
-  198928, // Azul
-  230802, // Azul: Stained Glass of Sintra
-  246900, // Pandemic: Fall of Rome
-  269385, // Wingspan: European Expansion
-  102794, // Caverna: The Cave Farmers
-  68448,  // 7 Wonders
-  173346, // 7 Wonders Duel
-  155426, // Broom Service
-  148228, // Splendor
-  163412, // Patchwork
-  178900, // The Voyages of Marco Polo
-  160499, // Viticulture
-  36218,  // Dominion
-  31260,  // Agricola
-  822,    // Carcassonne
-  13,     // Catan
-  9209,   // Ticket to Ride
-  124361, // Concordia
-  72125,  // Eclipse
-  84876,  // The Resistance
-  128882, // Coup
-  131835, // Pandemic: In the Lab
-  30549,  // Pandemic
-  463,    // Diplomacy
-  2651,   // Power Grid
-  65244,  // Ora et Labora
-  220,    // Puerto Rico
-  25613,  // Hanabi
-  45692,  // Small World
-  96848,  // Love Letter
-  822,    // Carcassonne
-  12333,  // Twilight Struggle
-  37111,  // Battlestar Galactica
-  37904,  // Container
-  70323,  // Kings of Air and Steam
-  40692,  // Le Havre
-  25554,  // Agricola (2007)
-  126163, // Caverna
-  146021, // Eldritch Horror
-  15987,  // Arkham Horror
-  205637, // Arkham Horror: The Card Game
-  2511,   // Acquire
-  9217,   // Stone Age
-  39856,  // Dixit
-  41114,  // Quarriors!
-  171,    // Chess
-  188,    // Go
-  3076,   // Backgammon
-  432,    // Risk
-  5,      // Acquire (original)
-  6249,   // Labyrinth: The War on Terror
-  42,     // Tigris & Euphrates
-  478,    // Citadels
-  463,    // Diplomacy
-  521,    // Brittania
-  241600, // Pandemic Legacy: Season 2
-  300531, // Pandemic Legacy: Season 0
-  276025, // The Crew: The Quest for Planet Nine
-  359986, // The Crew: Mission Deep Sea
-  357563, // Cascadia
-  336986, // Lost Ruins of Arnak
-  312484, // Lost Ruins of Arnak: Expedition Leaders
-  295770, // Sleeping Gods
-  317311, // Oath
-  325169, // Cartographers
-  246784, // Tainted Grail: The Fall of Avalon
-  219217, // Pandemic Iberia
-  324856, // Dune: House Secrets
-  187645, // Dead of Winter
-  271320, // Catan: Dawn of Humankind
-  226320, // Twilight Imperium: 4th Ed
-  136888, // Twilight Imperium: 3rd Ed
-  176494, // Viticulture World
-  205398, // Keyflower
-  175914, // Food Chain Magnate
-  84227,  // King of Tokyo
-  157354, // Five Tribes
-  129622, // Star Wars: X-Wing
-  120677, // Terra Mystica
-  254640, // Mombasa
-  68448,  // 7 Wonders
-  159675, // Hive Pocket
-  2181,   // Hive
-  209778, // Keyflower: The Farmers
-  193738, // Great Western Trail
-  233867, // Great Western Trail: Rails to the North
-  295486, // Underwater Cities
-  216132, // Clans of Caledonia
-  192508, // Alien Frontiers
-  194594, // Small World of Warcraft
-  264220, // Wingspan: Oceania Expansion
-  302168, // Vindication
-  339960, // Voidfall
-  350184, // Lands of Galzyr
-  351538, // Lacrimosa
-  367220, // Arcs
-  374173, // Hegemony: Lead Your Class to Victory
-  366013, // Molly House
-  351913, // Sky Team
-  329175, // Ark Nova: Marine Worlds
-  331106, // Tiletum
-  312067, // Flamecraft
-  321608, // Lands of Galzyr
-  308765, // Sleeping Gods: Distant Skies
+  174430, 161936, 224517, 167791, 233078, 237182, 266192, 169786, 316554, 342942,
+  291457, 220308, 182028, 183394, 162886, 198928, 173346, 68448,  148228, 163412,
+  36218,  31260,  822,    13,     9209,   124361, 72125,  84876,  128882, 30549,
+  2651,   25613,  45692,  96848,  12333,  37111,  40692,  146021, 15987,  205637,
+  39856,  178900, 157354, 84227,  120677, 175914, 2181,   159675, 193738, 295486,
+  216132, 241600, 300531, 276025, 359986, 357563, 336986, 295770, 325169, 226320,
+  136888, 192508, 264220, 329175, 331106, 312067, 367220, 374173, 351538, 351913,
+  312484, 187645, 230802, 246784, 102794, 155426, 126163, 180263, 129622, 254640,
+  317311, 246900, 219217, 9217,   478,    463,    42,     220,    2511,   65244,
+  160499, 176494, 194591, 233867, 302168, 339960, 366013, 350184, 312067, 270844,
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
+// ── Prompt helper ───────────────────────────────────────────────────────────
+function ask(question, hidden = false) {
+  return new Promise(resolve => {
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    if (hidden) {
+      process.stdout.write(question);
+      process.stdin.setRawMode?.(true);
+      let input = '';
+      process.stdin.resume();
+      process.stdin.setEncoding('utf8');
+      process.stdin.once('data', function handler(ch) {
+        ch = ch + '';
+        if (ch === '\r' || ch === '\n') {
+          process.stdin.setRawMode?.(false);
+          process.stdin.removeListener('data', handler);
+          process.stdout.write('\n');
+          rl.close();
+          resolve(input);
+        } else if (ch === '\u0003') {
+          process.exit();
+        } else {
+          input += ch;
+          process.stdout.write('*');
+          process.stdin.once('data', handler);
+        }
+      });
+    } else {
+      rl.question(question, answer => { rl.close(); resolve(answer.trim()); });
+    }
+  });
 }
 
-function getText(doc, tag) {
-  return doc.getElementsByTagName(tag)?.[0]?.getAttribute('value')
-      || doc.getElementsByTagName(tag)?.[0]?.textContent?.trim()
-      || '';
-}
-
-function getAttr(item, tag, attr) {
-  return item.getElementsByTagName(tag)?.[0]?.getAttribute(attr) || '';
-}
-
-function parseThing(item) {
-  const id = item.getAttribute('id');
-
-  // Name
-  let name = '';
-  const names = item.getElementsByTagName('name');
-  for (const n of names) {
-    if (n.getAttribute('type') === 'primary') { name = n.getAttribute('value') || ''; break; }
+// ── BGG login ───────────────────────────────────────────────────────────────
+async function bggLogin(username, password) {
+  process.stdout.write('Logging in to BGG... ');
+  const res = await fetch('https://boardgamegeek.com/login/api/v1', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credentials: { username, password } }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Login failed (${res.status}): ${body.slice(0, 100)}`);
   }
-  if (!name && names[0]) name = names[0].getAttribute('value') || names[0].textContent.trim();
-
-  const year        = getAttr(item, 'yearpublished', 'value');
-  const minplayers  = getAttr(item, 'minplayers', 'value');
-  const maxplayers  = getAttr(item, 'maxplayers', 'value');
-  const minplaytime = getAttr(item, 'minplaytime', 'value');
-  const maxplaytime = getAttr(item, 'maxplaytime', 'value');
-  const image       = item.getElementsByTagName('image')?.[0]?.textContent?.trim() || '';
-
-  // Description (strip CDATA markers if present)
-  let description = item.getElementsByTagName('description')?.[0]?.textContent?.trim() || '';
-  description = description.replace(/&amp;#10;/g, '\n').replace(/&#10;/g, '\n').slice(0, 800);
-
-  // Categories and mechanics
-  const categories = [];
-  const mechanics  = [];
-  const links = item.getElementsByTagName('link');
-  for (const l of links) {
-    if (l.getAttribute('type') === 'boardgamecategory') categories.push(l.getAttribute('value'));
-    if (l.getAttribute('type') === 'boardgamemechanic')  mechanics.push(l.getAttribute('value'));
-  }
-
-  // Weight (average complexity)
-  const weight = item.getElementsByTagName('averageweight')?.[0]?.getAttribute('value') || '';
-
-  return { id, name, year, description, minplayers, maxplayers, minplaytime, maxplaytime, categories, mechanics, weight, image };
+  // Collect Set-Cookie headers
+  const raw = res.headers.getSetCookie?.() ?? [res.headers.get('set-cookie') ?? ''];
+  const cookies = raw
+    .map(c => c.split(';')[0])
+    .filter(Boolean)
+    .join('; ');
+  if (!cookies) throw new Error('Login appeared to succeed but no cookies returned');
+  console.log('OK');
+  return cookies;
 }
 
-// ── XML parser (Node doesn't have DOMParser, use regex fallback) ───────────
-// We use a small dependency-free approach: parse the XML with a lightweight
-// hand-rolled parser focused on the fields we need.
+// ── XML helpers ─────────────────────────────────────────────────────────────
+function decodeXmlEntities(s) {
+  return s
+    .replace(/&amp;/g,  '&')
+    .replace(/&lt;/g,   '<')
+    .replace(/&gt;/g,   '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#10;/g,  '\n')
+    .replace(/&#xA;/g,  '\n')
+    .replace(/&amp;#10;/g, '\n');
+}
 
-import { JSDOM } from 'jsdom';
+function getFirstAttrByType(xml, tag, typeVal, attr) {
+  const re  = new RegExp(`<${tag}[^>]*type="${typeVal}"[^>]*${attr}="([^"]*)"`, 'i');
+  const re2 = new RegExp(`<${tag}[^>]*${attr}="([^"]*)"[^>]*type="${typeVal}"`, 'i');
+  const m   = xml.match(re) || xml.match(re2);
+  return m ? decodeXmlEntities(m[1]) : '';
+}
 
-async function fetchDetails(ids) {
+function getAttr(xml, tag, attr) {
+  const re = new RegExp(`<${tag}[^>]*\\s${attr}="([^"]*)"`, 'i');
+  const m  = xml.match(re);
+  return m ? decodeXmlEntities(m[1]) : '';
+}
+
+function getAllAttrByType(xml, tag, typeVal, attr) {
+  const results = [];
+  const seen    = new Set();
+  for (const re of [
+    new RegExp(`<${tag}[^>]*type="${typeVal}"[^>]*${attr}="([^"]*)"`, 'gi'),
+    new RegExp(`<${tag}[^>]*${attr}="([^"]*)"[^>]*type="${typeVal}"`, 'gi'),
+  ]) {
+    let m;
+    while ((m = re.exec(xml)) !== null) {
+      const v = decodeXmlEntities(m[1]);
+      if (!seen.has(v)) { seen.add(v); results.push(v); }
+    }
+  }
+  return results;
+}
+
+function getTagContent(xml, tag) {
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i');
+  const m  = xml.match(re);
+  return m ? decodeXmlEntities(m[1].trim()) : '';
+}
+
+function splitItems(xml) {
+  const items = [];
+  const re    = /<item\s[^>]*>([\s\S]*?)<\/item>/gi;
+  let m;
+  while ((m = re.exec(xml)) !== null) {
+    const idM = m[0].match(/\sid="(\d+)"/);
+    if (idM) items.push({ id: idM[1], body: m[0] });
+  }
+  return items;
+}
+
+function parseThing(id, xml) {
+  const name = getFirstAttrByType(xml, 'name', 'primary', 'value')
+             || getAttr(xml, 'name', 'value')
+             || '';
+  if (!name) return null;
+
+  let description = getTagContent(xml, 'description');
+  description = description.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 800);
+
+  return {
+    id,
+    name,
+    year:        getAttr(xml, 'yearpublished',  'value'),
+    description,
+    minplayers:  getAttr(xml, 'minplayers',     'value'),
+    maxplayers:  getAttr(xml, 'maxplayers',     'value'),
+    minplaytime: getAttr(xml, 'minplaytime',    'value'),
+    maxplaytime: getAttr(xml, 'maxplaytime',    'value'),
+    weight:      getAttr(xml, 'averageweight',  'value'),
+    image:       getTagContent(xml, 'image').replace(/\s+/g, ''),
+    categories:  getAllAttrByType(xml, 'link', 'boardgamecategory', 'value'),
+    mechanics:   getAllAttrByType(xml, 'link', 'boardgamemechanic',  'value'),
+  };
+}
+
+// ── Network ─────────────────────────────────────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function fetchDetails(ids, cookies) {
   const url = `https://boardgamegeek.com/xmlapi2/thing?stats=1&id=${ids.join(',')}`;
-  console.log(`  Fetching ${ids.length} games: ${ids.slice(0, 3).join(',')}...`);
+  process.stdout.write(`  Fetching IDs ${ids[0]}…${ids[ids.length-1]} `);
 
-  let attempts = 0;
-  while (attempts < 4) {
-    attempts++;
+  for (let attempt = 0; attempt < 5; attempt++) {
     let res;
     try {
       res = await fetch(url, {
         headers: {
-          'User-Agent': 'NOFNWAY-CatalogBuilder/1.0 (personal project; contact: admin@nofnway.ca)',
-          'Accept': 'application/xml',
-        }
+          'Cookie':     cookies,
+          'User-Agent': 'Mozilla/5.0 (compatible; NOFNWAY-CatalogBuilder/1.0)',
+          'Accept':     'application/xml',
+        },
+        signal: AbortSignal.timeout(30000),
       });
     } catch (e) {
-      console.warn(`  Fetch error (attempt ${attempts}):`, e.message);
+      process.stdout.write('(network error, retry) ');
       await sleep(3000);
       continue;
     }
 
     if (res.status === 202) {
-      console.log(`  202 queue — waiting 4s...`);
+      process.stdout.write('(202, retry) ');
       await sleep(4000);
       continue;
     }
 
     if (!res.ok) {
-      console.warn(`  HTTP ${res.status} — skipping batch`);
+      const body = await res.text().catch(() => '');
+      console.log(`\n  HTTP ${res.status} — ${body.slice(0, 120)}`);
       return [];
     }
 
     const xml = await res.text();
     if (!xml || xml.length < 50) {
-      console.warn(`  Empty body (attempt ${attempts}) — retrying...`);
+      process.stdout.write('(empty, retry) ');
       await sleep(3000);
       continue;
     }
 
-    // Parse with jsdom
-    const dom  = new JSDOM(xml, { contentType: 'text/xml' });
-    const items = dom.window.document.getElementsByTagName('item');
-    const results = [];
-    for (const item of items) {
-      try {
-        results.push(parseThing(item));
-      } catch (e) {
-        console.warn('  Parse error for item:', e.message);
-      }
-    }
-    return results;
+    const items = splitItems(xml);
+    const parsed = items.map(({ id, body }) => parseThing(id, body)).filter(Boolean);
+    console.log(`got ${parsed.length}`);
+    return parsed;
   }
 
-  console.warn('  All attempts exhausted for batch');
+  console.log('failed');
   return [];
 }
 
-async function fetchHotList() {
-  console.log('Fetching BGG hot list...');
-  const res = await fetch('https://boardgamegeek.com/xmlapi2/hot?type=boardgame', {
-    headers: { 'User-Agent': 'NOFNWAY-CatalogBuilder/1.0 (contact: admin@nofnway.ca)' }
-  });
-  if (!res.ok) { console.warn('Hot list failed:', res.status); return []; }
-  const xml = await res.text();
-  const dom = new JSDOM(xml, { contentType: 'text/xml' });
-  const items = dom.window.document.getElementsByTagName('item');
-  const ids = [];
-  for (const item of items) ids.push(item.getAttribute('id'));
-  console.log(`  Got ${ids.length} hot games`);
-  return ids;
+async function fetchHotList(cookies) {
+  process.stdout.write('Fetching BGG hot list... ');
+  try {
+    const res = await fetch('https://boardgamegeek.com/xmlapi2/hot?type=boardgame', {
+      headers: {
+        'Cookie':     cookies,
+        'User-Agent': 'Mozilla/5.0 (compatible; NOFNWAY-CatalogBuilder/1.0)',
+        'Accept':     'application/xml',
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) { const b = await res.text().catch(() => ''); console.log(`HTTP ${res.status} — ${b.slice(0,80)}`); return []; }
+    const xml  = await res.text();
+    const ids  = [...xml.matchAll(/\sid="(\d+)"/g)].map(m => m[1]);
+    console.log(`${ids.length} games`);
+    return ids;
+  } catch (e) {
+    console.log('failed:', e.message);
+    return [];
+  }
 }
 
-// ── Main ───────────────────────────────────────────────────────────────────
-
+// ── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   console.log('=== BGG Catalog Generator ===\n');
 
-  // Check for jsdom
-  try {
-    await import('jsdom');
-  } catch {
-    console.error('Missing dependency: run  npm install jsdom  first');
-    process.exit(1);
-  }
+  const username = process.env.BGG_USER || await ask('BGG username: ');
+  const password = process.env.BGG_PASS || await ask('BGG password: ', true);
+  console.log('');
 
-  // Gather all IDs
-  const hotIds = await fetchHotList();
+  const cookies = await bggLogin(username, password);
+
+  const hotIds = await fetchHotList(cookies);
   await sleep(1500);
 
   const allIds = [...new Set([...hotIds, ...POPULAR_IDS.map(String)])];
-  console.log(`\nTotal unique IDs to fetch: ${allIds.length}`);
+  console.log(`\nTotal unique IDs: ${allIds.length}\n`);
 
-  // Batch fetch
   const catalog = [];
+  const batches = Math.ceil(allIds.length / BATCH_SIZE);
+
   for (let i = 0; i < allIds.length; i += BATCH_SIZE) {
     const batch = allIds.slice(i, i + BATCH_SIZE);
-    console.log(`\nBatch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(allIds.length / BATCH_SIZE)}`);
-    const results = await fetchDetails(batch);
+    process.stdout.write(`Batch ${Math.floor(i / BATCH_SIZE) + 1}/${batches}: `);
+    const results = await fetchDetails(batch, cookies);
     catalog.push(...results);
-    console.log(`  Got ${results.length} games (catalog total: ${catalog.length})`);
     if (i + BATCH_SIZE < allIds.length) await sleep(DELAY_MS);
   }
 
-  // Sort by name
   catalog.sort((a, b) => a.name.localeCompare(b.name));
 
-  // Write output
   const js = `// bgg-catalog.js — auto-generated by scripts/generate-catalog.js
 // DO NOT edit by hand. Re-run the script to refresh.
 // Generated: ${new Date().toISOString()}
@@ -330,8 +287,9 @@ window.BGG_CATALOG = ${JSON.stringify(catalog, null, 2)};
 `;
 
   writeFileSync(OUTPUT, js, 'utf8');
-  console.log(`\nDone. Wrote ${catalog.length} games to bgg-catalog.js`);
-  console.log(`File size: ${(Buffer.byteLength(js, 'utf8') / 1024).toFixed(1)} KB`);
+  const kb = (Buffer.byteLength(js) / 1024).toFixed(1);
+  console.log(`\nDone. ${catalog.length} games written to bgg-catalog.js (${kb} KB)`);
+  console.log('Now: git add bgg-catalog.js && git commit -m "Add BGG catalog" && git push');
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(e => { console.error('\nError:', e.message); process.exit(1); });
