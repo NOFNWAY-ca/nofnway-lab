@@ -972,9 +972,25 @@ mark {
 // ============================================================
 // STATE
 // ============================================================
-const CORS = 'https://corsproxy.io/?';
-// Build a proxied BGG URL. corsproxy.io expects the raw target URL appended directly.
-function proxyUrl(bggUrl) { return CORS + bggUrl; }
+// Proxy chain — tried in order until one succeeds.
+// allorigins /get returns JSON wrapper { contents, status }; others return raw XML.
+const BGG_PROXIES = [
+  { url: bgg => '/api/bgg?url=' + encodeURIComponent(bgg), raw: true },
+  { url: bgg => 'https://thingproxy.freeboard.io/fetch/' + bgg, raw: true },
+  { url: bgg => 'https://api.allorigins.win/get?url=' + encodeURIComponent(bgg), raw: false },
+];
+
+async function bggFetch(bggUrl) {
+  for (const proxy of BGG_PROXIES) {
+    try {
+      const res = await fetch(proxy.url(bggUrl), { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const text = proxy.raw ? await res.text() : (await res.json()).contents;
+      if (text && text.includes('<')) return text;
+    } catch (_) { /* try next */ }
+  }
+  throw new Error('All BGG proxies failed or were blocked.');
+}
 const BGG_SEARCH = 'https://boardgamegeek.com/xmlapi2/search?query=';
 const BGG_THING  = 'https://boardgamegeek.com/xmlapi2/thing?stats=1&id=';
 const PLAYER_COLORS = ['#5b8dee','#4fa86a','#c4931a','#c84040','#9b72cf','#4fb8d4'];
@@ -1138,9 +1154,7 @@ async function searchBGG() {
   resultsEl.innerHTML = '<div class="loading-msg"><span class="spinner"></span> Searching BGG...</div>';
 
   try {
-    const url = proxyUrl(BGG_SEARCH + encodeURIComponent(q));
-    const res = await fetch(url);
-    const text = await res.text();
+    const text = await bggFetch(BGG_SEARCH + encodeURIComponent(q));
     const xml = new DOMParser().parseFromString(text, 'text/xml');
     const items = Array.from(xml.querySelectorAll('item')).slice(0, 15);
 
@@ -1209,9 +1223,7 @@ async function addToLibrary(id, name, year, btnEl) {
 }
 
 async function fetchBGGDetails(id) {
-  const url = proxyUrl(BGG_THING + id);
-  const res = await fetch(url);
-  const text = await res.text();
+  const text = await bggFetch(BGG_THING + id);
   const xml = new DOMParser().parseFromString(text, 'text/xml');
   const item = xml.querySelector('item');
   if (!item) return null;
