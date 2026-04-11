@@ -1136,14 +1136,14 @@ async function searchBGG() {
   resultsEl.innerHTML = '<div class="loading-msg"><span class="spinner"></span> Searching BGG...</div>';
 
   try {
-    const url = CORS + encodeURIComponent(BGG_SEARCH + encodeURIComponent(q) + '&type=boardgame');
+    const url = CORS + encodeURIComponent(BGG_SEARCH + encodeURIComponent(q));
     const res = await fetch(url);
     const text = await res.text();
     const xml = new DOMParser().parseFromString(text, 'text/xml');
     const items = Array.from(xml.querySelectorAll('item')).slice(0, 15);
 
     if (items.length === 0) {
-      resultsEl.innerHTML = '<div class="loading-msg">No results found.</div>';
+      resultsEl.innerHTML = '<div class="loading-msg">No results found on BGG.</div>';
       return;
     }
 
