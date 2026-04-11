@@ -74,10 +74,12 @@ export async function onRequest(context) {
 
     let res;
     try {
+      // 25s timeout inside the Worker so BGG slowness produces a handled
+      // error and a retry, rather than Cloudflare killing the whole Worker
+      // and emitting a raw 502 with no body.
       res = await fetch(target, {
         headers: BGG_HEADERS,
-        // Step 6 — Cache identical BGG responses at the Cloudflare edge for
-        // 5 minutes. Repeated searches for the same game hit cache, not BGG.
+        signal: AbortSignal.timeout(25000),
         cf: { cacheEverything: true, cacheTtl: 300 }
       });
     } catch (err) {
