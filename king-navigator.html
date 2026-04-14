@@ -916,6 +916,58 @@ mark {
   padding: 12px;
   text-align: center;
 }
+
+/* ---- BGG ATTRIBUTION ---- */
+#bgg-attribution {
+  position: fixed;
+  right: 12px;
+  bottom: 10px;
+  z-index: 20;
+  opacity: 0.78;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+#bgg-attribution:hover,
+#bgg-attribution:focus-within {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+#bgg-attribution a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(10, 10, 10, 0.92);
+  color: var(--text);
+  text-decoration: none;
+}
+
+#bgg-attribution img {
+  display: block;
+  height: 32px;
+  width: auto;
+}
+
+#bgg-attribution span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  #bgg-attribution {
+    right: 10px;
+    bottom: 8px;
+  }
+
+  #bgg-attribution img {
+    height: 28px;
+  }
+}
 </style>
 </head>
 <body>
@@ -1027,6 +1079,17 @@ mark {
   </div>
 </div>
 
+<div id="bgg-attribution">
+  <a href="https://boardgamegeek.com/" target="_blank" rel="noopener noreferrer" aria-label="Powered by BoardGameGeek">
+    <img
+      src="https://cf.geekdo.com/images/powered_by_bgg.svg"
+      alt="Powered by BoardGameGeek"
+      height="32"
+      onerror="this.style.display='none'"
+    />
+    <span>Powered by BGG</span>
+  </a>
+</div>
 
 <script src="bgg-catalog.js"></script>
 <script>
@@ -1047,6 +1110,7 @@ async function bggFetch(bggUrl) {
   if (!text || !text.includes('<')) throw new Error('BGG returned an empty response. Try again.');
   return text;
 }
+const BGG_SEARCH = 'https://boardgamegeek.com/xmlapi2/search?type=boardgame,boardgameexpansion&query=';
 const BGG_THING = 'https://boardgamegeek.com/xmlapi2/thing?stats=1&id=';
 const PLAYER_COLORS = ['#5b8dee','#4fa86a','#c4931a','#c84040','#9b72cf','#4fb8d4'];
 const COLOR_PALETTE = [
@@ -1231,49 +1295,42 @@ async function searchBGG() {
       return;
     }
 
-    // Not in catalog. Extract a name from the URL slug if present
-    // (e.g. boardgamegeek.com/boardgame/13/catan -> "Catan").
-    // No live BGG fetch — BGG blocks Cloudflare IPs.
+    resultsEl.innerHTML = '<div class="loading-msg"><span class="spinner"></span> Looking up game...</div>';
+    try {
+      const details = await fetchBGGDetails(parsed.id);
+      if (details && details._name) {
+        showSingleResult(resultsEl, parsed.id, details._name, details._year || '', details);
+        return;
+      }
+    } catch (_) {}
+
     const slugMatch = raw.match(/boardgamegeek\.com\/boardgame\/\d+\/([^/?#]+)/i);
     const slugName = slugMatch
       ? slugMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
       : null;
 
     if (slugName) {
-      resultsEl.innerHTML = '';
-      const row = document.createElement('div');
-      row.className = 'search-result-item';
-      const nameDiv = document.createElement('div');
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'result-name';
-      nameSpan.textContent = slugName;
-      const noteSpan = document.createElement('span');
-      noteSpan.className = 'result-year';
-      noteSpan.textContent = ' (name only — not in catalog)';
-      nameDiv.appendChild(nameSpan);
-      nameDiv.appendChild(noteSpan);
-      const inLib = library.some(g => String(g.id) === String(parsed.id));
-      const btn = document.createElement('button');
-      btn.className = 'result-add-btn' + (inLib ? ' saved' : '');
-      btn.textContent = inLib ? 'Saved' : '+ Add';
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        addToLibraryWithDetails(String(parsed.id), slugName, '', null, btn);
-      });
-      row.appendChild(nameDiv);
-      row.appendChild(btn);
-      resultsEl.appendChild(row);
+      showSingleResult(resultsEl, parsed.id, slugName, '', null, ' (name only)');
     } else {
-      resultsEl.innerHTML = `<div class="loading-msg">Not in catalog. Paste the full BGG URL (boardgamegeek.com/boardgame/…) to add it.</div>`;
+      resultsEl.innerHTML = '<div class="loading-msg">Could not load that BGG game right now. Try the full URL again in a moment.</div>';
     }
     return;
   }
 
   // --- Text search path — client-side catalog search (instant, works offline) ---
   const q = parsed.query.toLowerCase().trim();
-  const matches = window.BGG_CATALOG
+  let matches = window.BGG_CATALOG
     .filter(g => g.name.toLowerCase().includes(q))
     .slice(0, 15);
+
+  if (matches.length === 0) {
+    resultsEl.innerHTML = '<div class="loading-msg"><span class="spinner"></span> Searching BGG...</div>';
+    try {
+      matches = await searchBGGRemote(parsed.query);
+    } catch (_) {
+      matches = [];
+    }
+  }
 
   resultsEl.innerHTML = '';
   if (matches.length === 0) {
@@ -1303,6 +1360,29 @@ async function searchBGG() {
   });
 }
 
+async function searchBGGRemote(query) {
+  const text = await bggFetch(BGG_SEARCH + encodeURIComponent(query));
+  const xml = new DOMParser().parseFromString(text, 'text/xml');
+  return Array.from(xml.querySelectorAll('item')).slice(0, 15).map(item => {
+    const nameEl = item.querySelector('name[type="primary"]') || item.querySelector('name');
+    const yearEl = item.querySelector('yearpublished');
+    return {
+      id: item.getAttribute('id') || '',
+      name: nameEl ? (nameEl.getAttribute('value') || nameEl.textContent.trim()) : 'Unknown',
+      year: yearEl ? (yearEl.getAttribute('value') || yearEl.textContent.trim()) : '',
+      minplayers: '',
+      maxplayers: '',
+      minplaytime: '',
+      maxplaytime: '',
+      weight: '0',
+      description: '',
+      categories: [],
+      mechanics: [],
+      image: ''
+    };
+  }).filter(entry => entry.id && entry.name);
+}
+
 // Convert a BGG_CATALOG entry to the `details` format used in the library.
 function catalogToDetails(entry) {
   return {
@@ -1319,7 +1399,7 @@ function catalogToDetails(entry) {
 }
 
 // Render a single-row result panel (used for ID/URL lookups).
-function showSingleResult(resultsEl, id, name, year, details) {
+function showSingleResult(resultsEl, id, name, year, details, note = '') {
   const sid = String(id);
   const inLib = library.some(g => String(g.id) === sid);
   resultsEl.innerHTML = '';
@@ -1329,6 +1409,7 @@ function showSingleResult(resultsEl, id, name, year, details) {
     <div>
       <span class="result-name">${esc(name)}</span>
       ${year ? `<span class="result-year"> (${year})</span>` : ''}
+      ${note ? `<span class="result-year">${esc(note)}</span>` : ''}
     </div>
     <button class="result-add-btn${inLib ? ' saved' : ''}">
       ${inLib ? 'Saved' : '+ Add'}

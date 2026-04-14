@@ -23,16 +23,64 @@ const MAX_ATTEMPTS = BACKOFF.length;
 // an empty or near-empty body on overloaded nodes. Anything under this
 // is treated as a failed response and retried.
 const MIN_BODY_LENGTH = 50;
+const RATE_LIMIT_CAPACITY = 5;
+const RATE_LIMIT_REFILL_MS = 2000;
+const RATE_LIMIT_TTL_MS = 10 * 60 * 1000;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*'
 };
+
+const rateLimitBuckets = new Map();
 
 function errorResponse(status, message) {
   return new Response(message, {
     status,
     headers: { ...CORS_HEADERS, 'Content-Type': 'text/plain' }
   });
+}
+
+function getClientIp(request) {
+  const forwarded = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || '';
+  const ip = forwarded.split(',')[0].trim();
+  return ip || 'unknown';
+}
+
+function takeRateLimitToken(ip) {
+  const now = Date.now();
+
+  for (const [key, bucket] of rateLimitBuckets) {
+    if (now - bucket.updatedAt > RATE_LIMIT_TTL_MS) rateLimitBuckets.delete(key);
+  }
+
+  const bucket = rateLimitBuckets.get(ip) || {
+    tokens: RATE_LIMIT_CAPACITY,
+    updatedAt: now
+  };
+
+  const elapsed = now - bucket.updatedAt;
+  const refillTokens = Math.floor(elapsed / RATE_LIMIT_REFILL_MS);
+  if (refillTokens > 0) {
+    bucket.tokens = Math.min(RATE_LIMIT_CAPACITY, bucket.tokens + refillTokens);
+    bucket.updatedAt += refillTokens * RATE_LIMIT_REFILL_MS;
+  }
+
+  if (bucket.tokens < 1) {
+    rateLimitBuckets.set(ip, bucket);
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(1, Math.ceil((RATE_LIMIT_REFILL_MS - (now - bucket.updatedAt)) / 1000))
+    };
+  }
+
+  bucket.tokens -= 1;
+  bucket.updatedAt = now;
+  rateLimitBuckets.set(ip, bucket);
+
+  return {
+    allowed: true,
+    remaining: bucket.tokens
+  };
 }
 
 export async function onRequest(context) {
@@ -42,6 +90,19 @@ export async function onRequest(context) {
     requestUrl = new URL(context.request.url);
   } catch (_) {
     return errorResponse(400, 'Malformed request URL');
+  }
+
+  const clientIp = getClientIp(context.request);
+  const rateLimit = takeRateLimitToken(clientIp);
+  if (!rateLimit.allowed) {
+    return new Response('Too many BGG requests. Wait a moment and try again.', {
+      status: 429,
+      headers: {
+        ...CORS_HEADERS,
+        'Content-Type': 'text/plain',
+        'Retry-After': String(rateLimit.retryAfterSeconds)
+      }
+    });
   }
 
   const target = requestUrl.searchParams.get('url');
