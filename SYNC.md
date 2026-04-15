@@ -28,6 +28,7 @@ Experimental site with live tool work and Cloudflare Functions.
 - Fixed K.I.N.G. thumbnail parsing to read `<thumbnail>` from the current BGG `<item>` node and now persist a root-level `thumbnail` on new library saves.
 - Hardened K.I.N.G. library thumbnail rendering so empty or broken thumbnail URLs no longer show broken image icons.
 - Fixed the BGG attribution image host and made live BGG search result saves fetch full details before storing so thumbnails can be saved for remote-only games.
+- Added thumbnail hydration for the first few visible K.I.N.G. search results so thumbnails appear before games are added to the library without exceeding the proxy burst limit.
 
 ## Next Recommended Step
 - Track any `.env`, KV, or deployment assumptions here whenever alarm work is touched.

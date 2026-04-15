@@ -1416,7 +1416,7 @@ async function searchBGG() {
     resultsEl.innerHTML = `<div class="loading-msg">${esc(emptyMsg)}</div>`;
     return;
   }
-  matches.forEach(entry => {
+  matches.forEach((entry, index) => {
     const id = String(entry.id);
     const inLib = library.some(g => String(g.id) === id);
     const row = document.createElement('div');
@@ -1433,9 +1433,10 @@ async function searchBGG() {
     row.querySelector('.result-add-btn').addEventListener('click', e => {
       e.stopPropagation();
       const btn = e.currentTarget;
-      addToLibraryWithDetails(id, entry.name, entry.year, catalogToDetails(entry), btn);
+      addToLibraryWithDetails(id, entry.name, entry.year, entry.details || catalogToDetails(entry), btn);
     });
     resultsEl.appendChild(row);
+    attachSearchThumbnail(row, id, entry, index);
   });
 }
 
@@ -1478,6 +1479,56 @@ function catalogToDetails(entry) {
   };
 }
 
+function getSearchThumbnail(entry) {
+  return String(
+    entry?.thumbnail ||
+    entry?.image ||
+    entry?.details?.thumbnail ||
+    entry?.details?.image ||
+    ''
+  ).trim();
+}
+
+function addSearchThumbnail(row, thumbnail) {
+  if (!thumbnail || row.querySelector('.game-thumb')) return;
+  const img = document.createElement('img');
+  img.className = 'game-thumb';
+  img.loading = 'lazy';
+  img.alt = '';
+  img.src = thumbnail;
+  img.addEventListener('error', () => {
+    img.remove();
+  }, { once: true });
+  row.prepend(img);
+}
+
+function attachSearchThumbnail(row, id, entry, index = 0) {
+  const existing = getSearchThumbnail(entry);
+  if (existing) {
+    addSearchThumbnail(row, existing);
+    return;
+  }
+
+  // The BGG search endpoint does not include thumbnails. Hydrate a few
+  // visible rows from the details endpoint without tripping the proxy burst cap.
+  if (index > 3) return;
+
+  if (row.dataset.thumbnailRequested === 'true') return;
+  row.dataset.thumbnailRequested = 'true';
+
+  setTimeout(async () => {
+    try {
+      const details = await fetchBGGDetails(id);
+      const thumbnail = getSearchThumbnail(details);
+      if (!thumbnail) return;
+      entry.details = details;
+      entry.thumbnail = thumbnail;
+      entry.image = details.image || entry.image || '';
+      addSearchThumbnail(row, thumbnail);
+    } catch (e) { /* search thumbnails are optional */ }
+  }, 700 * index);
+}
+
 // Render a single-row result panel (used for ID/URL lookups).
 function showSingleResult(resultsEl, id, name, year, details, note = '') {
   const sid = String(id);
@@ -1501,6 +1552,7 @@ function showSingleResult(resultsEl, id, name, year, details, note = '') {
     addToLibraryWithDetails(sid, name, year, details, btn);
   });
   resultsEl.appendChild(row);
+  attachSearchThumbnail(row, sid, details || {});
 }
 
 async function addToLibrary(id, name, year, btnEl) {
