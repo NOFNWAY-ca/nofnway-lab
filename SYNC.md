@@ -33,6 +33,7 @@ Experimental site with live tool work and Cloudflare Functions.
 - Stabilized K.I.N.G. thumbnail layout with fixed-size wrappers and safer lazy/error image handling for search and library rows.
 - Improved K.I.N.G. local cached search ranking with lightweight scoring across title, categories, and mechanics.
 - Added backward-compatible library favorites with favorite-first rendering and local-only toggle behavior.
+- Added defensive BGG suggested-player parsing plus richer game detail and rules detail cards with covers, recommendations, and compact tags.
 
 ## Next Recommended Step
 - Track any `.env`, KV, or deployment assumptions here whenever alarm work is touched.

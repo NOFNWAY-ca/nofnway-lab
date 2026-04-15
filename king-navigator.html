@@ -369,6 +369,45 @@ button.small { padding: 4px 10px; font-size: 12px; }
   margin-bottom: 12px;
   position: relative;
 }
+.detail-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.detail-cover {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #222;
+}
+.detail-cover img {
+  width: 100%;
+  height: 100%;
+}
+.detail-body { flex: 1; min-width: 0; }
+.detail-submeta {
+  color: var(--dim);
+  font-size: 12px;
+  line-height: 1.4;
+  margin: -6px 0 10px;
+}
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.detail-tag {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--dim);
+}
 .detail-actions { display: flex; gap: 8px; margin-top: 16px; }
 
 .history-row {
@@ -479,6 +518,31 @@ button.small { padding: 4px 10px; font-size: 12px; }
 }
 .rules-detail-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
 .rules-detail-meta { color: var(--dim); font-size: 12px; margin-bottom: 12px; }
+.rules-detail-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.rules-detail-cover {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #222;
+}
+.rules-detail-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rules-detail-submeta {
+  color: var(--dim);
+  font-size: 12px;
+  line-height: 1.4;
+  margin: -6px 0 12px;
+}
 .rules-detail-desc {
   font-size: 13px;
   color: var(--dim);
@@ -1797,6 +1861,59 @@ async function fetchBGGDetails(id) {
   const mechanics = getAll('link[type="boardgamemechanic"]', 'value');
   const weight = get('averageweight', 'value') || '0';
   const thumbnail = item.querySelector('thumbnail')?.textContent || null;
+  const parsePlayerRecommendations = () => {
+    try {
+      const poll = item.querySelector('poll[name="suggested_numplayers"]');
+      if (!poll) return { bestPlayers: '', recommendedPlayers: '' };
+
+      const best = [];
+      const recommended = [];
+
+      poll.querySelectorAll('results[numplayers]').forEach(results => {
+        const numplayers = (results.getAttribute('numplayers') || '').trim();
+        if (!numplayers) return;
+
+        const votes = { best: 0, recommended: 0, notRecommended: 0 };
+        results.querySelectorAll('result').forEach(result => {
+          const label = (result.getAttribute('value') || result.getAttribute('name') || '').toLowerCase();
+          const numvotes = parseInt(result.getAttribute('numvotes') || '0', 10) || 0;
+
+          if (label === 'best') votes.best = numvotes;
+          if (label === 'recommended') votes.recommended = numvotes;
+          if (label === 'not recommended') votes.notRecommended = numvotes;
+        });
+
+        if (votes.best > votes.recommended && votes.best > votes.notRecommended) {
+          best.push(numplayers);
+        }
+        if ((votes.best + votes.recommended) > votes.notRecommended && (votes.best > 0 || votes.recommended > 0)) {
+          recommended.push(numplayers);
+        }
+      });
+
+      const formatPlayers = values => {
+        const unique = [...new Set(values)];
+        if (unique.length === 0) return '';
+        const allNumeric = unique.every(v => /^\d+$/.test(v));
+        if (!allNumeric) return unique.join(', ');
+
+        const nums = unique.map(Number).sort((a, b) => a - b);
+        const isRange = nums.length > 1 && nums.every((n, i) => i === 0 || n === nums[i - 1] + 1);
+        return isRange ? `${nums[0]}–${nums[nums.length - 1]}` : nums.join(', ');
+      };
+
+      const bestText = formatPlayers(best);
+      const recommendedText = formatPlayers(recommended);
+
+      return {
+        bestPlayers: bestText ? `Best with ${bestText}` : '',
+        recommendedPlayers: recommendedText ? `Recommended: ${recommendedText}` : ''
+      };
+    } catch (e) {
+      return { bestPlayers: '', recommendedPlayers: '' };
+    }
+  };
+  const playerRecommendations = parsePlayerRecommendations();
 
   // _name and _year are included so the ID lookup path can show them
   // without a separate search request.
@@ -1814,6 +1931,8 @@ async function fetchBGGDetails(id) {
     categories,
     mechanics,
     weight,
+    bestPlayers: playerRecommendations.bestPlayers,
+    recommendedPlayers: playerRecommendations.recommendedPlayers,
     thumbnail: thumbnail,
     image: get('image', null)
   };
@@ -1866,6 +1985,12 @@ function openGameDetail(id) {
   const d = game.details;
   const history = getGameHistory(id);
   const weight = d ? parseFloat(d.weight) : 0;
+  const cover = String(game.thumbnail || d?.thumbnail || d?.image || '').trim();
+  const recommendations = d
+    ? [d.bestPlayers, d.recommendedPlayers].filter(Boolean)
+    : [];
+  const categories = d && Array.isArray(d.categories) ? d.categories : [];
+  const mechanics = d && Array.isArray(d.mechanics) ? d.mechanics : [];
 
   let histHTML = '';
   if (history.length > 0) {
@@ -1876,14 +2001,21 @@ function openGameDetail(id) {
   }
 
   document.getElementById('gdp-content').innerHTML = `
-    <h2>${esc(game.name)}</h2>
-    <div class="meta">
-      ${game.year ? game.year : ''}
-      ${d ? ` &bull; ${d.minplayers}–${d.maxplayers} players &bull; ${d.minplaytime}–${d.maxplaytime} min` : ''}
-      ${weight > 0 ? ` &bull; Weight ${weight.toFixed(1)}` : ''}
+    <div class="detail-top">
+      ${cover ? `<div class="detail-cover"><img src="${esc(cover)}" alt="" loading="lazy" onerror="this.style.display='none'"></div>` : ''}
+      <div class="detail-body">
+        <h2>${esc(game.name)}</h2>
+        <div class="meta">
+          ${game.year ? esc(game.year) : ''}
+          ${d ? ` &bull; ${esc(d.minplayers)}–${esc(d.maxplayers)} players &bull; ${esc(d.minplaytime)}–${esc(d.maxplaytime)} min` : ''}
+          ${weight > 0 ? ` &bull; Weight ${weight.toFixed(1)}` : ''}
+        </div>
+        ${recommendations.length ? `<div class="detail-submeta">${recommendations.map(r => esc(r)).join('<br>')}</div>` : ''}
+      </div>
     </div>
     ${d && d.description ? `<div class="desc">${esc(d.description)}</div>` : ''}
-    ${d && d.categories && d.categories.length ? `<div style="font-size:12px;color:var(--dim);margin-bottom:4px">${d.categories.map(c => esc(c)).join(' &bull; ')}</div>` : ''}
+    ${categories.length ? `<div class="detail-tags">${categories.map(c => `<span class="detail-tag">${esc(c)}</span>`).join('')}</div>` : ''}
+    ${mechanics.length ? `<div class="detail-tags">${mechanics.map(m => `<span class="detail-tag">${esc(m)}</span>`).join('')}</div>` : ''}
     ${histHTML}
     <div class="detail-actions">
       <button onclick="startSessionForGame('${id}'); document.getElementById('game-detail-overlay').classList.remove('open')">Play Session</button>
@@ -2074,10 +2206,30 @@ function renderRulesDetail(game) {
   el.innerHTML = '';
   const d = game.details;
 
+  const top = document.createElement('div');
+  top.className = 'rules-detail-top';
+  const cover = String(game.thumbnail || d?.thumbnail || d?.image || '').trim();
+  if (cover) {
+    const coverWrap = document.createElement('div');
+    coverWrap.className = 'rules-detail-cover';
+    const img = document.createElement('img');
+    img.src = cover;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.onerror = () => {
+      img.style.display = 'none';
+    };
+    coverWrap.appendChild(img);
+    top.appendChild(coverWrap);
+  }
+
+  const body = document.createElement('div');
+  body.style.cssText = 'flex:1;min-width:0';
+
   const nameEl = document.createElement('div');
   nameEl.className = 'rules-detail-name';
   nameEl.textContent = game.name;
-  el.appendChild(nameEl);
+  body.appendChild(nameEl);
 
   if (d) {
     const metaEl = document.createElement('div');
@@ -2089,8 +2241,18 @@ function renderRulesDetail(game) {
     if (d.minplaytime && d.maxplaytime) parts.push(`${d.minplaytime}–${d.maxplaytime} min`);
     if (w > 0) parts.push(`Weight ${w.toFixed(1)}/5`);
     metaEl.textContent = parts.join(' · ');
-    el.appendChild(metaEl);
+    body.appendChild(metaEl);
+
+    const recommendations = [d.bestPlayers, d.recommendedPlayers].filter(Boolean);
+    if (recommendations.length) {
+      const submetaEl = document.createElement('div');
+      submetaEl.className = 'rules-detail-submeta';
+      submetaEl.innerHTML = recommendations.map(r => esc(r)).join('<br>');
+      body.appendChild(submetaEl);
+    }
   }
+  top.appendChild(body);
+  el.appendChild(top);
 
   if (d && d.description) {
     const lbl = document.createElement('div');
