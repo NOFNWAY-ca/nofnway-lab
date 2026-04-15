@@ -372,20 +372,24 @@ button.small { padding: 4px 10px; font-size: 12px; }
 .detail-top {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
   margin-bottom: 12px;
 }
 .detail-cover {
-  width: 72px;
-  height: 72px;
+  max-width: 140px;
+  max-height: 140px;
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
   background: #222;
 }
 .detail-cover img {
+  max-width: 140px;
+  max-height: 140px;
   width: 100%;
-  height: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
 }
 .detail-body { flex: 1; min-width: 0; }
 .detail-submeta {
@@ -1989,8 +1993,8 @@ function openGameDetail(id) {
   const recommendations = d
     ? [d.bestPlayers, d.recommendedPlayers].filter(Boolean)
     : [];
-  const categories = d && Array.isArray(d.categories) ? d.categories : [];
-  const mechanics = d && Array.isArray(d.mechanics) ? d.mechanics : [];
+  const categories = Array.from(new Set(d?.categories || [])).filter(Boolean);
+  const mechanics = Array.from(new Set(d?.mechanics || [])).filter(Boolean);
 
   let histHTML = '';
   if (history.length > 0) {
@@ -2205,6 +2209,8 @@ function renderRulesDetail(game) {
   const el = document.getElementById('rules-detail');
   el.innerHTML = '';
   const d = game.details;
+  const categories = Array.from(new Set(d?.categories || [])).filter(Boolean);
+  const mechanics = Array.from(new Set(d?.mechanics || [])).filter(Boolean);
 
   const top = document.createElement('div');
   top.className = 'rules-detail-top';
@@ -2265,14 +2271,14 @@ function renderRulesDetail(game) {
     el.appendChild(desc);
   }
 
-  if (d && d.categories && d.categories.length) {
+  if (categories.length) {
     const lbl = document.createElement('div');
     lbl.className = 'rules-section-label';
     lbl.textContent = 'Categories';
     el.appendChild(lbl);
     const tags = document.createElement('div');
     tags.className = 'rules-tags';
-    d.categories.forEach(c => {
+    categories.forEach(c => {
       const tag = document.createElement('div');
       tag.className = 'rules-tag';
       tag.textContent = c;
@@ -2281,14 +2287,14 @@ function renderRulesDetail(game) {
     el.appendChild(tags);
   }
 
-  if (d && d.mechanics && d.mechanics.length) {
+  if (mechanics.length) {
     const lbl = document.createElement('div');
     lbl.className = 'rules-section-label';
     lbl.textContent = 'Mechanics';
     el.appendChild(lbl);
     const tags = document.createElement('div');
     tags.className = 'rules-tags';
-    d.mechanics.forEach(m => {
+    mechanics.forEach(m => {
       const tag = document.createElement('div');
       tag.className = 'rules-tag clickable' + (rulesActiveFilters.has(m) ? ' active-filter' : '');
       tag.textContent = m;
