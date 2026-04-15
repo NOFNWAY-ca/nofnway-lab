@@ -1091,7 +1091,7 @@ mark {
 <div id="bgg-attribution">
   <a href="https://boardgamegeek.com/" target="_blank" rel="noopener noreferrer" aria-label="Powered by BoardGameGeek">
     <img
-      src="https://cf.geekdo.com/images/powered_by_bgg.svg"
+      src="https://cf.geekdo-images.com/images/powered_by_bgg.svg"
       alt="Powered by BoardGameGeek"
       height="32"
       onerror="this.style.display='none'"
@@ -1266,7 +1266,7 @@ function renderLibrary() {
   library.forEach(game => {
     const card = document.createElement('div');
     card.className = 'lib-card';
-    const thumbnail = game.thumbnail || game.details?.thumbnail || '';
+    const thumbnail = String(game.thumbnail || game.details?.thumbnail || '').trim();
 
     const weight = game.details ? parseFloat(game.details.weight) : 0;
     const weightLabel = weight > 0
@@ -1278,7 +1278,7 @@ function renderLibrary() {
       : '';
 
     card.innerHTML = `
-      <img src="${esc(thumbnail)}" class="game-thumb" loading="lazy" alt="">
+      ${thumbnail ? `<img src="${esc(thumbnail)}" class="game-thumb" loading="lazy" alt="">` : ''}
       <div class="lib-card-info">
         <div class="lib-card-name">${esc(game.name)} ${weightLabel}</div>
         <div class="lib-card-meta">${game.year ? game.year : ''}${players ? ' &bull; ' + players : ''}</div>
@@ -1289,6 +1289,12 @@ function renderLibrary() {
         <button class="ghost small danger" onclick="removeFromLibrary('${game.id}')">Remove</button>
       </div>
     `;
+    const img = card.querySelector('.game-thumb');
+    if (img) {
+      img.addEventListener('error', () => {
+        img.remove();
+      }, { once: true });
+    }
     el.appendChild(card);
   });
 }
@@ -1575,7 +1581,7 @@ async function fetchBGGDetails(id) {
 }
 
 // Used by the ID lookup path — details already fetched, skip the second request.
-function addToLibraryWithDetails(id, name, year, details, btnEl) {
+async function addToLibraryWithDetails(id, name, year, details, btnEl) {
   if (library.some(g => g.id === id)) {
     if (btnEl) { btnEl.textContent = 'Saved'; btnEl.classList.add('saved'); }
     return;
@@ -1584,6 +1590,17 @@ function addToLibraryWithDetails(id, name, year, details, btnEl) {
     if (btnEl) { btnEl.textContent = 'Full'; btnEl.disabled = false; }
     alert(`Library is full (${LIBRARY_LIMIT} games max). Remove a game first.`);
     return;
+  }
+  if (btnEl) { btnEl.textContent = '...'; btnEl.disabled = true; }
+  if (!details?.thumbnail && !details?.image) {
+    try {
+      const fetchedDetails = await fetchBGGDetails(id);
+      if (fetchedDetails) {
+        details = fetchedDetails;
+        name = fetchedDetails._name || name;
+        year = fetchedDetails._year || year;
+      }
+    } catch (e) { /* proceed with the available result data */ }
   }
   library.push({
     id,
