@@ -220,12 +220,13 @@ button.small { padding: 4px 10px; font-size: 12px; }
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
   transition: background 0.1s;
 }
 .search-result-item:last-child { border-bottom: none; }
 .search-result-item:hover { background: var(--surface2); }
+.search-result-item > .thumb-wrap + div { flex: 1; min-width: 0; }
 .result-name { font-weight: 500; }
 .result-year { color: var(--dim); font-size: 13px; }
 .result-add-btn {
@@ -271,19 +272,47 @@ button.small { padding: 4px 10px; font-size: 12px; }
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
-.game-thumb {
-  width: 48px;
-  height: 48px;
+.thumb-wrap {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.search-thumb,
+.game-thumb,
+.detail-cover img {
+  width: 40px;
+  height: 40px;
   object-fit: cover;
   border-radius: 6px;
-  margin-right: 8px;
   background: #222;
+  flex-shrink: 0;
 }
 
 .lib-card-info { flex: 1; min-width: 0; }
 .lib-card-name { font-weight: 600; font-size: 15px; }
 .lib-card-meta { color: var(--dim); font-size: 12px; margin-top: 2px; }
 .lib-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.favorite-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--dim);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+.favorite-btn:hover { border-color: #f9a825; color: #f9a825; background: none; }
+.favorite-btn.active {
+  border-color: #f9a825;
+  color: #f9a825;
+  background: rgba(249, 168, 37, 0.08);
+}
 
 .bgg-weight {
   display: inline-block;
@@ -1094,6 +1123,7 @@ mark {
       src="https://cf.geekdo-images.com/images/powered_by_bgg.svg"
       alt="Powered by BoardGameGeek"
       height="32"
+      loading="lazy"
       onerror="this.style.display='none'"
     />
     <span>Powered by BGG</span>
@@ -1165,6 +1195,10 @@ function migrateLibraryData(library) {
   return library.map(game => {
     if (!game || typeof game !== 'object') return game;
 
+    if (typeof game.favorite !== 'boolean') {
+      game.favorite = false;
+    }
+
     if (!game.thumbnail) {
       if (game.details?.thumbnail) {
         game.thumbnail = game.details.thumbnail;
@@ -1228,11 +1262,57 @@ function getCachedBGGGame(id) {
   return bggCache.find(g => String(g.id) === String(id));
 }
 
+function normalizeSearchText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/^the\s+/, '')
+    .trim();
+}
+
+function getCachedSearchTerms(game, key) {
+  const direct = Array.isArray(game?.[key]) ? game[key] : [];
+  const nested = Array.isArray(game?.details?.[key]) ? game.details[key] : [];
+  return [...direct, ...nested].map(normalizeSearchText).filter(Boolean);
+}
+
+function scoreCachedGameSearch(game, query) {
+  const q = normalizeSearchText(query);
+  if (!q) return 0;
+
+  const name = normalizeSearchText(game?.name);
+  let score = 0;
+
+  if (name === q) {
+    score = 1000;
+  } else if (name.startsWith(q)) {
+    score = 750;
+  } else if (name.includes(q)) {
+    score = 500;
+  }
+
+  const metadataMatch = [
+    ...getCachedSearchTerms(game, 'categories'),
+    ...getCachedSearchTerms(game, 'mechanics')
+  ].some(term => term.includes(q));
+  if (metadataMatch) {
+    score = Math.max(score, 250);
+  }
+
+  if (score > 0 && name) {
+    score += Math.max(0, 80 - name.length);
+  }
+
+  return score;
+}
+
 function searchCachedBGGGames(query) {
-  const q = query.toLowerCase().trim();
+  const q = normalizeSearchText(query);
   if (!q) return [];
   return bggCache
-    .filter(g => String(g.name || '').toLowerCase().includes(q))
+    .map(game => ({ game, score: scoreCachedGameSearch(game, q) }))
+    .filter(result => result.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(result => result.game)
     .slice(0, 15);
 }
 
@@ -1338,10 +1418,21 @@ function renderLibrary() {
     return;
   }
   empty.style.display = 'none';
-  library.forEach(game => {
+  const sortedLibrary = library
+    .map((game, index) => ({ game, index }))
+    .sort((a, b) => {
+      if (!!a.game.favorite !== !!b.game.favorite) {
+        return a.game.favorite ? -1 : 1;
+      }
+      return a.index - b.index;
+    })
+    .map(entry => entry.game);
+
+  sortedLibrary.forEach(game => {
     const card = document.createElement('div');
     card.className = 'lib-card';
     const thumbnail = String(game.thumbnail || game.details?.thumbnail || '').trim();
+    const isFavorite = !!game.favorite;
 
     const weight = game.details ? parseFloat(game.details.weight) : 0;
     const weightLabel = weight > 0
@@ -1353,12 +1444,20 @@ function renderLibrary() {
       : '';
 
     card.innerHTML = `
-      ${thumbnail ? `<img src="${esc(thumbnail)}" class="game-thumb" loading="lazy" alt="">` : ''}
+      <div class="thumb-wrap">
+        ${thumbnail ? `<img src="${esc(thumbnail)}" class="game-thumb" loading="lazy" alt="" onerror="this.style.display='none'">` : ''}
+      </div>
       <div class="lib-card-info">
         <div class="lib-card-name">${esc(game.name)} ${weightLabel}</div>
         <div class="lib-card-meta">${game.year ? game.year : ''}${players ? ' &bull; ' + players : ''}</div>
       </div>
       <div class="lib-card-actions">
+        <button
+          class="favorite-btn${isFavorite ? ' active' : ''}"
+          title="${isFavorite ? 'Remove favorite' : 'Add favorite'}"
+          aria-label="${isFavorite ? 'Remove favorite' : 'Add favorite'}"
+          onclick="toggleFavorite('${game.id}')"
+        >${isFavorite ? '★' : '☆'}</button>
         <button class="ghost small" onclick="openGameDetail('${game.id}')">Details</button>
         <button class="small" onclick="startSessionForGame('${game.id}')">Play</button>
         <button class="ghost small danger" onclick="removeFromLibrary('${game.id}')">Remove</button>
@@ -1372,6 +1471,14 @@ function renderLibrary() {
     }
     el.appendChild(card);
   });
+}
+
+function toggleFavorite(id) {
+  const game = library.find(g => String(g.id) === String(id));
+  if (!game) return;
+  game.favorite = !game.favorite;
+  saveLibrary();
+  renderLibrary();
 }
 
 function removeFromLibrary(id) {
@@ -1494,6 +1601,7 @@ async function searchBGG() {
     const row = document.createElement('div');
     row.className = 'search-result-item';
     row.innerHTML = `
+      <div class="thumb-wrap"></div>
       <div>
         <span class="result-name">${esc(entry.name)}</span>
         ${entry.year ? `<span class="result-year"> (${entry.year})</span>` : ''}
@@ -1563,16 +1671,21 @@ function getSearchThumbnail(entry) {
 }
 
 function addSearchThumbnail(row, thumbnail) {
-  if (!thumbnail || row.querySelector('.game-thumb')) return;
+  if (!thumbnail || row.querySelector('.search-thumb')) return;
+  const wrap = row.querySelector('.thumb-wrap');
+  if (!wrap) return;
   const img = document.createElement('img');
-  img.className = 'game-thumb';
+  img.className = 'search-thumb';
   img.loading = 'lazy';
   img.alt = '';
   img.src = thumbnail;
+  img.onerror = () => {
+    img.style.display = 'none';
+  };
   img.addEventListener('error', () => {
     img.remove();
   }, { once: true });
-  row.prepend(img);
+  wrap.appendChild(img);
 }
 
 function attachSearchThumbnail(row, id, entry, index = 0) {
@@ -1610,6 +1723,7 @@ function showSingleResult(resultsEl, id, name, year, details, note = '') {
   const row = document.createElement('div');
   row.className = 'search-result-item';
   row.innerHTML = `
+    <div class="thumb-wrap"></div>
     <div>
       <span class="result-name">${esc(name)}</span>
       ${year ? `<span class="result-year"> (${year})</span>` : ''}

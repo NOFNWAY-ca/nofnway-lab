@@ -30,6 +30,9 @@ Experimental site with live tool work and Cloudflare Functions.
 - Fixed the BGG attribution image host and made live BGG search result saves fetch full details before storing so thumbnails can be saved for remote-only games.
 - Added thumbnail hydration for the first few visible K.I.N.G. search results so thumbnails appear before games are added to the library without exceeding the proxy burst limit.
 - Removed the seeded `bgg-catalog.js` path. K.I.N.G. now uses a local `king_bgg_cache` built only from games this browser has viewed or saved from BGG responses.
+- Stabilized K.I.N.G. thumbnail layout with fixed-size wrappers and safer lazy/error image handling for search and library rows.
+- Improved K.I.N.G. local cached search ranking with lightweight scoring across title, categories, and mechanics.
+- Added backward-compatible library favorites with favorite-first rendering and local-only toggle behavior.
 
 ## Next Recommended Step
 - Track any `.env`, KV, or deployment assumptions here whenever alarm work is touched.
