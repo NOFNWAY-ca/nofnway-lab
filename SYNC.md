@@ -10,6 +10,7 @@ Experimental site with live tool work and Cloudflare Functions.
 
 ## Recent Changes
 - Added shared sync workflow so Codex and Claude use the same handoff file.
+- Gave `charlie-bug/` a kid-facing art polish pass: smoother illustrated canvas rendering, brighter title screen, stronger collectible rings, richer garden/path depth, and cleaner HUD/joystick styling while preserving touch, keyboard, and gamepad controls.
 - Added visible BoardGameGeek attribution to K.I.N.G. for XML API compliance.
 - Added lightweight per-IP rate limiting to `/api/bgg` to reduce burst abuse risk.
 - Re-enabled live BGG lookup in K.I.N.G. for uncataloged game IDs, URLs, and text searches that miss the local catalog.

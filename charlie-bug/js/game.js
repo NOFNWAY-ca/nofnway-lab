@@ -620,43 +620,42 @@ function render() {
 function renderTitle() {
   ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
-  // Background
-  ctx.fillStyle = state.theme ? state.theme.bgTint : '#C8EAF5';
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  drawTitleScenery(ctx, state.time);
 
-  // Bouncing Charlie (slightly below centre)
+  // Bouncing Charlie, large enough to be the focus.
   const bob = Math.sin(state.time * 0.003) * 6;
-  const fakeCharlie = {
-    x: CANVAS_W / 2, y: 268 + bob,
-    vx: 0, vy: 0, facing: 0,
-    cosmetics: state.charlie.cosmetics,
-  };
-  drawCharlie(ctx, fakeCharlie, state.time, { x: 0, y: 0 });
+  drawCharlieMini(ctx, state.charlie.cosmetics, CANVAS_W / 2, 300 + bob, 1.45, state.time);
 
   ctx.save();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 
   // Title "Charlie-Bug"
-  ctx.font = 'bold 46px sans-serif';
-  ctx.fillStyle = '#FF6B6B';
+  ctx.font = '900 50px sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#E94F62';
+  ctx.lineWidth = 8;
+  ctx.lineJoin = 'round';
   ctx.shadowOffsetX = 3; ctx.shadowOffsetY = 3;
   ctx.shadowColor = 'rgba(0,0,0,0.13)'; ctx.shadowBlur = 0;
+  ctx.strokeText('Charlie-Bug', CANVAS_W / 2, 22);
   ctx.fillText('Charlie-Bug', CANVAS_W / 2, 22);
   ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; ctx.shadowColor = 'rgba(0,0,0,0)';
 
   // Subtitle
-  ctx.font = '16px sans-serif';
+  ctx.font = 'bold 16px sans-serif';
   ctx.fillStyle = '#2D2D2D';
-  ctx.globalAlpha = 0.72;
-  ctx.fillText('Find everything to finish the look!', CANVAS_W / 2, 76);
-  ctx.globalAlpha = 1;
+  ctx.fillText('Find four treasures. Dress up Charlie.', CANVAS_W / 2, 84);
+
+  drawControlBadge(ctx, 110, 124, 'Touch', 'drag the circle', '#29B6F6');
+  drawControlBadge(ctx, 240, 124, 'Keys', 'WASD or arrows', '#FF9800');
+  drawControlBadge(ctx, 370, 124, 'Gamepad', 'stick or d-pad', '#7E57C2');
 
   // Theme name + palette dots
   if (state.theme) {
     ctx.font = 'bold 20px sans-serif';
     ctx.fillStyle = '#2D2D2D';
-    ctx.fillText(state.theme.emoji + ' ' + state.theme.name, CANVAS_W / 2, 104);
+    ctx.fillText(state.theme.emoji + ' ' + state.theme.name, CANVAS_W / 2, 170);
 
     if (state.theme.palette) {
       const n = state.theme.palette.length;
@@ -664,7 +663,7 @@ function renderTitle() {
       const dotX = CANVAS_W / 2 - ((n - 1) * gap) / 2;
       state.theme.palette.forEach((col, i) => {
         ctx.beginPath();
-        ctx.arc(dotX + i * gap, 142, 9, 0, Math.PI * 2);
+        ctx.arc(dotX + i * gap, 202, 9, 0, Math.PI * 2);
         ctx.fillStyle = col;
         ctx.shadowBlur = 5; ctx.shadowColor = 'rgba(0,0,0,0.2)';
         ctx.fill();
@@ -676,16 +675,24 @@ function renderTitle() {
     if (localStorage.getItem('charlie-bug-day')) {
       ctx.font = 'bold 13px sans-serif';
       ctx.fillStyle = '#4CAF50';
-      ctx.fillText('▶ Continue where you left off', CANVAS_W / 2, 164);
+      ctx.fillText('Continue where you left off', CANVAS_W / 2, 224);
     }
   }
 
-  // "Tap anywhere to start" — pulsing
+  // Start prompt.
   const pulse = 0.55 + Math.sin(state.time * 0.004) * 0.3;
   ctx.globalAlpha = pulse;
-  ctx.font = '17px sans-serif';
-  ctx.fillStyle = '#2D2D2D';
-  ctx.fillText('Tap anywhere to start', CANVAS_W / 2, CANVAS_H - 42);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#2D7D46';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.roundRect(132, CANVAS_H - 62, 216, 42, 21);
+  ctx.stroke();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.font = '900 17px sans-serif';
+  ctx.fillStyle = '#2D7D46';
+  ctx.fillText('Tap or press any key', CANVAS_W / 2, CANVAS_H - 51);
   ctx.globalAlpha = 1;
 
   ctx.restore();
@@ -708,6 +715,7 @@ function setScreen(s) {
   state.screen = s;
   showEl('celebrate-overlay', s === 'celebrate', 'flex');
   showEl('joy-container',    deviceHasTouch && (s === 'game' || s === 'scatter'));
+  showEl('hud-items',        s !== 'title' && s !== 'celebrate', 'flex');
 
   if (s === 'celebrate') {
     const themeEl = document.getElementById('celebrate-theme');
@@ -749,6 +757,7 @@ function init() {
 
   state.screen = 'title';
   showEl('celebrate-overlay', false);
+  showEl('hud-items', false);
 
   // Pre-load saved theme so the canvas title screen can render it immediately.
   // If the day was already completed, clear it — don't resume a finished game.

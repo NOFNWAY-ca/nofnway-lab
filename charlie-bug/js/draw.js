@@ -6,9 +6,27 @@ function drawWorld(ctx, camera, time, bgTint) {
   const W = WORLD_W, H = WORLD_H;
   const cx = -camera.x, cy = -camera.y; // canvas offset
 
-  // Base grass
-  ctx.fillStyle = '#7DC87A';
+  // Base grass with a soft storybook gradient.
+  const grass = ctx.createLinearGradient(cx, cy, cx + W, cy + H);
+  grass.addColorStop(0, '#9BE283');
+  grass.addColorStop(0.45, '#78C96E');
+  grass.addColorStop(1, '#62B85D');
+  ctx.fillStyle = grass;
   ctx.fillRect(cx, cy, W, H);
+
+  if (bgTint) {
+    ctx.fillStyle = bgTint;
+    ctx.globalAlpha = 0.16;
+    ctx.fillRect(cx, cy, W, H);
+    ctx.globalAlpha = 1;
+  }
+
+  // Big rounded garden patches keep the map readable for kids.
+  drawGardenPatch(ctx, cx + 245, cy + 315, 165, 115, '#B8EC8A', time * 0.0004);
+  drawGardenPatch(ctx, cx + 1160, cy + 295, 170, 118, '#A9E77E', -0.2);
+  drawGardenPatch(ctx, cx + 330, cy + 1120, 180, 125, '#B7EA7E', 0.25);
+  drawGardenPatch(ctx, cx + 1070, cy + 1045, 190, 130, '#9EDB73', -0.35);
+  drawGardenPatch(ctx, cx + 720, cy + 760, 220, 145, '#A8E080', 0.12);
 
   // Subtle grass texture patches (lighter/darker spots)
   const patches = [
@@ -28,6 +46,19 @@ function drawWorld(ctx, camera, time, bgTint) {
     ctx.fill();
   });
 
+  // Tiny blades and dots add texture without turning the scene noisy.
+  for (let i = 0; i < 90; i++) {
+    const gx = (i * 137) % W;
+    const gy = (i * 263) % H;
+    const sway = Math.sin(time * 0.001 + i) * 1.5;
+    ctx.strokeStyle = i % 3 === 0 ? 'rgba(52,128,58,0.22)' : 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx + gx, cy + gy + 4);
+    ctx.quadraticCurveTo(cx + gx + sway, cy + gy - 2, cx + gx + sway * 1.5, cy + gy - 8);
+    ctx.stroke();
+  }
+
   // Winding dirt path
   ctx.beginPath();
   const pts = PATH_SEGMENTS;
@@ -38,15 +69,60 @@ function drawWorld(ctx, camera, time, bgTint) {
     ctx.quadraticCurveTo(cx + pts[i].x, cy + pts[i].y, cx + mx, cy + my);
   }
   ctx.lineWidth = 40;
-  ctx.strokeStyle = '#C4A07A';
+  ctx.strokeStyle = '#AF835A';
   ctx.lineCap = 'round';
   ctx.stroke();
-  ctx.lineWidth = 38;
-  ctx.strokeStyle = '#D4B08A';
+  ctx.lineWidth = 34;
+  ctx.strokeStyle = '#E8C48D';
   ctx.stroke();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.setLineDash([18, 26]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  drawPathPebbles(ctx, cx, cy);
 
   // Decorations
   DECORATIONS.forEach(d => drawDecoration(ctx, d, cx, cy, time));
+
+  // Soft edge vignette gives the camera view a toy-diorama feel.
+  const vignette = ctx.createRadialGradient(CANVAS_W / 2, CANVAS_H / 2, 120, CANVAS_W / 2, CANVAS_H / 2, 360);
+  vignette.addColorStop(0, 'rgba(255,255,255,0)');
+  vignette.addColorStop(1, 'rgba(48,100,50,0.18)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+}
+
+function drawGardenPatch(ctx, x, y, w, h, color, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.42;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, w - 12, h - 10, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPathPebbles(ctx, cx, cy) {
+  [
+    [348, 396, 4], [410, 520, 3], [620, 610, 4], [815, 585, 3],
+    [1030, 468, 4], [1220, 668, 3], [1120, 898, 4], [940, 1075, 3],
+    [810, 1240, 4], [612, 220, 3], [285, 300, 4], [1320, 742, 3],
+  ].forEach(([px, py, r], i) => {
+    ctx.fillStyle = i % 2 ? 'rgba(135,96,58,0.22)' : 'rgba(255,255,255,0.32)';
+    ctx.beginPath();
+    ctx.ellipse(cx + px, cy + py, r + 2, r, 0.25, 0, Math.PI * 2);
+    ctx.fill();
+  });
 }
 
 function drawDecoration(ctx, d, cx, cy, time) {
@@ -63,6 +139,14 @@ function drawDecoration(ctx, d, cx, cy, time) {
     ctx.strokeStyle = '#4a8f46';
     ctx.lineWidth = 2;
     ctx.stroke();
+    // Leaf pair
+    ctx.fillStyle = '#5BBE5A';
+    ctx.beginPath();
+    ctx.ellipse(-3 * s, 4 * s, 4 * s, 2 * s, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(3 * s, 6 * s, 4 * s, 2 * s, 0.4, 0, Math.PI * 2);
+    ctx.fill();
     // Petals
     for (let i = 0; i < 5; i++) {
       const a = (i / 5) * Math.PI * 2;
@@ -76,6 +160,9 @@ function drawDecoration(ctx, d, cx, cy, time) {
     ctx.arc(0, -8, 3.5 * s, 0, Math.PI * 2);
     ctx.fillStyle = '#FFEB3B';
     ctx.fill();
+    ctx.strokeStyle = 'rgba(126,87,33,0.25)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
     ctx.restore();
   } else if (d.type === 'mushroom') {
     ctx.save();
@@ -90,6 +177,9 @@ function drawDecoration(ctx, d, cx, cy, time) {
     ctx.beginPath();
     ctx.ellipse(0, -6, 13, 10, 0, Math.PI, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(93,64,55,0.35)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
     // Spots
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
     [[-4,-8],[4,-7],[0,-4]].forEach(([sx,sy]) => {
@@ -134,9 +224,13 @@ function drawDecoration(ctx, d, cx, cy, time) {
     ctx.ellipse(4, 2, 18, 7, 0, 0, Math.PI*2);
     ctx.fill();
     // Trunk
-    ctx.fillStyle = '#6D4C41';
-    ctx.fillRect(-5, -18, 10, 20);
-    // Canopy — overlapping blobs with gentle sway
+    ctx.fillStyle = '#7A4B2A';
+    ctx.beginPath();
+    ctx.roundRect(-6, -20, 12, 25, 5);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(-3, -18, 2, 17);
+    // Canopy with overlapping blobs and gentle sway.
     const sway = Math.sin(time * 0.001 + d.x * 0.01) * 2;
     [
       [sway,    -36, 20, '#388E3C'],
@@ -148,7 +242,14 @@ function drawDecoration(ctx, d, cx, cy, time) {
       ctx.arc(tx, ty, r, 0, Math.PI*2);
       ctx.fillStyle = col;
       ctx.fill();
+      ctx.strokeStyle = 'rgba(26,90,36,0.18)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
     });
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.beginPath();
+    ctx.arc(sway - 7, -38, 5, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
 
   } else if (d.type === 'pond') {
@@ -252,14 +353,22 @@ function drawCharlie(ctx, charlie, time, camera) {
     ctx.restore();
   }
 
-  // Body shell — rounder, slightly shorter
+  // Body shell, rounder and slightly shorter.
   ctx.beginPath();
   ctx.ellipse(0, 7, 13, 14, 0, 0, Math.PI * 2);
-  ctx.fillStyle = cos.body ? 'rgba(229,57,53,0.75)' : '#E53935';
+  const shell = ctx.createLinearGradient(-8, -8, 9, 22);
+  shell.addColorStop(0, cos.body ? 'rgba(255,138,128,0.86)' : '#FF6B5F');
+  shell.addColorStop(1, cos.body ? 'rgba(211,47,47,0.8)' : '#D83232');
+  ctx.fillStyle = shell;
   ctx.fill();
   ctx.strokeStyle = '#C62828';
   ctx.lineWidth = 1.5;
   ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(-5, 1, 4, 8, -0.45, 0, Math.PI * 2);
+  ctx.fill();
 
   // Default spots (3 classic ladybug dots)
   if (!cos.body) {
@@ -278,8 +387,14 @@ function drawCharlie(ctx, charlie, time, camera) {
   // Head — bigger and rounder for chibi proportions
   ctx.beginPath();
   ctx.arc(0, -14, 12, 0, Math.PI * 2);
-  ctx.fillStyle = '#1a1a1a';
+  const head = ctx.createRadialGradient(-4, -18, 3, 0, -14, 14);
+  head.addColorStop(0, '#3C3C3C');
+  head.addColorStop(1, '#171717');
+  ctx.fillStyle = head;
   ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
 
   // Big cute eyes
   ctx.fillStyle = 'white';
@@ -303,7 +418,7 @@ function drawCharlie(ctx, charlie, time, camera) {
   ctx.beginPath(); ctx.ellipse(-9.5, -12, 4.5, 2.8, 0.3, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.ellipse( 9.5, -12, 4.5, 2.8, -0.3, 0, Math.PI*2); ctx.fill();
 
-  // Tiny smile
+  // Tiny smile.
   ctx.beginPath();
   ctx.arc(0, -11.5, 4, 0.25, Math.PI - 0.25);
   ctx.strokeStyle = 'rgba(255,255,255,0.55)';
@@ -746,7 +861,7 @@ function drawItem(ctx, item, time, camera) {
   const spin = time * 0.001;
   const pulse = 0.85 + Math.sin(time * 0.005 + item.y) * 0.15;
 
-  // Ground glow (stays on ground, no bob)
+  // Ground glow stays on the ground.
   ctx.save();
   ctx.translate(sx, sy);
   const groundGlow = ctx.createRadialGradient(0, 0, 4, 0, 0, 30);
@@ -756,6 +871,21 @@ function drawItem(ctx, item, time, camera) {
   ctx.arc(0, 0, 30, 0, Math.PI*2);
   ctx.fillStyle = groundGlow;
   ctx.fill();
+  ctx.restore();
+
+  // A clear "come get this" ring helps new players understand the goal.
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.strokeStyle = `rgba(255,255,255,${0.45 * pulse})`;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, 32 + pulse * 6, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = `rgba(255,214,90,${0.6 * pulse})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, 39 + pulse * 4, 0, Math.PI * 2);
+  ctx.stroke();
   ctx.restore();
 
   ctx.save();
@@ -773,14 +903,24 @@ function drawItem(ctx, item, time, camera) {
   drawStar(ctx, 0, 0, 6, 18, 7, `rgba(255,255,255,${0.4 * pulse})`);
   ctx.restore();
 
-  // White bubble backing with item-coloured border
+  // White bubble backing with item-coloured border.
   ctx.beginPath();
   ctx.arc(0, 0, 22, 0, Math.PI*2);
   ctx.fillStyle = 'rgba(255,255,255,0.95)';
   ctx.fill();
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 3;
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'rgba(0,0,0,0.14)';
   ctx.strokeStyle = item.color1;
   ctx.lineWidth = 3;
   ctx.stroke();
+  ctx.shadowColor = 'rgba(0,0,0,0)';
+
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.beginPath();
+  ctx.ellipse(-7, -8, 6, 3, -0.5, 0, Math.PI * 2);
+  ctx.fill();
 
   // Icon at larger scale
   ctx.scale(0.75, 0.75);
@@ -967,6 +1107,84 @@ function drawFloatTexts(ctx, floatTexts) {
     ctx.fillText(t.text, t.x, t.y);
     ctx.restore();
   });
+}
+
+// Title screen helpers
+function drawTitleScenery(ctx, time) {
+  const sky = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+  sky.addColorStop(0, '#BFEFFF');
+  sky.addColorStop(0.62, '#DDF8FF');
+  sky.addColorStop(1, '#BFEA85');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  drawCloud(ctx, 78, 76, 0.95, time, 0);
+  drawCloud(ctx, 380, 62, 0.8, time, 1.4);
+  drawCloud(ctx, 320, 155, 0.58, time, 2.6);
+
+  ctx.fillStyle = '#8EDC72';
+  ctx.beginPath();
+  ctx.ellipse(110, 430, 210, 82, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#78CC62';
+  ctx.beginPath();
+  ctx.ellipse(370, 438, 245, 94, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(0, 0);
+  ctx.lineWidth = 8;
+  RAINBOW_COLORS.forEach((col, i) => {
+    ctx.strokeStyle = col;
+    ctx.beginPath();
+    ctx.arc(240, 276, 142 - i * 7, Math.PI * 1.08, Math.PI * 1.92);
+    ctx.stroke();
+  });
+  ctx.restore();
+
+  // Friendly trail leading the eye to Charlie.
+  ctx.strokeStyle = '#E6BE82';
+  ctx.lineWidth = 22;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(120, 480);
+  ctx.quadraticCurveTo(210, 390, 240, 320);
+  ctx.stroke();
+}
+
+function drawCloud(ctx, x, y, scale, time, phase) {
+  const bob = Math.sin(time * 0.001 + phase) * 2;
+  ctx.save();
+  ctx.translate(x, y + bob);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  [[-22, 4, 20], [0, -4, 25], [24, 5, 18], [5, 12, 28]].forEach(([cx, cy, r]) => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawControlBadge(ctx, x, y, label, detail, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = 'rgba(255,255,255,0.86)';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(-58, -18, 116, 36, 18);
+  ctx.fill();
+  ctx.stroke();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#263238';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText(label, 0, -5);
+  ctx.font = '10px sans-serif';
+  ctx.globalAlpha = 0.75;
+  ctx.fillText(detail, 0, 8);
+  ctx.restore();
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
