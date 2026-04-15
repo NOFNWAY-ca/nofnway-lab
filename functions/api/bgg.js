@@ -14,10 +14,11 @@ const BGG_HEADERS = {
   'Referer': 'https://lab.nofnway.ca/'
 };
 
-// Retry queued requests a few times, but do not assume timer APIs exist in
-// every Worker runtime.
-const BACKOFF = [2000, 3000, 5000];
-const MAX_ATTEMPTS = BACKOFF.length;
+// Retry transient upstream failures with exponential backoff, but do not
+// assume timer APIs exist in every Worker runtime.
+const RETRY_BACKOFF = [1000, 2000, 4000];
+const MAX_RETRIES = RETRY_BACKOFF.length;
+const FETCH_TIMEOUT_MS = 30000;
 
 // Minimum valid XML body length. BGG occasionally returns HTTP 200 with
 // an empty or near-empty body on overloaded nodes. Anything under this
@@ -32,12 +33,51 @@ const CORS_HEADERS = {
 };
 
 const rateLimitBuckets = new Map();
+const inFlightRequests = new Map();
+
+function buildSuccessHeaders() {
+  return {
+    ...CORS_HEADERS,
+    'Content-Type': 'text/xml; charset=utf-8',
+    'Cache-Control': 'public, max-age=604800'
+  };
+}
 
 function errorResponse(status, message) {
   return new Response(message, {
     status,
     headers: { ...CORS_HEADERS, 'Content-Type': 'text/plain' }
   });
+}
+
+function logRequestStart(url) {
+  console.log(JSON.stringify({
+    type: 'bgg_request_start',
+    url
+  }));
+}
+
+function logRequest(url, cache, duration, status, error) {
+  const payload = {
+    type: 'bgg_request',
+    url,
+    cache,
+    duration_ms: duration,
+    status
+  };
+  if (error) payload.error = error;
+  console.log(JSON.stringify(payload));
+}
+
+function logError(url, cache, duration, status, error) {
+  console.log(JSON.stringify({
+    type: 'bgg_error',
+    url,
+    cache,
+    duration_ms: duration,
+    status,
+    error
+  }));
 }
 
 async function sleep(ms) {
@@ -51,9 +91,16 @@ async function sleep(ms) {
 }
 
 function getClientIp(request) {
-  const forwarded = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || '';
-  const ip = forwarded.split(',')[0].trim();
+  const ip = (request.headers.get('CF-Connecting-IP') || '').trim();
   return ip || 'unknown';
+}
+
+function isAbortError(err) {
+  return err?.name === 'AbortError';
+}
+
+function shouldRetryStatus(status) {
+  return status === 500 || status === 503;
 }
 
 function takeRateLimitToken(ip) {
@@ -93,96 +140,60 @@ function takeRateLimitToken(ip) {
   };
 }
 
-export async function onRequest(context) {
-  // Validate request URL is parseable before touching searchParams.
-  let requestUrl;
-  try {
-    requestUrl = new URL(context.request.url);
-  } catch (_) {
-    return errorResponse(400, 'Malformed request URL');
-  }
-
-  const clientIp = getClientIp(context.request);
-  const rateLimit = takeRateLimitToken(clientIp);
-  if (!rateLimit.allowed) {
-    return new Response('Too many BGG requests. Wait a moment and try again.', {
-      status: 429,
-      headers: {
-        ...CORS_HEADERS,
-        'Content-Type': 'text/plain',
-        'Retry-After': String(rateLimit.retryAfterSeconds)
-      }
-    });
-  }
-
-  const target = requestUrl.searchParams.get('url');
-  const token = context.env?.BGG_API_TOKEN?.trim();
-
-  // Step 8 — Input validation
-  if (!target) {
-    return errorResponse(400, 'Missing url parameter');
-  }
-
-  // Reject non-BGG or non-XMLAPI2 URLs to prevent open-proxy abuse.
-  if (!target.startsWith(ALLOWED_PREFIX)) {
-    return errorResponse(400, 'url must start with ' + ALLOWED_PREFIX);
-  }
-
-  // Confirm the target is itself a valid URL (catches truncated or
-  // malformed values that pass the prefix check).
-  try {
-    new URL(target);
-  } catch (_) {
-    return errorResponse(400, 'Malformed target URL');
-  }
-
-  if (!token) {
-    return errorResponse(
-      503,
-      'Live BGG lookup is not configured. Add BGG_API_TOKEN to the Cloudflare Pages environment for NOFNWAY Lab.'
-    );
-  }
-
-  console.log('[bgg] target:', target);
-
-  // Step 3 — Retry loop with exponential backoff.
-  // Retries on: 202 (BGG queue), empty body, fetch throws.
-  // Does NOT retry hard errors (4xx from BGG — those are deterministic).
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    console.log('[bgg] attempt:', attempt + 1, 'of', MAX_ATTEMPTS);
-
+async function fetchBGGWithRetry(target, token, requestedUrl) {
+  // Retries on upstream 202/500/503 and network errors.
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     let res;
+    const fetchStartedAt = Date.now();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
       const headers = new Headers(BGG_HEADERS);
       headers.set('Authorization', `Bearer ${token}`);
 
       res = await fetch(target, {
         headers,
+        signal: controller.signal,
         cf: { cacheEverything: true, cacheTtl: 300 }
       });
     } catch (err) {
-      console.log('[bgg] fetch threw on attempt', attempt + 1, ':', err.message);
-      if (attempt < MAX_ATTEMPTS - 1) {
-        await sleep(BACKOFF[attempt]);
+      clearTimeout(timeoutId);
+      const duration = Date.now() - fetchStartedAt;
+      if (isAbortError(err)) {
+        logError(requestedUrl, 'miss', duration, 504, 'BGG request timed out');
+        return errorResponse(504, 'BGG request timed out.');
+      }
+      if (attempt < MAX_RETRIES) {
+        logError(requestedUrl, 'miss', duration, 502, `Fetch failed on attempt ${attempt + 1}: ${err.message}`);
+        await sleep(RETRY_BACKOFF[attempt]);
         continue;
       }
-      return errorResponse(502, 'BGG request failed before a response came back.');
+      logError(requestedUrl, 'miss', duration, 502, `Fetch failed after retries: ${err.message}`);
+      return errorResponse(502, 'BGG temporarily unavailable.');
     }
-
-    console.log('[bgg] response status:', res.status, 'attempt:', attempt + 1);
+    clearTimeout(timeoutId);
+    const duration = Date.now() - fetchStartedAt;
+    logRequest(requestedUrl, 'miss', duration, res.status);
 
     if (res.status === 202) {
-      if (attempt < MAX_ATTEMPTS - 1) {
-        console.log('[bgg] 202 received, waiting', BACKOFF[attempt], 'ms before retry');
-        await sleep(BACKOFF[attempt]);
+      logError(requestedUrl, 'miss', duration, 202, `BGG request still processing on attempt ${attempt + 1}`);
+      if (attempt < MAX_RETRIES) {
+        await sleep(RETRY_BACKOFF[attempt]);
         continue;
       }
-      return errorResponse(503, 'BGG queued the request for too long. Try again in a moment.');
+      return errorResponse(503, 'BGG request is still processing.');
     }
 
     if (!res.ok) {
       const upstreamText = (await res.text()).trim();
-      console.log('[bgg] BGG hard error:', res.status, res.statusText, upstreamText);
+      logError(requestedUrl, 'miss', duration, res.status, upstreamText || res.statusText);
+      if (shouldRetryStatus(res.status)) {
+        if (attempt < MAX_RETRIES) {
+          await sleep(RETRY_BACKOFF[attempt]);
+          continue;
+        }
+        return errorResponse(502, 'BGG temporarily unavailable.');
+      }
       if (res.status === 401) {
         return errorResponse(
           502,
@@ -197,30 +208,121 @@ export async function onRequest(context) {
 
     // Step 4 — Empty body guard.
     // BGG occasionally returns HTTP 200 with an empty or malformed body
-    // on overloaded nodes. Detect and retry rather than forwarding silence.
+    // on overloaded nodes. Forward a clear failure rather than silence.
     const body = await res.text();
     if (!body || body.length < MIN_BODY_LENGTH) {
-      console.log('[bgg] empty/short body detected (length:', body.length, ') on attempt', attempt + 1);
-      if (attempt < MAX_ATTEMPTS - 1) {
-        await sleep(BACKOFF[attempt]);
-        continue;
-      }
+      logError(requestedUrl, 'miss', duration, 502, 'BGG returned an empty response');
       return errorResponse(502, 'BGG returned an empty response.');
     }
 
-    console.log('[bgg] success on attempt', attempt + 1, '— body length:', body.length);
-
-    return new Response(body, {
+    const response = new Response(body, {
       status: 200,
+      headers: buildSuccessHeaders()
+    });
+
+    logRequest(requestedUrl, 'miss', duration, response.status);
+    return response;
+  }
+
+  logError(requestedUrl, 'miss', 0, 502, 'BGG Origin Error');
+  return errorResponse(502, 'BGG Origin Error');
+}
+
+export async function onRequest(context) {
+  const requestStartedAt = Date.now();
+
+  // Validate request URL is parseable before touching searchParams.
+  let requestUrl;
+  try {
+    requestUrl = new URL(context.request.url);
+  } catch (_) {
+    logError(context.request.url, 'miss', Date.now() - requestStartedAt, 400, 'Malformed request URL');
+    return errorResponse(400, 'Malformed request URL');
+  }
+
+  const clientIp = getClientIp(context.request);
+  const rateLimit = takeRateLimitToken(clientIp);
+  if (!rateLimit.allowed) {
+    logRequest(requestUrl.toString(), 'miss', Date.now() - requestStartedAt, 429, 'Rate limit exceeded');
+    return new Response('Rate limit exceeded. Please wait.', {
+      status: 429,
       headers: {
         ...CORS_HEADERS,
-        'Content-Type': 'text/xml; charset=utf-8',
-        // 5-minute browser cache on top of CF edge cache.
-        'Cache-Control': 'public, max-age=300'
+        'Content-Type': 'text/plain',
+        'Retry-After': String(rateLimit.retryAfterSeconds)
       }
     });
   }
 
-  // Fallthrough (should not be reachable, but Workers require a return).
-  return errorResponse(502, 'BGG Origin Error');
+  const target = requestUrl.searchParams.get('url');
+  const token = context.env?.BGG_API_TOKEN?.trim();
+  const requestedUrl = target || requestUrl.toString();
+
+  logRequestStart(requestedUrl);
+
+  // Step 8 — Input validation
+  if (!target) {
+    logError(requestedUrl, 'miss', Date.now() - requestStartedAt, 400, 'Missing url parameter');
+    return errorResponse(400, 'Missing url parameter');
+  }
+
+  // Reject non-BGG or non-XMLAPI2 URLs to prevent open-proxy abuse.
+  if (!target.startsWith(ALLOWED_PREFIX)) {
+    logError(requestedUrl, 'miss', Date.now() - requestStartedAt, 400, 'Target URL failed allowlist validation');
+    return errorResponse(400, 'url must start with ' + ALLOWED_PREFIX);
+  }
+
+  // Confirm the target is itself a valid URL (catches truncated or
+  // malformed values that pass the prefix check).
+  try {
+    new URL(target);
+  } catch (_) {
+    logError(requestedUrl, 'miss', Date.now() - requestStartedAt, 400, 'Malformed target URL');
+    return errorResponse(400, 'Malformed target URL');
+  }
+
+  const cacheKey = new Request(context.request.url, { method: 'GET' });
+  const canUseCache = !context.request.headers.has('Authorization');
+  if (canUseCache) {
+    const cachedResponse = await caches.default.match(cacheKey);
+    if (cachedResponse) {
+      logRequest(requestedUrl, 'hit', Date.now() - requestStartedAt, cachedResponse.status);
+      return cachedResponse;
+    }
+  }
+
+  logRequest(requestedUrl, 'miss', Date.now() - requestStartedAt, 0);
+
+  if (!token) {
+    logError(requestedUrl, 'miss', Date.now() - requestStartedAt, 503, 'BGG API token not configured');
+    return errorResponse(
+      503,
+      'Live BGG lookup is not configured. Add BGG_API_TOKEN to the Cloudflare Pages environment for NOFNWAY Lab.'
+    );
+  }
+
+  const coalesceKey = context.request.url;
+  let inFlight = inFlightRequests.get(coalesceKey);
+
+  if (!inFlight) {
+    inFlight = (async () => {
+      const response = await fetchBGGWithRetry(target, token, requestedUrl);
+
+      if (canUseCache && response.status === 200) {
+        await caches.default.put(cacheKey, response.clone());
+      }
+
+      return response;
+    })();
+
+    inFlightRequests.set(coalesceKey, inFlight);
+    inFlight.finally(() => {
+      if (inFlightRequests.get(coalesceKey) === inFlight) {
+        inFlightRequests.delete(coalesceKey);
+      }
+    });
+  }
+
+  const sharedResponse = await inFlight;
+  return sharedResponse.clone();
 }
