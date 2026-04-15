@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="author" content="Gerry McMahon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Free Unit Converter – NOFNWAY</title>
+
+    <link rel="stylesheet" href="theme.css">
+
+    <style>
+        :root {
+            --accent-yellow: #facc15;
+            --accent-green:  #4ade80;
+            --accent-red:    #f87171;
+        }
+    </style>
+
+    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});</script>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index" class="brand">NO<span>FN</span>WAY</a>
+    <div class="nav-controls">
+        <div id="unit-indicator">Awaiting input…</div>
+        <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">🌙 Dark</button>
+    </div>
+</nav>
+
+<main class="workspace">
+
+    <div class="hero-title">
+        <h1 id="dynamic-title">HOW [FN] <span style="color:var(--brand)">MUCH?</span></h1>
+    </div>
+
+    <div class="input-container" id="box">
+        <input type="text" id="userInput" class="main-input"
+               placeholder="e.g. 10kg"
+               autofocus
+               autocomplete="off"
+               oninput="convert()">
+    </div>
+
+    <div id="results" class="results-grid"></div>
+
+    <div id="empty" class="empty-state">
+        Type a value and unit to begin.
+    </div>
+
+</main>
+
+<div id="toast" class="toast">COPIED</div>
+
+<script>
+
+// ── THEME ─────────────────────────
+
+function initTheme() {
+    const saved = localStorage.getItem('nofnway-theme') || 'light';
+    if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('themeBtn').textContent = '☀️ Light';
+    }
+}
+function toggleTheme() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+    localStorage.setItem('nofnway-theme', isDark ? 'light' : 'dark');
+}
+initTheme();
+
+
+// ── UNIT DATA ─────────────────────
+
+const UnitData = {
+    weight: { lb:1, kg:0.453592, oz:16, g:453.592, st:0.0714286 },
+    length: { in:1, ft:1/12, yd:1/36, mi:1/63360, mm:25.4, cm:2.54, m:0.0254, km:1/39370 },
+    volume: { tsp:48, tbsp:16, floz:8, cup:1, pt:0.5, qt:0.25, gal:0.0625, ml:236.588, l:0.236588 },
+    pressure:{ psi:1, bar:0.0689476, kpa:6.89476 },
+    temp: { c:1, f:1, k:1 }
+};
+
+
+// ── UNIT ALIASES ──────────────────
+
+const UnitAliases = {
+    kg: ['kg','kgs','kilogram','kilograms'],
+    lb: ['lb','lbs','pound','pounds'],
+    oz: ['oz','ounce','ounces'],
+    g:  ['g','gram','grams'],
+    m:  ['m','meter','meters'],
+    km: ['km','kilometer','kilometers'],
+    cm: ['cm','centimeter','centimeters'],
+    mm: ['mm','millimeter','millimeters'],
+    l:  ['l','liter','liters'],
+    ml: ['ml','milliliter','milliliters']
+};
+
+function normalizeUnit(u) {
+    for (const key in UnitAliases) {
+        if (UnitAliases[key].includes(u)) return key;
+    }
+    return u;
+}
+
+
+// ── HELPERS ───────────────────────
+
+function formatNumber(val) {
+    if (val === 0) return '0';
+    const abs = Math.abs(val);
+    if (abs < 0.0001) return val.toExponential(2);
+    if (abs < 1) return val.toFixed(4);
+    if (abs < 100) return val.toFixed(2);
+    if (abs < 10000) return val.toFixed(1);
+    return Math.round(val).toLocaleString();
+}
+
+function resetUI(msg = 'Awaiting input…') {
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('empty').style.display = 'block';
+    document.getElementById('unit-indicator').textContent = msg;
+    document.getElementById('box').classList.remove('active');
+}
+
+
+// ── STATE ─────────────────────────
+
+let lastUnit = null;
+
+
+// ── CONVERSION ────────────────────
+
+function convert() {
+
+    const input = document.getElementById('userInput').value.toLowerCase().trim();
+
+    if (!input) return resetUI();
+
+    // sticky unit
+    if (/^\d+$/.test(input) && lastUnit) {
+        document.getElementById('userInput').value = input + lastUnit;
+        return convert();
+    }
+
+    const match = input.match(/^(-?\d+(\.\d+)?)[\s]*([a-zA-Z]+)$/);
+
+    if (!match) return resetUI("Try format: 10kg");
+
+    const val = parseFloat(match[1]);
+    let unit = normalizeUnit(match[3]);
+
+    let foundCat = null;
+    for (const cat in UnitData) {
+        if (UnitData[cat][unit]) {
+            foundCat = cat;
+            break;
+        }
+    }
+
+    if (!foundCat) return resetUI(`Unknown: ${unit}`);
+
+    lastUnit = unit;
+
+    document.getElementById('empty').style.display = 'none';
+    document.getElementById('box').classList.add('active');
+    document.getElementById('unit-indicator').textContent = foundCat;
+
+    let html = '';
+
+    if (foundCat === 'temp') {
+        let c;
+        if (unit === 'c') c = val;
+        else if (unit === 'f') c = (val - 32) * 5/9;
+        else if (unit === 'k') c = val - 273.15;
+
+        const f = (c * 9/5) + 32;
+        const k = c + 273.15;
+
+        if (unit !== 'f') html += card('Fahrenheit', f);
+        if (unit !== 'c') html += card('Celsius', c);
+        if (unit !== 'k') html += card('Kelvin', k);
+
+    } else {
+        const base = val / UnitData[foundCat][unit];
+
+        for (const u in UnitData[foundCat]) {
+            if (u === unit) continue;
+            html += card(u, base * UnitData[foundCat][u]);
+        }
+    }
+
+    document.getElementById('results').innerHTML = html;
+}
+
+
+// ── UI ────────────────────────────
+
+function card(label, val) {
+    const displayVal = formatNumber(val);
+    const copyVal = +val.toPrecision(8);
+
+    return `
+        <div class="result-card" onclick="copy('${copyVal} ${label}')">
+            <div class="res-unit">${label}</div>
+            <div class="res-val">${displayVal}</div>
+        </div>`;
+}
+
+function copy(text) {
+    navigator.clipboard.writeText(text);
+
+    const toast = document.getElementById('toast');
+    toast.textContent = text + " copied";
+    toast.style.display = 'block';
+
+    setTimeout(() => toast.style.display = 'none', 1500);
+}
+
+
+// ── KEYBOARD ─────────────────────
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        document.getElementById('userInput').value = '';
+        resetUI();
+    }
+});
+
+</script>
+
+</body>
+</html>

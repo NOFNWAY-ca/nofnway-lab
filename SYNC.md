@@ -13,7 +13,9 @@ Experimental site with live tool work and Cloudflare Functions.
 - Added visible BoardGameGeek attribution to K.I.N.G. for XML API compliance.
 - Added lightweight per-IP rate limiting to `/api/bgg` to reduce burst abuse risk.
 - Re-enabled live BGG lookup in K.I.N.G. for uncataloged game IDs, URLs, and text searches that miss the local catalog.
+- Updated `/api/bgg` and `king-navigator.html` to handle BGG's current bearer-token requirement cleanly instead of failing with opaque 502s or false "No results" messages.
 
 ## Next Recommended Step
 - Track any `.env`, KV, or deployment assumptions here whenever alarm work is touched.
+- Add `BGG_API_TOKEN` to the Cloudflare Pages environment for NOFNWAY Lab after registering/approving the app with BoardGameGeek.
 - If K.I.N.G. moves closer to public rollout, replace the in-memory `/api/bgg` limiter with KV-backed rate limiting and add longer-lived response caching.

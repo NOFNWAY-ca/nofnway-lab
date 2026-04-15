@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caylie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f2;--surface:#ffffff;--border:#e0dbd4;
+  --text:#1a1714;--muted:#6b6357;
+  --navy:#2E3192;--warm:#c9923a;
+  --r:10px;--sh:0 1px 3px rgba(0,0,0,.08);
+}
+html{font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:'Source Sans 3',sans-serif;min-height:100vh;line-height:1.5}
+h1,h2,h3,h4,h5{font-family:'Outfit',sans-serif;line-height:1.2}
+.app{display:flex;min-height:100vh}
+.sidebar{width:200px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:1.25rem .875rem;display:flex;flex-direction:column;gap:.2rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{font-family:'Outfit',sans-serif;font-weight:700;font-size:1.15rem;color:var(--navy);padding:.4rem .75rem .9rem}
+.nav-btn{display:flex;align-items:center;gap:.55rem;padding:.55rem .75rem;border-radius:7px;cursor:pointer;font-size:.92rem;color:var(--muted);transition:all .12s;border:none;background:none;width:100%;text-align:left;font-family:'Source Sans 3',sans-serif}
+.nav-btn:hover{background:var(--bg);color:var(--text)}
+.nav-btn.active{background:var(--navy);color:#fff}
+.nav-btn svg{width:16px;height:16px;flex-shrink:0}
+.nav-spacer{flex:1}
+.main{flex:1;padding:1.5rem;max-width:940px;overflow-x:hidden}
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{padding:.875rem .875rem 5.5rem}
+}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:100;padding:.4rem 0 env(safe-area-inset-bottom)}
+.bnav-row{display:flex;justify-content:space-around}
+.bnav-btn{display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.45rem .6rem;border:none;background:none;cursor:pointer;font-size:.68rem;color:var(--muted);font-family:'Source Sans 3',sans-serif;border-radius:6px;min-width:54px}
+.bnav-btn svg{width:20px;height:20px}
+.bnav-btn.active{color:var(--navy)}
+@media(max-width:768px){.bottom-nav{display:block}}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;box-shadow:var(--sh)}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.sec-title{font-size:1.3rem;font-weight:700}
+.subsec-title{font-family:'Outfit',sans-serif;font-weight:600;font-size:.92rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.7rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
+.subsec{margin-bottom:1.75rem}
+
+/* Welcome */
+.welcome-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:1.5rem;box-shadow:var(--sh)}
+.welcome-card p{color:var(--text);line-height:1.75;font-size:.98rem;margin-bottom:1rem}
+.welcome-dismiss{padding:.45rem .95rem;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.88rem;color:var(--muted);background:transparent}
+.welcome-dismiss:hover{background:var(--bg)}
+
+/* Dashboard */
+.dash-greeting{font-size:1.55rem;font-weight:700;margin-bottom:.2rem}
+.dash-date{color:var(--muted);font-size:.9rem;margin-bottom:1.1rem}
+.chips{display:flex;gap:.65rem;flex-wrap:wrap;margin-bottom:1.1rem}
+.chip{background:var(--bg);border:1px solid var(--border);border-radius:18px;padding:.35rem .9rem;font-size:.85rem;color:var(--muted)}
+.chip strong{color:var(--text);font-family:'Outfit',sans-serif;font-weight:600}
+.season-bar-wrap{margin-bottom:1.1rem}
+.season-bar-label{font-size:.83rem;color:var(--muted);margin-bottom:.35rem}
+.season-bar{height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.season-fill{height:100%;background:var(--warm);border-radius:4px}
+.this-week{margin-bottom:1.1rem}
+.this-week h5{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;font-family:'Outfit',sans-serif;font-weight:600}
+.this-week-item{font-size:.88rem;padding:.35rem 0;border-bottom:1px solid var(--border)}
+.this-week-item:last-child{border-bottom:none}
+.burnout-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:1.1rem}
+.burnout-card p{font-size:.92rem;color:var(--muted);margin-bottom:.65rem}
+.burnout-pills{display:flex;gap:.45rem;flex-wrap:wrap}
+.burnout-pill{padding:.35rem .85rem;border:1px solid var(--border);border-radius:18px;font-size:.85rem;cursor:pointer;background:var(--surface);color:var(--text);font-family:'Source Sans 3',sans-serif;transition:all .12s}
+.burnout-pill:hover{border-color:var(--navy);color:var(--navy)}
+.burnout-resp{font-size:.88rem;color:var(--muted)}
+.burnout-resp strong{color:var(--text)}
+.dash-divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0}
+
+/* Section panels */
+.sec-panel{display:none}
+.sec-panel.active{display:block}
+
+/* Buttons */
+.btn{padding:.48rem 1rem;border-radius:7px;font-family:'Source Sans 3',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer;transition:all .12s;border:1px solid transparent;display:inline-flex;align-items:center;gap:.35rem;line-height:1.2}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{opacity:.88}
+.btn-ghost{background:transparent;color:var(--muted);border-color:var(--border)}
+.btn-ghost:hover{border-color:#aaa;color:var(--text)}
+.btn-danger{background:transparent;color:#9b1c1c;border-color:#fecaca}
+.btn-danger:hover{background:#fef2f2}
+.btn-sm{padding:.28rem .65rem;font-size:.8rem}
+.btn-warm{background:var(--warm);color:#fff;border-color:var(--warm)}
+
+/* Jobs */
+.earnings-banner{background:var(--navy);color:#fff;border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1.1rem}
+.earnings-banner p{font-size:.9rem;opacity:.8;margin-top:.2rem}
+.earnings-banner strong{font-family:'Outfit',sans-serif;font-size:1.05rem}
+.job-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:.95rem 1.05rem;margin-bottom:.65rem;cursor:pointer;transition:box-shadow .12s}
+.job-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.09)}
+.jc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem}
+.jc-name{font-weight:600;font-family:'Outfit',sans-serif;font-size:.98rem}
+.jc-addr{font-size:.82rem;color:var(--muted)}
+.status-badge{font-size:.72rem;font-weight:700;padding:.18rem .55rem;border-radius:11px;flex-shrink:0;font-family:'Outfit',sans-serif}
+.s-Estimate{background:#f3f4f6;color:#555}
+.s-Scheduled{background:#e8f0fe;color:#1a56db}
+.s-Active{background:#e6f4ea;color:#137333}
+.s-Complete{background:#bbf7d0;color:#15803d}
+.s-Cancelled{background:#fef2f2;color:#9b1c1c}
+.jc-meta{display:flex;gap:.85rem;margin-top:.45rem;font-size:.83rem;color:var(--muted);flex-wrap:wrap}
+.jc-prog{height:4px;background:var(--border);border-radius:2px;margin-top:.55rem;overflow:hidden}
+.jc-prog-fill{height:100%;background:var(--warm);border-radius:2px}
+.job-detail{display:none;margin-top:.7rem;border-top:1px solid var(--border);padding-top:.7rem}
+.job-detail.open{display:block}
+.dr{display:grid;grid-template-columns:110px 1fr;gap:.35rem .65rem;font-size:.86rem;margin-bottom:.3rem}
+.dr .lbl{color:var(--muted)}
+.detail-actions{display:flex;gap:.45rem;margin-top:.65rem}
+
+/* Contacts */
+.contacts-toolbar{display:flex;gap:.65rem;flex-wrap:wrap;align-items:center;margin-bottom:.95rem}
+.inp{padding:.5rem .8rem;border:1px solid var(--border);border-radius:7px;font-family:'Source Sans 3',sans-serif;font-size:.88rem;background:var(--surface);color:var(--text)}
+.inp:focus{outline:none;border-color:var(--navy)}
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(256px,1fr));gap:.65rem}
+@media(max-width:600px){.contact-grid{grid-template-columns:1fr}}
+.contact-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:.95rem}
+.contact-card.followup{border-left:3px solid var(--warm)}
+.cc-name{font-weight:600;font-family:'Outfit',sans-serif;font-size:.97rem;margin-bottom:.12rem}
+.cc-org{font-size:.8rem;color:var(--muted);margin-bottom:.45rem}
+.type-tag{font-size:.7rem;font-weight:600;padding:.13rem .48rem;border-radius:9px;background:var(--bg);color:var(--muted);border:1px solid var(--border);font-family:'Outfit',sans-serif}
+.cc-info{font-size:.82rem;color:var(--muted);margin-top:.45rem;line-height:1.55}
+.cc-notes{font-size:.84rem;color:var(--text);margin-top:.45rem;line-height:1.6}
+.cc-followup{font-size:.74rem;color:var(--warm);font-weight:600;margin-top:.3rem}
+.cc-actions{display:flex;gap:.4rem;margin-top:.65rem}
+
+/* Med school */
+.school-table{width:100%;border-collapse:collapse;font-size:.86rem;margin-bottom:1.1rem}
+.school-table th{text-align:left;padding:.45rem .65rem;border-bottom:2px solid var(--border);font-family:'Outfit',sans-serif;font-weight:600;font-size:.76rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.school-table td{padding:.55rem .65rem;border-bottom:1px solid var(--border);vertical-align:top}
+.school-table tr:hover td{background:var(--bg)}
+.school-badge{padding:.18rem .55rem;border-radius:11px;font-size:.75rem;font-weight:700;font-family:'Outfit',sans-serif}
+.deadline-list{list-style:none}
+.dl-item{display:flex;align-items:center;gap:.65rem;padding:.55rem .4rem;border-bottom:1px solid var(--border);font-size:.88rem}
+.dl-item:last-child{border-bottom:none}
+.dl-item.done{opacity:.45}
+.dl-item.overdue .dl-date{color:var(--warm)}
+.dl-check{width:17px;height:17px;cursor:pointer;accent-color:var(--navy);flex-shrink:0}
+.dl-text{flex:1}
+.dl-date{font-size:.8rem;color:var(--muted);flex-shrink:0}
+.mcat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:.95rem;margin-bottom:1.1rem}
+.mcat-card h5{font-family:'Outfit',sans-serif;font-weight:600;margin-bottom:.45rem}
+.med-notes{width:100%;min-height:160px;border:1px solid var(--border);border-radius:7px;padding:.7rem;font-family:'Source Sans 3',sans-serif;font-size:.88rem;background:var(--surface);color:var(--text);resize:vertical;line-height:1.6}
+.med-notes:focus{outline:none;border-color:var(--navy)}
+
+/* Wellbeing */
+.burnout-timeline{}
+.burnout-entry{display:flex;gap:.65rem;padding:.7rem 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.burnout-entry:last-child{border-bottom:none}
+.be-date{font-size:.78rem;color:var(--muted);flex-shrink:0;width:78px;padding-top:.2rem}
+.resp-badge{padding:.18rem .55rem;border-radius:11px;font-size:.76rem;font-weight:700;font-family:'Outfit',sans-serif;flex-shrink:0}
+.r-Thriving{background:#dcfce7;color:#166534}
+.r-Good{background:#e8f0fe;color:#1a56db}
+.r-Holding{background:#fef9e7;color:#92400e}
+.r-Tired{background:#fef2f2;color:#9b1c1c}
+.r-Running{background:#f3f4f6;color:#374151}
+.be-note-wrap{flex:1}
+.be-note-inp{width:100%;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.84rem;color:var(--text);padding:.18rem 0;margin-top:.2rem}
+.be-note-inp:focus{outline:none;border-bottom-color:var(--navy)}
+.simple-list{list-style:none}
+.sl-item{display:flex;align-items:center;gap:.65rem;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.9rem}
+.sl-item:last-child{border-bottom:none}
+.sl-text{flex:1}
+.well-footer{font-size:.79rem;color:var(--muted);font-style:italic;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);text-align:center}
+.add-row{display:flex;gap:.5rem;margin-top:.6rem}
+.add-row .inp{flex:1}
+
+/* Modals */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.32);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--r);padding:1.5rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.modal h3{font-family:'Outfit',sans-serif;font-weight:700;font-size:1.15rem;margin-bottom:1.15rem}
+.field{margin-bottom:.9rem}
+.field label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:.3rem}
+.field input,.field select,.field textarea{width:100%;padding:.5rem .72rem;border:1px solid var(--border);border-radius:7px;font-family:'Source Sans 3',sans-serif;font-size:.88rem;background:var(--surface);color:var(--text)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--navy)}
+.field textarea{resize:vertical;min-height:72px;line-height:1.5}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.field-row .field{margin-bottom:0}
+.cb-row{display:flex;align-items:center;gap:.55rem;font-size:.88rem;cursor:pointer;margin-bottom:.45rem}
+.cb-row input{width:auto;accent-color:var(--navy)}
+.modal-footer{display:flex;justify-content:flex-end;gap:.45rem;margin-top:1.1rem;border-top:1px solid var(--border);padding-top:.95rem}
+.settings-sec{margin-bottom:1.35rem}
+.settings-sec h5{font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.7rem;font-family:'Outfit',sans-serif}
+.data-btns{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:.75rem}
+.site-footer{font-size:.78rem;color:var(--muted);text-align:center;margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--border)}
+
+/* Toast */
+.toast-wrap{position:fixed;bottom:5.5rem;right:1rem;z-index:999;display:flex;flex-direction:column;gap:.4rem;pointer-events:none}
+@media(min-width:769px){.toast-wrap{bottom:1.5rem}}
+.toast{background:#1a1714;color:#fff;border-radius:7px;padding:.55rem .95rem;font-size:.85rem;opacity:0;transition:opacity .2s;max-width:280px}
+.toast.show{opacity:1}
+
+/* Empty */
+.empty{color:var(--muted);font-size:.88rem;font-style:italic;padding:.75rem 0}
+
+/* Print */
+@media print{
+  .sidebar,.bottom-nav,.toast-wrap,.modal-bg,.btn,.contacts-toolbar{display:none!important}
+  body{background:#fff}.main{padding:0}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <nav class="sidebar">
+    <div class="sidebar-logo">Caylie</div>
+    <button class="nav-btn active" id="nav-jobs" onclick="showSec('jobs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Jobs
+    </button>
+    <button class="nav-btn" id="nav-contacts" onclick="showSec('contacts')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Contacts
+    </button>
+    <button class="nav-btn" id="nav-med" onclick="showSec('med')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Med School
+    </button>
+    <button class="nav-btn" id="nav-wellbeing" onclick="showSec('wellbeing')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Wellbeing
+    </button>
+    <div class="nav-spacer"></div>
+    <button class="nav-btn" onclick="openSettings()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings
+    </button>
+  </nav>
+
+  <main class="main">
+    <div id="welcome-wrap"></div>
+    <div id="dash"></div>
+    <div id="sec-jobs" class="sec-panel active"></div>
+    <div id="sec-contacts" class="sec-panel"></div>
+    <div id="sec-med" class="sec-panel"></div>
+    <div id="sec-wellbeing" class="sec-panel"></div>
+    <div class="site-footer">Built for Caylie by Before It Breaks &middot; beforeitbreaks.ca</div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bnav-row">
+    <button class="bnav-btn active" id="bnav-jobs" onclick="showSec('jobs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Jobs
+    </button>
+    <button class="bnav-btn" id="bnav-contacts" onclick="showSec('contacts')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Contacts
+    </button>
+    <button class="bnav-btn" id="bnav-med" onclick="showSec('med')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Med
+    </button>
+    <button class="bnav-btn" id="bnav-wellbeing" onclick="showSec('wellbeing')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Wellbeing
+    </button>
+    <button class="bnav-btn" onclick="openSettings()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings
+    </button>
+  </div>
+</nav>
+
+<!-- Job Modal -->
+<div class="modal-bg" id="m-job">
+  <div class="modal">
+    <h3 id="m-job-title">Add Job</h3>
+    <div class="field-row">
+      <div class="field"><label>Client Name</label><input id="jf-name" type="text" placeholder="Friesen Home"></div>
+      <div class="field"><label>Value ($)</label><input id="jf-value" type="number" step="50" min="0"></div>
+    </div>
+    <div class="field"><label>Address</label><input id="jf-address" type="text"></div>
+    <div class="field-row">
+      <div class="field"><label>Status</label>
+        <select id="jf-status"><option>Estimate</option><option>Scheduled</option><option>Active</option><option>Complete</option><option>Cancelled</option></select>
+      </div>
+      <div class="field"><label>Progress %</label><input id="jf-progress" type="number" min="0" max="100" value="0"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Start Date</label><input id="jf-start" type="date"></div>
+      <div class="field"><label>Est. End Date</label><input id="jf-end" type="date"></div>
+    </div>
+    <div class="field"><label>Crew</label><input id="jf-crew" type="text" placeholder="the usual crew"></div>
+    <div class="field"><label>Notes</label><textarea id="jf-notes" rows="2"></textarea></div>
+    <div style="display:flex;gap:1.5rem;margin-top:.2rem">
+      <label class="cb-row"><input type="checkbox" id="jf-discount"> 10% discount</label>
+      <label class="cb-row"><input type="checkbox" id="jf-deposit"> Deposit received</label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m-job')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveJob()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Modal -->
+<div class="modal-bg" id="m-contact">
+  <div class="modal">
+    <h3 id="m-contact-title">Add Contact</h3>
+    <div class="field-row">
+      <div class="field"><label>Name *</label><input id="cf-name" type="text"></div>
+      <div class="field"><label>Relationship</label>
+        <select id="cf-type"><option>Client</option><option>Professional</option><option>Personal</option><option>Academic</option><option>Medical</option><option>Crew</option></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Phone</label><input id="cf-phone" type="tel"></div>
+      <div class="field"><label>Email</label><input id="cf-email" type="email"></div>
+    </div>
+    <div class="field"><label>Organization / Context</label><input id="cf-org" type="text" placeholder="U of M — Biology Dept"></div>
+    <div class="field"><label>Notes</label><textarea id="cf-notes" rows="3"></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Last Contacted</label><input id="cf-last" type="date"></div>
+      <div class="field"><label>Follow-up Date</label><input id="cf-followup-date" type="date"></div>
+    </div>
+    <label class="cb-row"><input type="checkbox" id="cf-flagged"> Flag for follow-up</label>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m-contact')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveContact()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- School Modal -->
+<div class="modal-bg" id="m-school">
+  <div class="modal">
+    <h3 id="m-school-title">Add School</h3>
+    <div class="field"><label>School Name</label><input id="sf-school" type="text" placeholder="University of Manitoba"></div>
+    <div class="field"><label>Program</label><input id="sf-program" type="text" placeholder="Max Rady College of Medicine — MD"></div>
+    <div class="field-row">
+      <div class="field"><label>Application Date</label><input id="sf-appdate" type="date"></div>
+      <div class="field"><label>Status</label>
+        <select id="sf-status"><option>Researching</option><option>Applied</option><option>Interview Invited</option><option>Interview Scheduled</option><option>Interview Done</option><option>Offer</option><option>Waitlisted</option><option>Declined</option><option>Closed</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Interview Date</label><input id="sf-interview" type="date"></div>
+    <div class="field"><label>Notes</label><textarea id="sf-notes" rows="2"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m-school')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSchool()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-bg" id="m-settings">
+  <div class="modal">
+    <h3>Settings</h3>
+    <div class="settings-sec">
+      <h5>About you</h5>
+      <div class="field-row">
+        <div class="field"><label>Your Name</label><input id="set-name" type="text"></div>
+        <div class="field"><label>MCAT Exam Date</label><input id="set-mcat" type="date"></div>
+      </div>
+    </div>
+    <div class="settings-sec">
+      <h5>Season</h5>
+      <div class="field-row">
+        <div class="field"><label>Season Start</label><input id="set-ss" type="date"></div>
+        <div class="field"><label>Season End</label><input id="set-se" type="date"></div>
+      </div>
+    </div>
+    <div class="settings-sec">
+      <h5>Data</h5>
+      <div class="data-btns">
+        <button class="btn btn-ghost btn-sm" onclick="exportJSON()">Export all (JSON)</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportContactsCSV()">Export contacts (CSV)</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('imp-json').click()">Import from JSON</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('imp-csv').click()">Import contacts (CSV)</button>
+      </div>
+      <input type="file" id="imp-json" accept=".json" style="display:none" onchange="importJSON(event)">
+      <input type="file" id="imp-csv" accept=".csv" style="display:none" onchange="importCSV(event)">
+    </div>
+    <div class="settings-sec">
+      <h5>Danger zone</h5>
+      <div class="field"><label>Type "reset" to confirm</label><input id="reset-input" type="text" placeholder="reset"></div>
+      <button class="btn btn-danger btn-sm" onclick="clearAll()">Clear all data</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m-settings')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+const KEY = 'caylie_personal_v1';
+
+const SEED = {
+  jobs: [
+    {id:'j1',name:'Friesen Home',address:'88 Maple Dr, Steinbach',value:2100,startDate:'2026-04-10',endDate:'2026-04-18',status:'Active',crew:'the usual crew',progress:65,notes:'',discount:false,deposit:true},
+    {id:'j2',name:'Wall Garage & House',address:'15 Prairie Ave, Mitchell',value:4400,startDate:'2026-04-08',endDate:'2026-04-20',status:'Active',crew:'the usual crew',progress:30,notes:'',discount:true,deposit:true},
+    {id:'j3',name:'Penner Property',address:'42 Oak Cres, Steinbach',value:3200,startDate:'2026-04-15',endDate:'',status:'Scheduled',crew:'',progress:0,notes:'',discount:false,deposit:false},
+    {id:'j4',name:'Dyck Duplex',address:'231 First St, Steinbach',value:1950,startDate:'',endDate:'',status:'Complete',crew:'the usual crew',progress:100,notes:'',discount:false,deposit:true}
+  ],
+  contacts: [
+    {id:'c1',name:'Dr. Susan Klassen',phone:'204-474-8800',email:'s.klassen@umanitoba.ca',org:'U of M — Biology Dept',type:'Academic',lastContacted:'2026-03-15',notes:'Academic advisor. Supportive of med school application. Good to check in before fall.',followUp:false,followUpDate:''},
+    {id:'c2',name:'Priya Sharma',phone:'204-555-0182',email:'priya.sharma@email.com',org:'Crew — Student Works',type:'Crew',lastContacted:'2026-04-10',notes:'Reliable, detail-oriented. Has expressed interest in returning next season.',followUp:false,followUpDate:''},
+    {id:'c3',name:'Marcus Webb',phone:'204-555-0341',email:'marcus.webb@studentworks.ca',org:'Student Works — Regional',type:'Professional',lastContacted:'2026-03-20',notes:'Regional contact. Helpful with scheduling conflicts and territory questions.',followUp:false,followUpDate:''},
+    {id:'c4',name:'Linda Friesen',phone:'204-346-2210',email:'',org:'Client — Steinbach',type:'Client',lastContacted:'2026-04-12',notes:'Very easy to work with. Left a strong Google review. Would hire again. Possible referral to her sister in Blumenort.',followUp:true,followUpDate:'2026-04-25'},
+    {id:'c5',name:'Garry Wall',phone:'204-555-0499',email:'g.wall@mitchellgrain.ca',org:'Client — Mitchell',type:'Client',lastContacted:'2026-04-08',notes:'Agreed to 10% discount in exchange for cash. Communication has been good. Prefers texts.',followUp:false,followUpDate:''},
+    {id:'c6',name:'Admissions Office',phone:'204-789-3499',email:'admissions@umanitoba.ca',org:'U of M — Max Rady College of Medicine',type:'Medical',lastContacted:'2026-04-01',notes:'Main admissions contact. Confirmed application received. Check in after supplemental deadline.',followUp:true,followUpDate:'2026-04-22'}
+  ],
+  medSchools: [
+    {id:'m1',school:'University of Manitoba',program:'Max Rady College of Medicine — MD',appDate:'2026-02-15',status:'Applied',interviewDate:'',notes:'Primary application submitted. Supplemental requested.'}
+  ],
+  deadlines: [
+    {id:'d1',item:'Confirm supplemental documents — U of M',date:'2026-04-20',done:false}
+  ],
+  mcat: {date:'2026-04-05',score:'',notes:'Wrote April 5. Felt okay about CARS. Bio/Biochem section was dense.'},
+  medNotes: '',
+  burnout: [
+    {id:'b1',week:'2026-W12',date:'2026-03-23',response:'Good',note:'Busy but manageable.'},
+    {id:'b2',week:'2026-W13',date:'2026-03-30',response:'Holding',note:''}
+  ],
+  thingsWorking: [
+    {id:'tw1',text:'The crew is genuinely good. Trust them completely.'},
+    {id:'tw2',text:'Mornings before the jobs start are quiet and mine.'}
+  ],
+  whenOver: [
+    {id:'wo1',text:'Sleep past 7am on a weekday.'}
+  ],
+  settings: {name:'Caylie',mcatDate:'2026-04-05',seasonStart:'2026-04-01',seasonEnd:'2026-08-31'},
+  welcomed: false
+};
+
+function load() {
+  try { const r = localStorage.getItem(KEY); if (r) return JSON.parse(r); } catch(e) {}
+  return JSON.parse(JSON.stringify(SEED));
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
+
+let S = load();
+let editJobId = null, editContactId = null, editSchoolId = null;
+let curSec = 'jobs';
+let cSearch = '', cFilter = 'All';
+
+// Helpers
+function uid() { return crypto.randomUUID(); }
+function fmt(n) { return new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:0}).format(n||0); }
+function fmtD(d) {
+  if (!d) return '';
+  const p = d.split('-');
+  return new Date(+p[0], +p[1]-1, +p[2]).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'});
+}
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function weekKey(dateStr) {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const wk = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `${d.getFullYear()}-W${wk}`;
+}
+function greeting() {
+  const h = new Date().getHours();
+  const n = S.settings.name || 'Caylie';
+  return h < 12 ? `Good morning, ${n}` : h < 17 ? `Good afternoon, ${n}` : `Good evening, ${n}`;
+}
+function respClass(r) {
+  const map = {'Thriving':'r-Thriving','Good':'r-Good','Holding':'r-Holding','Tired':'r-Tired','Running on empty':'r-Running'};
+  return map[r] || 'r-Good';
+}
+function toast(msg) {
+  const w = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  w.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2500);
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Nav
+function showSec(s) {
+  curSec = s;
+  document.querySelectorAll('.sec-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('sec-' + s).classList.add('active');
+  ['jobs','contacts','med','wellbeing'].forEach(id => {
+    const nb = document.getElementById('nav-' + id);
+    const bb = document.getElementById('bnav-' + id);
+    if (nb) nb.classList.toggle('active', id === s);
+    if (bb) bb.classList.toggle('active', id === s);
+  });
+  renderSec(s);
+  window.scrollTo(0, 0);
+}
+function renderSec(s) {
+  if (s === 'jobs') renderJobs();
+  else if (s === 'contacts') renderContacts();
+  else if (s === 'med') renderMed();
+  else if (s === 'wellbeing') renderWellbeing();
+}
+
+// Welcome
+function renderWelcome() {
+  const w = document.getElementById('welcome-wrap');
+  if (S.welcomed) { w.innerHTML = ''; return; }
+  w.innerHTML = `<div class="welcome-card">
+    <p>Hey Caylie. You've had a big few weeks. This is yours — a place to keep the business tidy, track what matters, and not lose anyone important along the way. Nothing leaves this file. Nothing goes anywhere you didn't put it.</p>
+    <button class="welcome-dismiss" onclick="dismissWelcome()">Got it</button>
+  </div>`;
+}
+function dismissWelcome() {
+  S.welcomed = true; save();
+  document.getElementById('welcome-wrap').innerHTML = '';
+}
+
+// Dashboard
+function renderDash() {
+  const el = document.getElementById('dash');
+  const td = todayStr();
+  const activeJobs = S.jobs.filter(j => j.status === 'Active').length;
+  const total = S.jobs.length;
+  const complete = S.jobs.filter(j => j.status === 'Complete').length;
+  const pct = total ? Math.round(complete / total * 100) : 0;
+
+  let daysSince = '';
+  if (S.settings.mcatDate) {
+    const diff = Math.floor((new Date(td) - new Date(S.settings.mcatDate)) / 86400000);
+    daysSince = diff >= 0 ? `${diff} days since exam` : 'Exam upcoming';
+  }
+
+  // This week
+  const now = new Date();
+  const wkStart = new Date(now); wkStart.setDate(now.getDate() - now.getDay());
+  const wkEnd = new Date(wkStart); wkEnd.setDate(wkStart.getDate() + 6);
+  const wkJobs = S.jobs.filter(j => {
+    if (!j.startDate || j.status === 'Complete' || j.status === 'Cancelled') return false;
+    const d = new Date(j.startDate + 'T12:00:00');
+    return d >= wkStart && d <= wkEnd;
+  });
+  const overdueFollowup = S.contacts.filter(c => c.followUp && c.followUpDate && c.followUpDate <= td).slice(0, 3);
+  const hasThisWeek = wkJobs.length || overdueFollowup.length;
+
+  // Burnout
+  const thisWk = weekKey();
+  const thisWkEntry = S.burnout.find(b => b.week === thisWk);
+  let burnoutHtml = '';
+  if (thisWkEntry) {
+    const daysAgo = Math.floor((new Date(td) - new Date(thisWkEntry.date)) / 86400000);
+    const ago = daysAgo === 0 ? 'today' : daysAgo === 1 ? 'yesterday' : `${daysAgo} days ago`;
+    burnoutHtml = `<div class="burnout-card"><p class="burnout-resp">You said: <strong>${thisWkEntry.response}</strong> — ${ago}</p></div>`;
+  } else {
+    burnoutHtml = `<div class="burnout-card">
+      <p>How are you doing this week?</p>
+      <div class="burnout-pills">
+        ${['Thriving','Good','Holding','Tired','Running on empty'].map(r =>
+          `<button class="burnout-pill" onclick="logBurnout('${r}')">${r}</button>`
+        ).join('')}
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = `<div style="margin-bottom:1.5rem">
+    <div class="dash-greeting">${greeting()}</div>
+    <div class="dash-date">${now.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+    <div class="chips">
+      <div class="chip"><strong>${activeJobs}</strong> active job${activeJobs !== 1 ? 's' : ''}</div>
+      <div class="chip"><strong>${S.contacts.length}</strong> contact${S.contacts.length !== 1 ? 's' : ''}</div>
+      ${daysSince ? `<div class="chip"><strong>${daysSince}</strong></div>` : ''}
+    </div>
+    <div class="season-bar-wrap">
+      <div class="season-bar-label">Season — ${complete} of ${total} jobs complete</div>
+      <div class="season-bar"><div class="season-fill" style="width:${pct}%"></div></div>
+    </div>
+    ${hasThisWeek ? `<div class="this-week">
+      <h5>This week</h5>
+      ${wkJobs.map(j => `<div class="this-week-item">${j.name} — <span style="color:var(--muted)">${j.status}</span></div>`).join('')}
+      ${overdueFollowup.map(c => `<div class="this-week-item" style="color:var(--warm)">Follow up: ${c.name}</div>`).join('')}
+    </div>` : ''}
+    ${burnoutHtml}
+    <hr class="dash-divider">
+  </div>`;
+}
+
+function logBurnout(response) {
+  S.burnout.push({id: uid(), week: weekKey(), date: todayStr(), response, note: ''});
+  save(); renderDash();
+  if (curSec === 'wellbeing') renderWellbeing();
+}
+
+// Jobs
+let expandedJob = null;
+function renderJobs() {
+  const el = document.getElementById('sec-jobs');
+  const earned = S.jobs.filter(j => j.status === 'Complete').reduce((a, j) => a + (j.discount ? j.value * 0.9 : j.value), 0);
+  const pipeline = S.jobs.filter(j => j.status !== 'Complete' && j.status !== 'Cancelled').reduce((a, j) => a + (j.discount ? j.value * 0.9 : j.value), 0);
+
+  const cards = S.jobs.map(j => {
+    const eff = j.discount ? j.value * 0.9 : j.value;
+    const open = expandedJob === j.id;
+    let detail = '';
+    if (open) {
+      detail = `<div class="job-detail open">
+        <div class="dr"><span class="lbl">Value</span><span>${fmt(j.value)}${j.discount ? ` <em style="font-size:.8rem;color:var(--muted)">(10% disc → ${fmt(eff)})</em>` : ''}</span></div>
+        ${j.startDate ? `<div class="dr"><span class="lbl">Dates</span><span>${fmtD(j.startDate)}${j.endDate ? ' → ' + fmtD(j.endDate) : ''}</span></div>` : ''}
+        ${j.crew ? `<div class="dr"><span class="lbl">Crew</span><span>${j.crew}</span></div>` : ''}
+        ${j.status === 'Active' ? `<div class="dr"><span class="lbl">Progress</span><span style="display:flex;align-items:center;gap:.6rem">
+          <input type="range" min="0" max="100" value="${j.progress}" style="width:130px;accent-color:var(--warm)" oninput="updateProg('${j.id}',+this.value)"> <span id="prog-${j.id}">${j.progress}%</span>
+        </span></div>` : ''}
+        <div class="dr"><span class="lbl">Deposit</span><span>${j.deposit ? 'Received' : 'Not yet'}</span></div>
+        ${j.notes ? `<div class="dr"><span class="lbl">Notes</span><span>${j.notes}</span></div>` : ''}
+        <div class="detail-actions">
+          <button class="btn btn-ghost btn-sm" onclick="editJob('${j.id}');event.stopPropagation()">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}');event.stopPropagation()">Delete</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="job-card" onclick="toggleJob('${j.id}')">
+      <div class="jc-header">
+        <div><div class="jc-name">${j.name}</div><div class="jc-addr">${j.address}</div></div>
+        <span class="status-badge s-${j.status}">${j.status}</span>
+      </div>
+      <div class="jc-meta">
+        <span>${fmt(eff)}</span>
+        ${j.startDate ? `<span>${fmtD(j.startDate)}</span>` : ''}
+        ${j.discount ? `<span style="color:var(--warm)">10% disc</span>` : ''}
+        ${j.crew ? `<span>${j.crew}</span>` : ''}
+      </div>
+      ${j.status === 'Active' ? `<div class="jc-prog"><div class="jc-prog-fill" style="width:${j.progress}%"></div></div>` : ''}
+      ${detail}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="sec-header">
+    <span class="sec-title">Jobs</span>
+    <button class="btn btn-primary btn-sm" onclick="openAddJob()">+ Add job</button>
+  </div>
+  <div class="earnings-banner">
+    <div>You've earned <strong>${fmt(earned)}</strong> this season.</div>
+    <p>${fmt(pipeline)} still in the pipeline.</p>
+  </div>
+  ${cards || '<div class="empty">No jobs yet.</div>'}`;
+}
+
+function toggleJob(id) {
+  expandedJob = expandedJob === id ? null : id;
+  renderJobs();
+}
+function updateProg(id, val) {
+  const j = S.jobs.find(x => x.id === id);
+  if (!j) return;
+  j.progress = val;
+  const el = document.getElementById('prog-' + id);
+  if (el) el.textContent = val + '%';
+  save();
+}
+function openAddJob() {
+  editJobId = null;
+  document.getElementById('m-job-title').textContent = 'Add Job';
+  document.getElementById('jf-name').value = '';
+  document.getElementById('jf-value').value = '';
+  document.getElementById('jf-address').value = '';
+  document.getElementById('jf-status').value = 'Estimate';
+  document.getElementById('jf-progress').value = '0';
+  document.getElementById('jf-start').value = '';
+  document.getElementById('jf-end').value = '';
+  document.getElementById('jf-crew').value = '';
+  document.getElementById('jf-notes').value = '';
+  document.getElementById('jf-discount').checked = false;
+  document.getElementById('jf-deposit').checked = false;
+  openModal('m-job');
+}
+function editJob(id) {
+  editJobId = id;
+  const j = S.jobs.find(x => x.id === id);
+  if (!j) return;
+  document.getElementById('m-job-title').textContent = 'Edit Job';
+  document.getElementById('jf-name').value = j.name;
+  document.getElementById('jf-value').value = j.value;
+  document.getElementById('jf-address').value = j.address || '';
+  document.getElementById('jf-status').value = j.status;
+  document.getElementById('jf-progress').value = j.progress;
+  document.getElementById('jf-start').value = j.startDate || '';
+  document.getElementById('jf-end').value = j.endDate || '';
+  document.getElementById('jf-crew').value = j.crew || '';
+  document.getElementById('jf-notes').value = j.notes || '';
+  document.getElementById('jf-discount').checked = !!j.discount;
+  document.getElementById('jf-deposit').checked = !!j.deposit;
+  openModal('m-job');
+}
+function saveJob() {
+  const name = document.getElementById('jf-name').value.trim();
+  if (!name) { toast('Client name required'); return; }
+  const j = {
+    id: editJobId || uid(), name,
+    value: +document.getElementById('jf-value').value || 0,
+    address: document.getElementById('jf-address').value.trim(),
+    status: document.getElementById('jf-status').value,
+    progress: +document.getElementById('jf-progress').value || 0,
+    startDate: document.getElementById('jf-start').value,
+    endDate: document.getElementById('jf-end').value,
+    crew: document.getElementById('jf-crew').value.trim(),
+    notes: document.getElementById('jf-notes').value.trim(),
+    discount: document.getElementById('jf-discount').checked,
+    deposit: document.getElementById('jf-deposit').checked
+  };
+  if (editJobId) {
+    const i = S.jobs.findIndex(x => x.id === editJobId);
+    if (i >= 0) S.jobs[i] = j;
+  } else S.jobs.push(j);
+  save(); closeModal('m-job'); renderJobs(); renderDash();
+  toast(editJobId ? 'Job updated' : 'Job added');
+}
+function deleteJob(id) {
+  if (!confirm('Delete this job?')) return;
+  S.jobs = S.jobs.filter(j => j.id !== id);
+  if (expandedJob === id) expandedJob = null;
+  save(); renderJobs(); renderDash(); toast('Job deleted');
+}
+
+// Contacts
+function renderContacts() {
+  const el = document.getElementById('sec-contacts');
+  let contacts = S.contacts;
+  if (cSearch) {
+    const q = cSearch.toLowerCase();
+    contacts = contacts.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.org || '').toLowerCase().includes(q) ||
+      (c.type || '').toLowerCase().includes(q)
+    );
+  }
+  if (cFilter !== 'All') contacts = contacts.filter(c => c.type === cFilter);
+  contacts = contacts.slice().sort((a, b) => {
+    if (a.followUp && !b.followUp) return -1;
+    if (!a.followUp && b.followUp) return 1;
+    return a.name.localeCompare(b.name);
+  });
+  const types = ['All','Client','Professional','Personal','Academic','Medical','Crew'];
+  const cards = contacts.map(c => `
+    <div class="contact-card${c.followUp ? ' followup' : ''}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
+        <div>
+          <div class="cc-name">${c.name}</div>
+          ${c.org ? `<div class="cc-org">${c.org}</div>` : ''}
+        </div>
+        <span class="type-tag">${c.type}</span>
+      </div>
+      <div class="cc-info">
+        ${c.phone ? `<div>${c.phone}</div>` : ''}
+        ${c.email ? `<div>${c.email}</div>` : ''}
+        ${c.lastContacted ? `<div>Last contact: ${fmtD(c.lastContacted)}</div>` : ''}
+      </div>
+      ${c.notes ? `<div class="cc-notes">${c.notes}</div>` : ''}
+      ${c.followUp && c.followUpDate ? `<div class="cc-followup">Follow up by ${fmtD(c.followUpDate)}</div>` : ''}
+      <div class="cc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editContact('${c.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteContact('${c.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+
+  el.innerHTML = `<div class="sec-header">
+    <span class="sec-title">Contacts</span>
+    <button class="btn btn-primary btn-sm" onclick="openAddContact()">+ Add</button>
+  </div>
+  <div class="contacts-toolbar">
+    <input class="inp" type="search" placeholder="Search name, org, or type…" value="${cSearch}" oninput="cSearch=this.value;renderContacts()" style="flex:1;min-width:160px">
+    <select class="inp" onchange="cFilter=this.value;renderContacts()">
+      ${types.map(t => `<option${t === cFilter ? ' selected' : ''}>${t}</option>`).join('')}
+    </select>
+  </div>
+  <div class="contact-grid">${cards || '<div class="empty">No contacts found.</div>'}</div>`;
+}
+function openAddContact() {
+  editContactId = null;
+  document.getElementById('m-contact-title').textContent = 'Add Contact';
+  ['cf-name','cf-phone','cf-email','cf-org','cf-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cf-type').value = 'Client';
+  document.getElementById('cf-last').value = '';
+  document.getElementById('cf-followup-date').value = '';
+  document.getElementById('cf-flagged').checked = false;
+  openModal('m-contact');
+}
+function editContact(id) {
+  editContactId = id;
+  const c = S.contacts.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('m-contact-title').textContent = 'Edit Contact';
+  document.getElementById('cf-name').value = c.name;
+  document.getElementById('cf-phone').value = c.phone || '';
+  document.getElementById('cf-email').value = c.email || '';
+  document.getElementById('cf-org').value = c.org || '';
+  document.getElementById('cf-type').value = c.type || 'Client';
+  document.getElementById('cf-last').value = c.lastContacted || '';
+  document.getElementById('cf-followup-date').value = c.followUpDate || '';
+  document.getElementById('cf-notes').value = c.notes || '';
+  document.getElementById('cf-flagged').checked = !!c.followUp;
+  openModal('m-contact');
+}
+function saveContact() {
+  const name = document.getElementById('cf-name').value.trim();
+  if (!name) { toast('Name required'); return; }
+  const c = {
+    id: editContactId || uid(), name,
+    phone: document.getElementById('cf-phone').value.trim(),
+    email: document.getElementById('cf-email').value.trim(),
+    org: document.getElementById('cf-org').value.trim(),
+    type: document.getElementById('cf-type').value,
+    lastContacted: document.getElementById('cf-last').value,
+    followUpDate: document.getElementById('cf-followup-date').value,
+    notes: document.getElementById('cf-notes').value.trim(),
+    followUp: document.getElementById('cf-flagged').checked
+  };
+  if (editContactId) {
+    const i = S.contacts.findIndex(x => x.id === editContactId);
+    if (i >= 0) S.contacts[i] = c;
+  } else S.contacts.push(c);
+  save(); closeModal('m-contact'); renderContacts(); renderDash();
+  toast(editContactId ? 'Contact updated' : 'Contact added');
+}
+function deleteContact(id) {
+  if (!confirm('Delete this contact?')) return;
+  S.contacts = S.contacts.filter(c => c.id !== id);
+  save(); renderContacts(); renderDash(); toast('Contact deleted');
+}
+
+// Med School
+function schoolBadgeStyle(s) {
+  const m = {
+    'Applied':'background:#e8f0fe;color:#1a56db',
+    'Interview Invited':'background:#fef3c7;color:#92400e',
+    'Interview Scheduled':'background:#fef3c7;color:#92400e',
+    'Interview Done':'background:#dcfce7;color:#166534',
+    'Offer':'background:#bbf7d0;color:#15803d',
+    'Waitlisted':'background:#f3f4f6;color:#374151',
+    'Declined':'background:#fef2f2;color:#9b1c1c',
+    'Researching':'background:#f3f4f6;color:#6b6357',
+    'Closed':'background:#f3f4f6;color:#9ca3af'
+  };
+  return m[s] || 'background:#f3f4f6;color:#374151';
+}
+function renderMed() {
+  const el = document.getElementById('sec-med');
+  const td = todayStr();
+  const rows = S.medSchools.map(m => `
+    <tr>
+      <td><strong>${m.school}</strong><br><span style="font-size:.8rem;color:var(--muted)">${m.program}</span></td>
+      <td>${fmtD(m.appDate)}</td>
+      <td><span class="school-badge" style="${schoolBadgeStyle(m.status)}">${m.status}</span></td>
+      <td>${fmtD(m.interviewDate)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="editSchool('${m.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteSchool('${m.id}')">Del</button></td>
+    </tr>`).join('');
+
+  const dlItems = S.deadlines.slice().sort((a,b) => a.date.localeCompare(b.date)).map(d => {
+    const over = !d.done && d.date && d.date < td;
+    return `<li class="dl-item${d.done ? ' done' : ''}${over ? ' overdue' : ''}">
+      <input type="checkbox" class="dl-check" ${d.done ? 'checked' : ''} onchange="toggleDl('${d.id}',this.checked)">
+      <span class="dl-text">${d.item}</span>
+      <span class="dl-date">${fmtD(d.date)}</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteDl('${d.id}')">✕</button>
+    </li>`;
+  }).join('');
+
+  el.innerHTML = `<div class="sec-header">
+    <span class="sec-title">Med School</span>
+  </div>
+
+  <div class="subsec">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem">
+      <div class="subsec-title" style="margin:0;border:none;padding:0">Applications</div>
+      <button class="btn btn-ghost btn-sm" onclick="openAddSchool()">+ Add school</button>
+    </div>
+    ${S.medSchools.length ? `<div style="overflow-x:auto"><table class="school-table">
+      <thead><tr><th>School</th><th>Applied</th><th>Status</th><th>Interview</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>` : '<div class="empty">No schools added yet.</div>'}
+  </div>
+
+  <div class="subsec">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem">
+      <div class="subsec-title" style="margin:0;border:none;padding:0">Deadlines</div>
+      <button class="btn btn-ghost btn-sm" onclick="showDlForm()">+ Add</button>
+    </div>
+    <ul class="deadline-list">${dlItems || '<div class="empty">No deadlines.</div>'}</ul>
+    <div id="dl-form" style="display:none;flex-wrap:wrap;gap:.5rem;margin-top:.6rem">
+      <input class="inp" type="text" id="dl-item-inp" placeholder="Deadline description" style="flex:1;min-width:200px">
+      <input class="inp" type="date" id="dl-date-inp" style="width:160px">
+      <button class="btn btn-primary btn-sm" onclick="saveDl()">Add</button>
+      <button class="btn btn-ghost btn-sm" onclick="hideDlForm()">Cancel</button>
+    </div>
+  </div>
+
+  <div class="mcat-card">
+    <h5>MCAT</h5>
+    ${S.mcat.date ? `<div style="font-size:.86rem;color:var(--muted)">Date: ${fmtD(S.mcat.date)}</div>` : ''}
+    ${S.mcat.score ? `<div style="font-size:.86rem;margin-top:.2rem">Score: ${S.mcat.score}</div>` : ''}
+    ${S.mcat.notes ? `<div style="font-size:.86rem;margin-top:.45rem;color:var(--text);line-height:1.55">${S.mcat.notes}</div>` : ''}
+    <button class="btn btn-ghost btn-sm" style="margin-top:.65rem" onclick="toggleMcatForm()">Edit</button>
+    <div id="mcat-form" style="display:none;margin-top:.75rem;border-top:1px solid var(--border);padding-top:.75rem">
+      <div class="field-row" style="gap:.6rem">
+        <div class="field" style="margin-bottom:.6rem"><label>Date</label><input id="mf-date" type="date" value="${S.mcat.date||''}"></div>
+        <div class="field" style="margin-bottom:.6rem"><label>Score (optional)</label><input id="mf-score" type="text" value="${S.mcat.score||''}"></div>
+      </div>
+      <div class="field" style="margin-bottom:.6rem"><label>Notes</label><textarea id="mf-notes" rows="2">${S.mcat.notes||''}</textarea></div>
+      <button class="btn btn-primary btn-sm" onclick="saveMcat()">Save</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mcat-form').style.display='none'">Cancel</button>
+    </div>
+  </div>
+
+  <div class="subsec">
+    <div class="subsec-title">Private notes</div>
+    <textarea class="med-notes" placeholder="Notes…" oninput="S.medNotes=this.value;save()">${S.medNotes||''}</textarea>
+  </div>`;
+}
+function showDlForm() { const f = document.getElementById('dl-form'); f.style.display = 'flex'; document.getElementById('dl-item-inp').focus(); }
+function hideDlForm() { document.getElementById('dl-form').style.display = 'none'; }
+function saveDl() {
+  const item = document.getElementById('dl-item-inp').value.trim();
+  if (!item) return;
+  S.deadlines.push({id: uid(), item, date: document.getElementById('dl-date-inp').value, done: false});
+  save(); renderMed(); toast('Deadline added');
+}
+function toggleDl(id, done) {
+  const d = S.deadlines.find(x => x.id === id);
+  if (d) { d.done = done; save(); }
+}
+function deleteDl(id) {
+  S.deadlines = S.deadlines.filter(d => d.id !== id);
+  save(); renderMed(); toast('Deadline removed');
+}
+function toggleMcatForm() {
+  const f = document.getElementById('mcat-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+function saveMcat() {
+  S.mcat = {
+    date: document.getElementById('mf-date').value,
+    score: document.getElementById('mf-score').value.trim(),
+    notes: document.getElementById('mf-notes').value.trim()
+  };
+  save(); renderMed(); toast('MCAT record saved');
+}
+function openAddSchool() {
+  editSchoolId = null;
+  document.getElementById('m-school-title').textContent = 'Add School';
+  ['sf-school','sf-program','sf-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sf-status').value = 'Researching';
+  document.getElementById('sf-appdate').value = '';
+  document.getElementById('sf-interview').value = '';
+  openModal('m-school');
+}
+function editSchool(id) {
+  editSchoolId = id;
+  const m = S.medSchools.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('m-school-title').textContent = 'Edit School';
+  document.getElementById('sf-school').value = m.school;
+  document.getElementById('sf-program').value = m.program || '';
+  document.getElementById('sf-status').value = m.status;
+  document.getElementById('sf-appdate').value = m.appDate || '';
+  document.getElementById('sf-interview').value = m.interviewDate || '';
+  document.getElementById('sf-notes').value = m.notes || '';
+  openModal('m-school');
+}
+function saveSchool() {
+  const school = document.getElementById('sf-school').value.trim();
+  if (!school) { toast('School name required'); return; }
+  const m = {
+    id: editSchoolId || uid(), school,
+    program: document.getElementById('sf-program').value.trim(),
+    status: document.getElementById('sf-status').value,
+    appDate: document.getElementById('sf-appdate').value,
+    interviewDate: document.getElementById('sf-interview').value,
+    notes: document.getElementById('sf-notes').value.trim()
+  };
+  if (editSchoolId) {
+    const i = S.medSchools.findIndex(x => x.id === editSchoolId);
+    if (i >= 0) S.medSchools[i] = m;
+  } else S.medSchools.push(m);
+  save(); closeModal('m-school'); renderMed();
+  toast(editSchoolId ? 'School updated' : 'School added');
+}
+function deleteSchool(id) {
+  if (!confirm('Remove this school?')) return;
+  S.medSchools = S.medSchools.filter(m => m.id !== id);
+  save(); renderMed(); toast('Removed');
+}
+
+// Wellbeing
+function renderWellbeing() {
+  const el = document.getElementById('sec-wellbeing');
+  const burnoutHtml = S.burnout.slice().sort((a,b) => b.date.localeCompare(a.date)).map(b => `
+    <div class="burnout-entry">
+      <span class="be-date">${fmtD(b.date)}</span>
+      <span class="resp-badge ${respClass(b.response)}">${b.response}</span>
+      <div class="be-note-wrap">
+        <input class="be-note-inp" type="text" value="${b.note ? b.note.replace(/"/g,'&quot;') : ''}" placeholder="Add a note…" onchange="updateBurnoutNote('${b.id}',this.value)">
+      </div>
+    </div>`).join('');
+
+  const twHtml = S.thingsWorking.map(t => `
+    <li class="sl-item">
+      <span class="sl-text">${t.text}</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteTW('${t.id}')">✕</button>
+    </li>`).join('');
+
+  const woHtml = S.whenOver.map(t => `
+    <li class="sl-item">
+      <span class="sl-text">${t.text}</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteWO('${t.id}')">✕</button>
+    </li>`).join('');
+
+  el.innerHTML = `<div class="sec-header">
+    <span class="sec-title">Wellbeing</span>
+  </div>
+
+  <div class="subsec">
+    <div class="subsec-title">Check-in log</div>
+    <div>${burnoutHtml || '<div class="empty">No entries yet.</div>'}</div>
+  </div>
+
+  <div class="subsec">
+    <div class="subsec-title">Things that are working</div>
+    <ul class="simple-list">${twHtml}</ul>
+    <div class="add-row">
+      <input class="inp" type="text" id="tw-inp" placeholder="Add something…" onkeydown="if(event.key==='Enter')addTW()">
+      <button class="btn btn-ghost btn-sm" onclick="addTW()">Add</button>
+    </div>
+  </div>
+
+  <div class="subsec">
+    <div class="subsec-title">When this is over</div>
+    <ul class="simple-list">${woHtml}</ul>
+    <div class="add-row">
+      <input class="inp" type="text" id="wo-inp" placeholder="Something to look forward to…" onkeydown="if(event.key==='Enter')addWO()">
+      <button class="btn btn-ghost btn-sm" onclick="addWO()">Add</button>
+    </div>
+  </div>
+
+  <div class="well-footer">This section is just for you. Nothing here affects anything else.</div>`;
+}
+function updateBurnoutNote(id, val) {
+  const b = S.burnout.find(x => x.id === id);
+  if (b) { b.note = val; save(); }
+}
+function addTW() {
+  const inp = document.getElementById('tw-inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  S.thingsWorking.push({id: uid(), text});
+  inp.value = ''; save(); renderWellbeing();
+}
+function deleteTW(id) {
+  S.thingsWorking = S.thingsWorking.filter(t => t.id !== id);
+  save(); renderWellbeing();
+}
+function addWO() {
+  const inp = document.getElementById('wo-inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  S.whenOver.push({id: uid(), text});
+  inp.value = ''; save(); renderWellbeing();
+}
+function deleteWO(id) {
+  S.whenOver = S.whenOver.filter(t => t.id !== id);
+  save(); renderWellbeing();
+}
+
+// Settings
+function openSettings() {
+  document.getElementById('set-name').value = S.settings.name || '';
+  document.getElementById('set-mcat').value = S.settings.mcatDate || '';
+  document.getElementById('set-ss').value = S.settings.seasonStart || '';
+  document.getElementById('set-se').value = S.settings.seasonEnd || '';
+  document.getElementById('reset-input').value = '';
+  openModal('m-settings');
+}
+function saveSettings() {
+  S.settings.name = document.getElementById('set-name').value.trim() || 'Caylie';
+  S.settings.mcatDate = document.getElementById('set-mcat').value;
+  S.settings.seasonStart = document.getElementById('set-ss').value;
+  S.settings.seasonEnd = document.getElementById('set-se').value;
+  save(); closeModal('m-settings'); renderDash(); toast('Settings saved');
+}
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'caylie-backup.json';
+  a.click(); toast('Export complete');
+}
+function exportContactsCSV() {
+  const rows = [['name','phone','email','organization','type','notes','followUp','followUpDate']];
+  S.contacts.forEach(c => rows.push([c.name,c.phone||'',c.email||'',c.org||'',c.type||'',c.notes||'',c.followUp?'yes':'no',c.followUpDate||'']));
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'caylie-contacts.csv';
+  a.click(); toast('Contacts exported');
+}
+function importJSON(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (confirm('Replace all data with this backup?')) {
+        S = data; save(); closeModal('m-settings'); init(); toast('Data imported');
+      }
+    } catch { toast('Invalid file'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+function importCSV(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split('\n').filter(l => l.trim());
+    if (!lines.length) { toast('Empty file'); return; }
+    const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim().toLowerCase());
+    const col = k => headers.indexOf(k);
+    const added = [];
+    for (let i = 1; i < lines.length; i++) {
+      const vals = [];
+      let cur = '', inQ = false;
+      for (const ch of lines[i] + ',') {
+        if (ch === '"') { inQ = !inQ; }
+        else if (ch === ',' && !inQ) { vals.push(cur.replace(/""/g,'"').trim()); cur = ''; }
+        else cur += ch;
+      }
+      const v = j => vals[j] !== undefined ? vals[j] : '';
+      const name = v(col('name'));
+      if (!name) continue;
+      added.push({
+        id: uid(), name,
+        phone: v(col('phone')), email: v(col('email')),
+        org: v(col('organization')), type: v(col('type')) || 'Client',
+        notes: v(col('notes')), followUp: false, followUpDate: '', lastContacted: ''
+      });
+    }
+    if (added.length && confirm(`Import ${added.length} contacts?`)) {
+      S.contacts.push(...added); save();
+      closeModal('m-settings'); renderContacts();
+      toast(`${added.length} contacts imported`);
+    } else if (!added.length) toast('No contacts found in file');
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+function clearAll() {
+  if (document.getElementById('reset-input').value !== 'reset') { toast('Type "reset" to confirm'); return; }
+  if (!confirm('Delete everything and start fresh?')) return;
+  localStorage.removeItem(KEY);
+  S = JSON.parse(JSON.stringify(SEED));
+  save(); closeModal('m-settings'); init(); toast('Data cleared');
+}
+
+// Modal backdrop close
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('open'); });
+});
+
+function init() {
+  renderWelcome();
+  renderDash();
+  renderSec(curSec);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -231,7 +231,7 @@
   <h2>You found everything!</h2>
   <div id="celebrate-theme"></div>
   <canvas id="celebrate-canvas" width="120" height="120"></canvas>
-  <button id="play-again-btn">Play Again</button>
+  <button id="play-again-btn" onclick="playAgain()">Play Again</button>
   <p class="celebrate-note">Press Space or Enter to play again</p>
 </div>
 
@@ -251,8 +251,8 @@
   document.getElementById('game-canvas').addEventListener('click', () => {
     if (state.screen === 'title') startDay();
   });
-  // Initialise
-  window.addEventListener('load', init);
+  // Initialise — call directly (all scripts above are synchronous, no need to wait for window.load)
+  init();
 </script>
 </body>
 </html>

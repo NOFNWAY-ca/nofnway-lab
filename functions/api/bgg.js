@@ -1,21 +1,21 @@
 // /api/bgg — Cloudflare Pages Function
-// Proxies requests to BGG XMLAPI2, handling BGG's quirky 202 queuing,
-// empty 200 bodies, connection resets, and exponential backoff.
+// Proxies requests to BGG XMLAPI2 and forwards actionable plain-text errors.
 //
 // API contract: GET /api/bgg?url=https://boardgamegeek.com/xmlapi2/...
-// Returns: raw XML from BGG, or 4xx/502 with plain-text error body.
+// Returns: raw XML from BGG, or 4xx/5xx with plain-text error body.
 
 const ALLOWED_PREFIX = 'https://boardgamegeek.com/xmlapi2/';
 
-// BGG responds better to identified traffic with a contact address.
+// BGG now requires a registered application token. Keep the contact address
+// for auditability, but attach Authorization when configured in Cloudflare.
 const BGG_HEADERS = {
   'User-Agent': 'NOFNWAY-King-Navigator/1.0 (contact: admin@nofnway.ca)',
   'Accept': 'application/xml',
   'Referer': 'https://lab.nofnway.ca/'
 };
 
-// Exponential backoff delays per attempt (ms).
-// BGG 202 processing typically resolves within 2–5 seconds.
+// Retry queued requests a few times, but do not assume timer APIs exist in
+// every Worker runtime.
 const BACKOFF = [2000, 3000, 5000];
 const MAX_ATTEMPTS = BACKOFF.length;
 
@@ -38,6 +38,16 @@ function errorResponse(status, message) {
     status,
     headers: { ...CORS_HEADERS, 'Content-Type': 'text/plain' }
   });
+}
+
+async function sleep(ms) {
+  if (typeof scheduler !== 'undefined' && typeof scheduler.wait === 'function') {
+    await scheduler.wait(ms);
+    return;
+  }
+  if (typeof setTimeout === 'function') {
+    await new Promise(resolve => setTimeout(resolve, ms));
+  }
 }
 
 function getClientIp(request) {
@@ -106,6 +116,7 @@ export async function onRequest(context) {
   }
 
   const target = requestUrl.searchParams.get('url');
+  const token = context.env?.BGG_API_TOKEN?.trim();
 
   // Step 8 — Input validation
   if (!target) {
@@ -125,6 +136,13 @@ export async function onRequest(context) {
     return errorResponse(400, 'Malformed target URL');
   }
 
+  if (!token) {
+    return errorResponse(
+      503,
+      'Live BGG lookup is not configured. Add BGG_API_TOKEN to the Cloudflare Pages environment for NOFNWAY Lab.'
+    );
+  }
+
   console.log('[bgg] target:', target);
 
   // Step 3 — Retry loop with exponential backoff.
@@ -135,44 +153,46 @@ export async function onRequest(context) {
 
     let res;
     try {
-      // 25s timeout inside the Worker so BGG slowness produces a handled
-      // error and a retry, rather than Cloudflare killing the whole Worker
-      // and emitting a raw 502 with no body.
+      const headers = new Headers(BGG_HEADERS);
+      headers.set('Authorization', `Bearer ${token}`);
+
       res = await fetch(target, {
-        headers: BGG_HEADERS,
-        signal: AbortSignal.timeout(25000),
+        headers,
         cf: { cacheEverything: true, cacheTtl: 300 }
       });
     } catch (err) {
-      // Network-level failure (connection reset, DNS, timeout).
-      // These are retryable — BGG connections drop intermittently.
       console.log('[bgg] fetch threw on attempt', attempt + 1, ':', err.message);
       if (attempt < MAX_ATTEMPTS - 1) {
-        await new Promise(r => setTimeout(r, BACKOFF[attempt]));
+        await sleep(BACKOFF[attempt]);
         continue;
       }
-      return errorResponse(502, 'BGG Origin Error');
+      return errorResponse(502, 'BGG request failed before a response came back.');
     }
 
     console.log('[bgg] response status:', res.status, 'attempt:', attempt + 1);
 
-    // Step 3 — BGG 202: "request queued, try again shortly."
-    // This is normal for popular or complex searches. Wait and retry.
     if (res.status === 202) {
       if (attempt < MAX_ATTEMPTS - 1) {
         console.log('[bgg] 202 received, waiting', BACKOFF[attempt], 'ms before retry');
-        await new Promise(r => setTimeout(r, BACKOFF[attempt]));
+        await sleep(BACKOFF[attempt]);
         continue;
       }
-      console.log('[bgg] 202 on final attempt — giving up');
-      return errorResponse(502, 'BGG Origin Error');
+      return errorResponse(503, 'BGG queued the request for too long. Try again in a moment.');
     }
 
-    // Hard errors from BGG (4xx, 5xx other than 202) are not retried.
-    // A 429 or 403 from BGG won't improve with retrying.
     if (!res.ok) {
-      console.log('[bgg] BGG hard error:', res.status, res.statusText);
-      return errorResponse(502, 'BGG Origin Error');
+      const upstreamText = (await res.text()).trim();
+      console.log('[bgg] BGG hard error:', res.status, res.statusText, upstreamText);
+      if (res.status === 401) {
+        return errorResponse(
+          502,
+          'BGG rejected the request. Confirm the NOFNWAY Lab application is approved and BGG_API_TOKEN is a valid Bearer token.'
+        );
+      }
+      if (res.status === 429) {
+        return errorResponse(503, 'BGG rate-limited the request. Wait a moment and try again.');
+      }
+      return errorResponse(502, upstreamText || `BGG returned ${res.status} ${res.statusText}.`);
     }
 
     // Step 4 — Empty body guard.
@@ -182,10 +202,10 @@ export async function onRequest(context) {
     if (!body || body.length < MIN_BODY_LENGTH) {
       console.log('[bgg] empty/short body detected (length:', body.length, ') on attempt', attempt + 1);
       if (attempt < MAX_ATTEMPTS - 1) {
-        await new Promise(r => setTimeout(r, BACKOFF[attempt]));
+        await sleep(BACKOFF[attempt]);
         continue;
       }
-      return errorResponse(502, 'BGG Origin Error');
+      return errorResponse(502, 'BGG returned an empty response.');
     }
 
     console.log('[bgg] success on attempt', attempt + 1, '— body length:', body.length);

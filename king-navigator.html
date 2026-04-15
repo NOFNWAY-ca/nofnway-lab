@@ -1101,12 +1101,20 @@ mark {
 // via /api/bgg only when the game isn't in the catalog.
 if (typeof window.BGG_CATALOG === 'undefined') window.BGG_CATALOG = [];
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function bggFetch(bggUrl) {
-  const res = await fetch('/api/bgg?url=' + encodeURIComponent(bggUrl), {
-    signal: AbortSignal.timeout(35000)
-  });
-  if (!res.ok) throw new Error('BGG is not responding. Try again in a moment.');
+  const res = await fetchWithTimeout('/api/bgg?url=' + encodeURIComponent(bggUrl));
   const text = await res.text();
+  if (!res.ok) throw new Error(text || 'BGG is not responding. Try again in a moment.');
   if (!text || !text.includes('<')) throw new Error('BGG returned an empty response. Try again.');
   return text;
 }
@@ -1283,6 +1291,7 @@ async function searchBGG() {
   if (!raw) return;
   const resultsEl = document.getElementById('search-results');
   resultsEl.className = 'visible';
+  let remoteError = '';
 
   const parsed = parseBGGInput(raw);
 
@@ -1302,7 +1311,9 @@ async function searchBGG() {
         showSingleResult(resultsEl, parsed.id, details._name, details._year || '', details);
         return;
       }
-    } catch (_) {}
+    } catch (err) {
+      remoteError = err?.message || 'Live BGG lookup is unavailable right now.';
+    }
 
     const slugMatch = raw.match(/boardgamegeek\.com\/boardgame\/\d+\/([^/?#]+)/i);
     const slugName = slugMatch
@@ -1310,9 +1321,9 @@ async function searchBGG() {
       : null;
 
     if (slugName) {
-      showSingleResult(resultsEl, parsed.id, slugName, '', null, ' (name only)');
+      showSingleResult(resultsEl, parsed.id, slugName, '', null, ` (${remoteError || 'name only'})`);
     } else {
-      resultsEl.innerHTML = '<div class="loading-msg">Could not load that BGG game right now. Try the full URL again in a moment.</div>';
+      resultsEl.innerHTML = `<div class="loading-msg">${esc(remoteError || 'Could not load that BGG game right now. Try the full URL again in a moment.')}</div>`;
     }
     return;
   }
@@ -1327,14 +1338,18 @@ async function searchBGG() {
     resultsEl.innerHTML = '<div class="loading-msg"><span class="spinner"></span> Searching BGG...</div>';
     try {
       matches = await searchBGGRemote(parsed.query);
-    } catch (_) {
+    } catch (err) {
+      remoteError = err?.message || 'Live BGG search is unavailable right now.';
       matches = [];
     }
   }
 
   resultsEl.innerHTML = '';
   if (matches.length === 0) {
-    resultsEl.innerHTML = '<div class="loading-msg">No results. Try a different name or paste the BGG URL.</div>';
+    const emptyMsg = remoteError
+      ? `No local catalog matches. ${remoteError}`
+      : 'No results. Try a different name or paste the BGG URL.';
+    resultsEl.innerHTML = `<div class="loading-msg">${esc(emptyMsg)}</div>`;
     return;
   }
   matches.forEach(entry => {

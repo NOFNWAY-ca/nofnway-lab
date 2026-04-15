@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="author" content="Gerry McMahon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Free Unit Converter – NOFNWAY</title>
+    <meta name="description" content="Fast unit conversions that work offline. Type a number and a unit, get instant results. No ads, no account, no nonsense.">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Roboto:wght@400;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Roboto:wght@400;700&display=swap"></noscript>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        :root {
+            --accent-yellow: #facc15;
+            --accent-green:  #4ade80;
+        }
+
+        body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        .brand { text-decoration: none; }
+
+        #unit-indicator {
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        .workspace {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .hero-title { padding: 1rem 0; text-align: center; }
+        #dynamic-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 3rem;
+            letter-spacing: -2px;
+            margin: 0;
+            text-transform: uppercase;
+            line-height: 1;
+            color: var(--text-main);
+            transition: color 0.2s;
+        }
+
+        .input-container {
+            background: var(--card-bg);
+            border: 3px solid var(--border);
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: border-color 0.2s;
+        }
+        .input-container.active { border-color: var(--brand); }
+
+        .main-input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 2.5rem;
+            font-weight: 800;
+            width: 100%;
+            outline: none;
+            font-family: 'Montserrat', sans-serif;
+            text-align: center;
+            caret-color: var(--accent-yellow);
+        }
+        .main-input::placeholder { color: var(--border); }
+
+        .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .result-card {
+            background: var(--card-bg);
+            padding: 1.2rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            border-left: 5px solid var(--brand);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .result-card:hover  { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .result-card:active { transform: scale(0.95); filter: brightness(0.9); }
+
+        .res-unit { font-size: 0.65rem; color: var(--accent-yellow); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+        .res-val  { font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-top: 4px; font-family: monospace; }
+
+        .empty-state { text-align: center; color: var(--text-dim); margin-top: 2rem; font-size: 0.9rem; line-height: 1.8; }
+        .empty-state b { color: var(--accent-yellow); }
+
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--accent-green); color: #000; padding: 10px 20px;
+            border-radius: 5px; font-weight: bold; font-size: 0.8rem;
+            display: none; z-index: 1000; white-space: nowrap;
+        }
+
+        @media (max-width: 400px) {
+            #dynamic-title  { font-size: 2rem; }
+            .main-input     { font-size: 1.8rem; }
+            .results-grid   { grid-template-columns: 1fr; }
+        }
+    </style>
+    <!-- Open Graph / social sharing -->
+    <meta property="og:type"        content="website">
+    <meta property="og:url"         content="https://nofnway.ca/how_much">
+    <meta property="og:title"       content="Free Unit Converter – NOFNWAY">
+    <meta property="og:description" content="Fast unit conversions that work offline. Type a number and a unit, get instant results. No ads, no account, no nonsense.">
+    <meta property="og:site_name"   content="NOFNWAY">
+    <meta property="og:image"       content="https://nofnway.ca/og-image.png">
+    <meta name="twitter:card"       content="summary_large_image">
+    <meta name="twitter:title"      content="Free Unit Converter – NOFNWAY">
+    <meta name="twitter:description" content="Fast unit conversions that work offline. Type a number and a unit, get instant results. No ads, no account, no nonsense.">
+    <meta name="twitter:image"      content="https://nofnway.ca/og-image.png">
+    <link rel="canonical" href="https://nofnway.ca/how_much">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "HOW [FN] MUCH?",
+      "url": "https://nofnway.ca/how_much",
+      "description": "Fast unit conversions that work offline. Type a number and a unit, get instant results. No ads, no account, no nonsense.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "NOFNWAY",
+        "url": "https://nofnway.ca"
+      }
+    }
+    </script>
+    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});</script>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index" class="brand">NO<span>FN</span>WAY</a>
+    <div class="nav-controls">
+        <div id="unit-indicator">Awaiting input…</div>
+        <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">🌙 Dark</button>
+        <button class="privacy-btn" onclick="togglePrivacy()" aria-label="Privacy information"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><text x="12" y="16.5" text-anchor="middle" font-size="9" fill="currentColor" stroke="none" font-weight="700" font-family="sans-serif">?</text></svg></button>
+    </div>
+</nav>
+
+<div class="privacy-panel" id="privacy-panel" hidden>
+    <div class="privacy-panel-hd">
+        <div class="privacy-panel-title"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Privacy &amp; Data</div>
+        <button class="privacy-close" onclick="document.getElementById('privacy-panel').hidden=true" aria-label="Close">&#x2715;</button>
+    </div>
+    <p>Nothing happens here except math. No data is stored and nothing is sent anywhere.</p>
+</div>
+
+<main class="workspace">
+    <div class="how-it-works">
+        <p><strong>Type a number followed by a unit. Get instant conversions for the whole category.</strong></p>
+        <ul>
+            <li><strong>Weight:</strong> lb, kg, oz, g, st</li>
+            <li><strong>Length:</strong> in, ft, yd, mi, mm, cm, m, km</li>
+            <li><strong>Temperature:</strong> c, f, k</li>
+            <li><strong>Volume:</strong> tsp, tbsp, floz, cup, pt, qt, gal, ml, l</li>
+            <li><strong>Pressure:</strong> psi, bar, kpa</li>
+            <li>Click any result card to copy the value. Press <strong>Esc</strong> to clear and start over.</li>
+            <li>Works offline. No data is stored or sent anywhere.</li>
+        </ul>
+    </div>
+
+    <div class="hero-title">
+        <h1 id="dynamic-title">HOW [FN] <span style="color:var(--brand)">MUCH?</span></h1>
+    </div>
+
+    <div class="input-container" id="box">
+        <input type="text" id="userInput" class="main-input"
+               placeholder="e.g. 10kg"
+               autofocus
+               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+               oninput="convert()">
+    </div>
+
+    <div id="results" class="results-grid"></div>
+
+    <div id="empty" class="empty-state">
+        Type a value and unit to begin.<br>
+        Try <b>180c</b>, <b>32psi</b>, <b>12lb</b>, <b>6ft</b>, <b>100km</b>, or <b>3tsp</b>.<br>
+        <span style="font-size:0.8rem; opacity:0.7;">Press Esc to clear. Click any result to copy.</span>
+    </div>
+</main>
+
+<div id="toast" class="toast">COPIED</div>
+
+<script>
+
+    // ── Theme ─────────────────────────────────────────────────────────────────
+
+    function initTheme() {
+        const saved = localStorage.getItem('nofnway-theme') || 'light';
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeBtn').textContent = '☀️ Light';
+        }
+    }
+
+    function toggleTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+        localStorage.setItem('nofnway-theme', isDark ? 'light' : 'dark');
+        document.getElementById('themeBtn').textContent = isDark ? '🌙 Dark' : '☀️ Light';
+    }
+
+    initTheme();
+
+
+    // ── Unit Data ─────────────────────────────────────────────────────────────
+    // Rate = how many of THIS unit per base unit
+    // Base units: lb (weight), in (length), cup (volume), psi (pressure)
+
+    const UnitData = {
+        weight: {
+            lb:  { name: 'Pounds',      rate: 1          },
+            kg:  { name: 'Kilograms',   rate: 0.453592   },
+            oz:  { name: 'Ounces',      rate: 16         },
+            g:   { name: 'Grams',       rate: 453.592    },
+            st:  { name: 'Stone',       rate: 0.0714286  }
+        },
+        length: {
+            in:  { name: 'Inches',      rate: 1              },
+            ft:  { name: 'Feet',        rate: 1/12           },
+            yd:  { name: 'Yards',       rate: 1/36           },
+            mi:  { name: 'Miles',       rate: 1/63360        },
+            mm:  { name: 'Millimeters', rate: 25.4           },
+            cm:  { name: 'Centimeters', rate: 2.54           },
+            m:   { name: 'Meters',      rate: 0.0254         },
+            km:  { name: 'Kilometers',  rate: 1/39370.0787   }
+        },
+        temp: {
+            c:   { name: 'Celsius'     },
+            f:   { name: 'Fahrenheit'  },
+            k:   { name: 'Kelvin'      }
+        },
+        volume: {
+            tsp:  { name: 'Teaspoons',   rate: 48       },
+            tbsp: { name: 'Tablespoons', rate: 16       },
+            floz: { name: 'Fl. Ounces',  rate: 8        },
+            cup:  { name: 'Cups',        rate: 1        },
+            pt:   { name: 'Pints',       rate: 0.5      },
+            qt:   { name: 'Quarts',      rate: 0.25     },
+            gal:  { name: 'Gallons',     rate: 0.0625   },
+            ml:   { name: 'Milliliters', rate: 236.588  },
+            l:    { name: 'Liters',      rate: 0.236588 }
+        },
+        pressure: {
+            psi:  { name: 'PSI',  rate: 1         },
+            bar:  { name: 'Bar',  rate: 0.0689476 },
+            kpa:  { name: 'kPa',  rate: 6.89476   }
+        }
+    };
+
+
+    // ── Number Formatting ─────────────────────────────────────────────────────
+
+    function formatNumber(val) {
+        if (val === 0) return '0';
+        const abs = Math.abs(val);
+        if (abs < 0.0001) return val.toExponential(2);
+        if (abs < 1)      return val.toFixed(4);
+        if (abs < 100)    return val.toFixed(2);
+        if (abs < 10000)  return val.toFixed(1);
+        return Math.round(val).toLocaleString();
+    }
+
+
+    // ── Conversion Logic ──────────────────────────────────────────────────────
+
+    function convert() {
+        const raw  = document.getElementById('userInput').value.toLowerCase().replace(/\s/g, '');
+        const val  = parseFloat(raw);
+        const unit = raw.replace(/[\d.\-]/g, '');
+
+        const resultsDiv = document.getElementById('results');
+        const emptyDiv   = document.getElementById('empty');
+        const titleEl    = document.getElementById('dynamic-title');
+        const indicator  = document.getElementById('unit-indicator');
+        const box        = document.getElementById('box');
+
+        if (isNaN(val) || !unit) {
+            resultsDiv.innerHTML = '';
+            emptyDiv.style.display = 'block';
+            titleEl.innerHTML = 'HOW <span style="color:var(--brand)">MUCH?</span>';
+            titleEl.style.color = '';
+            indicator.textContent = 'Awaiting input…';
+            box.classList.remove('active');
+            return;
+        }
+
+        let foundCat = null;
+        for (const cat in UnitData) {
+            if (UnitData[cat][unit]) { foundCat = cat; break; }
+        }
+
+        if (!foundCat) {
+            indicator.textContent = `Unknown: "${unit}"`;
+            box.classList.remove('active');
+            resultsDiv.innerHTML = '';
+            return;
+        }
+
+        emptyDiv.style.display = 'none';
+        titleEl.innerHTML = foundCat.toUpperCase() + '?';
+        titleEl.style.color = 'var(--accent-yellow)';
+        indicator.textContent = foundCat.charAt(0).toUpperCase() + foundCat.slice(1);
+        box.classList.add('active');
+
+        let html = '';
+        if (foundCat === 'temp') {
+            html = renderTemp(val, unit);
+        } else {
+            const base = val / UnitData[foundCat][unit].rate;
+            for (const u in UnitData[foundCat]) {
+                if (u === unit) continue;
+                html += createCard(UnitData[foundCat][u].name, base * UnitData[foundCat][u].rate);
+            }
+        }
+        resultsDiv.innerHTML = html;
+    }
+
+    function renderTemp(val, unit) {
+        let c;
+        if (unit === 'c') c = val;
+        else if (unit === 'f') c = (val - 32) * 5 / 9;
+        else if (unit === 'k') c = val - 273.15;
+
+        const f = (c * 9 / 5) + 32;
+        const k = c + 273.15;
+
+        let out = '';
+        if (unit !== 'f') out += createCard('Fahrenheit', f);
+        if (unit !== 'c') out += createCard('Celsius', c);
+        if (unit !== 'k') out += createCard('Kelvin', k);
+        return out;
+    }
+
+    function createCard(label, val) {
+        const displayVal = formatNumber(val);
+        const copyVal    = +val.toPrecision(8);
+        return `
+            <div class="result-card" onclick="copyToClipboard('${copyVal}')">
+                <div class="res-unit">${label}</div>
+                <div class="res-val">${displayVal}</div>
+            </div>`;
+    }
+
+
+    // ── Clipboard ─────────────────────────────────────────────────────────────
+
+    function copyToClipboard(text) {
+        const showToast = () => {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 1800);
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(showToast).catch(() => fallbackCopy(text, showToast));
+        } else {
+            fallbackCopy(text, showToast);
+        }
+    }
+
+    function fallbackCopy(text, cb) {
+        const el = document.createElement('textarea');
+        el.value = text;
+        el.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+        document.body.appendChild(el);
+        el.select();
+        try { document.execCommand('copy'); cb(); } catch (e) {}
+        document.body.removeChild(el);
+    }
+
+
+    // ── Keyboard Shortcuts ────────────────────────────────────────────────────
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            const input = document.getElementById('userInput');
+            input.value = '';
+            convert();
+            input.focus();
+        }
+    });
+
+</script>
+<script>
+function shareThisPage() {
+    if (navigator.share) {
+        navigator.share({
+            title: document.title,
+            url: window.location.href
+        }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            const btn = document.querySelector('.footer-share-btn');
+            const orig = btn.textContent;
+            btn.textContent = 'Link copied!';
+            setTimeout(() => { btn.textContent = orig; }, 2000);
+        }).catch(() => {});
+    }
+}
+</script>
+<script src="privacy.js"></script>
+<footer style="text-align:center; padding:8px 20px; font-size:0.65rem; color:var(--text-dim); border-top:1px solid var(--border); flex-shrink:0;">
+    <div class="footer-share">
+        <button class="footer-share-btn" onclick="shareThisPage()">You know who might like this?</button>
+    </div>
+    &copy; 2026 NOFNWAY. All Rights Reserved.
+</footer>
+</body>
+</html>
