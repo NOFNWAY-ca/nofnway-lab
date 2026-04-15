@@ -1005,16 +1005,16 @@ mark {
   <!-- LIBRARY -->
   <div id="section-library" class="section active">
     <div id="search-row">
-      <input type="text" id="search-input" placeholder="Search local catalog, or paste a BGG URL / ID..." />
+      <input type="text" id="search-input" placeholder="Search viewed games, or paste a BGG URL / ID..." />
       <button onclick="searchBGG()">Search</button>
     </div>
     <div id="search-hint" style="font-size:12px;color:var(--dim);margin-bottom:12px;padding-left:2px">
-      Search checks the built-in catalog first, then falls back to a live BGG lookup if needed. You can search by name, or paste a BoardGameGeek URL or numeric BGG ID.
+      Search checks games you have already viewed first, then asks BGG if needed. You can search by name, or paste a BoardGameGeek URL or numeric BGG ID.
     </div>
     <div id="search-results"></div>
     <div class="section-label">Your Library</div>
     <div id="library-list"></div>
-    <div id="library-empty">No games yet. Search above to add games from the local catalog or live BGG lookup.</div>
+    <div id="library-empty">No games yet. Search above to add games from BGG. Viewed games are remembered locally after that.</div>
   </div>
 
   <!-- RULES -->
@@ -1100,15 +1100,13 @@ mark {
   </a>
 </div>
 
-<script src="bgg-catalog.js"></script>
 <script>
 // ============================================================
 // STATE
 // ============================================================
-// Catalog-based search: text queries search window.BGG_CATALOG client-side (offline, instant).
-// BGG URL / bare-ID inputs check the catalog first; fall back to a live BGG fetch
-// via /api/bgg only when the game isn't in the catalog.
-if (typeof window.BGG_CATALOG === 'undefined') window.BGG_CATALOG = [];
+// User-built BGG cache: local results come only from games this browser has
+// already viewed or saved. No seed catalog is loaded.
+const BGG_CACHE_KEY = 'king_bgg_cache';
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
   const controller = new AbortController();
@@ -1138,6 +1136,7 @@ const LIBRARY_LIMIT = 50;
 
 let library = [];          // [{id, name, year, details}]
 let sessions = [];         // session objects
+let bggCache = [];         // user-built cache of viewed BGG games
 let activeSessionId = null;
 let rulesQuery = '';
 let rulesActiveFilters = new Set();
@@ -1180,12 +1179,88 @@ function migrateLibraryData(library) {
   });
 }
 
+function loadBGGCache() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(BGG_CACHE_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed.filter(g => g && g.id && g.name) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveBGGCache() {
+  localStorage.setItem(BGG_CACHE_KEY, JSON.stringify(bggCache.slice(0, 500)));
+}
+
+function normalizeCachedGame(id, name, year, details = null) {
+  const sid = String(id || '').trim();
+  if (!sid) return null;
+  const safeDetails = details && typeof details === 'object' ? details : null;
+  return {
+    id: sid,
+    name: name || safeDetails?._name || 'Unknown',
+    year: year || safeDetails?._year || '',
+    details: safeDetails,
+    thumbnail:
+      safeDetails?.thumbnail ||
+      safeDetails?.image ||
+      null,
+    image:
+      safeDetails?.image ||
+      safeDetails?.thumbnail ||
+      '',
+    updatedAt: Date.now()
+  };
+}
+
+function rememberBGGGame(id, name, year, details = null) {
+  const entry = normalizeCachedGame(id, name, year, details);
+  if (!entry) return null;
+  bggCache = [
+    entry,
+    ...bggCache.filter(g => String(g.id) !== entry.id)
+  ].slice(0, 500);
+  saveBGGCache();
+  return entry;
+}
+
+function getCachedBGGGame(id) {
+  return bggCache.find(g => String(g.id) === String(id));
+}
+
+function searchCachedBGGGames(query) {
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+  return bggCache
+    .filter(g => String(g.name || '').toLowerCase().includes(q))
+    .slice(0, 15);
+}
+
+function hydrateBGGCacheFromLibrary() {
+  let changed = false;
+  library.forEach(game => {
+    if (!game?.id || !game?.name) return;
+    if (!game.details && !game.thumbnail && !game.image) return;
+    const exists = getCachedBGGGame(game.id);
+    if (exists) return;
+    const entry = normalizeCachedGame(game.id, game.name, game.year, game.details);
+    if (!entry) return;
+    entry.thumbnail = game.thumbnail || entry.thumbnail;
+    entry.image = game.details?.image || game.image || entry.image || '';
+    bggCache.unshift(entry);
+    changed = true;
+  });
+  if (changed) saveBGGCache();
+}
+
 // ============================================================
 // INIT
 // ============================================================
 function init() {
   loadTheme();
   library = migrateLibraryData(JSON.parse(localStorage.getItem('king_library') || '[]'));
+  bggCache = loadBGGCache();
+  hydrateBGGCacheFromLibrary();
   sessions = JSON.parse(localStorage.getItem('king_sessions') || '[]');
   renderLibrary();
   renderRulesSection();
@@ -1349,19 +1424,19 @@ async function searchBGG() {
   };
 
   const parsed = parseBGGInput(raw);
-  setLoading('Searching catalog...');
+  setLoading('Searching viewed games...');
 
   // --- ID/URL path ---
   if (parsed.type === 'id') {
-    // Check catalog first (instant, no network)
-    const catalogEntry = window.BGG_CATALOG.find(g => String(g.id) === String(parsed.id));
+    // Check user-built cache first (instant, offline)
+    const catalogEntry = getCachedBGGGame(parsed.id);
     if (catalogEntry) {
       clearRetryTimer();
-      showSingleResult(resultsEl, catalogEntry.id, catalogEntry.name, catalogEntry.year, catalogToDetails(catalogEntry));
+      showSingleResult(resultsEl, catalogEntry.id, catalogEntry.name, catalogEntry.year, catalogEntry.details || catalogToDetails(catalogEntry));
       return;
     }
 
-    setLoading('Not found locally. Checking BGG...');
+    setLoading('Not viewed locally. Checking BGG...');
     startRetryState();
     try {
       const details = await fetchBGGDetails(parsed.id);
@@ -1388,14 +1463,11 @@ async function searchBGG() {
     return;
   }
 
-  // --- Text search path — client-side catalog search (instant, works offline) ---
-  const q = parsed.query.toLowerCase().trim();
-  let matches = window.BGG_CATALOG
-    .filter(g => g.name.toLowerCase().includes(q))
-    .slice(0, 15);
+  // --- Text search path — client-side cache search (instant, works offline) ---
+  let matches = searchCachedBGGGames(parsed.query);
 
   if (matches.length === 0) {
-    setLoading('Not found locally. Checking BGG...');
+    setLoading('Not viewed locally. Checking BGG...');
     startRetryState();
     try {
       matches = await searchBGGRemote(parsed.query);
@@ -1458,12 +1530,13 @@ async function searchBGGRemote(query) {
       description: '',
       categories: [],
       mechanics: [],
+      thumbnail: '',
       image: ''
     };
   }).filter(entry => entry.id && entry.name);
 }
 
-// Convert a BGG_CATALOG entry to the `details` format used in the library.
+// Convert a cached/search entry to the `details` format used in the library.
 function catalogToDetails(entry) {
   return {
     description: entry.description || '',
@@ -1617,7 +1690,7 @@ async function fetchBGGDetails(id) {
   const _name = nameEl ? (nameEl.getAttribute('value') || nameEl.textContent.trim()) : 'Unknown';
   const _year = get('yearpublished', 'value') || '';
 
-  return {
+  const details = {
     _name, _year,
     description: desc,
     minplayers: get('minplayers', 'value'),
@@ -1630,6 +1703,8 @@ async function fetchBGGDetails(id) {
     thumbnail: thumbnail,
     image: get('image', null)
   };
+  rememberBGGGame(id, details._name, details._year, details);
+  return details;
 }
 
 // Used by the ID lookup path — details already fetched, skip the second request.
