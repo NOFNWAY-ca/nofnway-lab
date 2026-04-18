@@ -169,6 +169,13 @@ body {
   align-items: center;
 }
 
+.helper-copy {
+  color: var(--dim);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: -2px 0 12px;
+}
+
 input[type=text], input[type=password], select, textarea {
   background: var(--surface);
   border: 1px solid var(--border2);
@@ -1230,11 +1237,11 @@ mark {
 </head>
 <body>
 
-<div id="app-header">
+  <div id="app-header">
   <div id="app-title">K.I.N.G. <span>Kelly's Infinite Navigator for Games</span></div>
   <div id="header-controls">
-    <button class="ghost small" onclick="exportAllData()">Backup</button>
-    <button class="ghost small" onclick="importAllDataClick()">Restore</button>
+    <button class="ghost small" onclick="exportAllData()" title="Export your whole K.I.N.G. library, sessions, notes, history, and settings">Backup</button>
+    <button class="ghost small" onclick="importAllDataClick()" title="Restore a whole K.I.N.G. backup file">Restore</button>
     <input type="file" id="import-all-input" style="display:none" accept=".json" onchange="importAllData(event)">
     <select id="theme-select" onchange="setTheme(this.value)" title="Color theme">
       <option value="midnight">Midnight</option>
@@ -1266,6 +1273,7 @@ mark {
       Search checks games you have already viewed first, then asks BGG if needed. You can search by name, or paste a BoardGameGeek URL or numeric BGG ID.
     </div>
     <div id="search-results"></div>
+    <div class="helper-copy">Use the filters below to sort your shelf, narrow by player count, time, or weight, and separate games that are ready tonight from games you want to try later.</div>
     <div id="library-tools" class="toolbar">
       <select id="library-sort">
         <option value="favorite">Favorites First</option>
@@ -1315,6 +1323,7 @@ mark {
       <input type="text" id="rules-search" placeholder="Search games, mechanics, categories... ( / )" />
       <div id="rules-filters"></div>
     </div>
+    <div class="helper-copy">Press <code>/</code> to jump to Rules search. Click a mechanic tag in the detail panel to turn it into a filter.</div>
     <div id="rules-body">
       <div id="rules-results-col">
         <div id="rules-results"></div>
@@ -1330,6 +1339,7 @@ mark {
       <div id="session-tabs"></div>
       <button onclick="openNewSession()">+ New Session</button>
     </div>
+    <div class="helper-copy">Session Export and Import are for one session only. Closed sessions land in Recent Sessions below so you can resume or duplicate them later.</div>
     <div id="recent-sessions"></div>
     <div id="session-empty">No open sessions. Start one by clicking + New Session.</div>
     <div id="session-content"></div>
@@ -1337,6 +1347,7 @@ mark {
 
   <div id="section-picker" class="section">
     <div class="section-label">Game Night Picker</div>
+    <div class="helper-copy">Picks come from your library only. Shelved games stay out, favorites can bias the list, and the filters below narrow by table size, time, and complexity.</div>
     <div class="toolbar">
       <select id="picker-player-count">
         <option value="">Any Player Count</option>
@@ -1371,6 +1382,7 @@ mark {
   <div id="section-history" class="section">
     <div class="section-label">Play History</div>
     <div id="history-stats"></div>
+    <div class="helper-copy">History stores finished-session snapshots like winner, notes, and key tracker totals. Clearing history does not delete your library or backups.</div>
     <div class="toolbar">
       <input type="text" id="history-search" placeholder="Search history by game or player">
       <button class="ghost small danger" onclick="clearHistory()">Clear History</button>
@@ -2409,6 +2421,7 @@ function renderGameDetailOverlay(payload) {
     ${categories.length ? `<div class="detail-tags">${categories.map(c => `<span class="detail-tag">${esc(c)}</span>`).join('')}</div>` : ''}
     ${mechanics.length ? `<div class="detail-tags">${mechanics.map(m => `<span class="detail-tag">${esc(m)}</span>`).join('')}</div>` : ''}
     ${inLibrary ? `
+      <div class="helper-copy">Quick Reference is your short version of the game. Shelf Status controls whether it shows up as ready tonight, just a future idea, or hidden from the picker.</div>
       <div class="template-section">
         <label>Quick Reference</label>
         <textarea id="detail-quickref-area" class="template-notes" placeholder="Setup notes, teach order, gotchas, endgame trigger.">${esc(game.quickRef || '')}</textarea>
@@ -2499,6 +2512,7 @@ function renderTemplateEditor() {
 
   el.innerHTML = `
     <h3 id="template-title"></h3>
+    <div class="helper-copy">Templates shape new sessions for this game. Pinned trackers rise to the top, role names prefill players, and default notes carry into every new session.</div>
     <div class="template-section">
       <label>Trackers</label>
       <div id="template-trackers" class="template-list"></div>
@@ -3361,6 +3375,11 @@ function renderSessionPanel(id) {
   meta.className = 'session-meta';
   meta.textContent = `Started ${sess.created}${sess.updatedAt ? ` • Last changed ${new Date(sess.updatedAt).toLocaleString()}` : ''}`;
   panel.appendChild(meta);
+
+  const sessionHint = document.createElement('div');
+  sessionHint.className = 'helper-copy';
+  sessionHint.innerHTML = 'Click player chips to rename or recolor them. Click tracker labels to rename them, and click counter values to type a number directly.';
+  panel.appendChild(sessionHint);
 
   // Players row
   const playersRow = document.createElement('div');

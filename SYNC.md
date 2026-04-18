@@ -36,6 +36,7 @@ Experimental site with live tool work and Cloudflare Functions.
 - Added defensive BGG suggested-player parsing plus richer game detail and rules detail cards with covers, recommendations, and compact tags.
 - Added optional per-game session templates in K.I.N.G. with tracker names, default notes, player roles, and a game-detail template editor.
 - Expanded K.I.N.G. into a fuller local game-night cockpit: library sort/filter controls, shelf status, quick-reference notes, search-result detail overlays, recent-session resume/duplicate cards, in-session notes, richer end-session history snapshots, a dedicated history tab, a game-night picker, and full backup/restore for all local K.I.N.G. data.
+- Added a UI-clarity pass to K.I.N.G. with helper copy for library filters, backup scope, rules shortcuts, session persistence, picker behavior, history scope, quick reference, templates, and in-session editing gestures.
 
 ## Next Recommended Step
 - Track any `.env`, KV, or deployment assumptions here whenever alarm work is touched.
