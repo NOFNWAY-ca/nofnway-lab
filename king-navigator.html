@@ -161,6 +161,14 @@ body {
   margin-bottom: 16px;
 }
 
+.toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
 input[type=text], input[type=password], select, textarea {
   background: var(--surface);
   border: 1px solid var(--border2);
@@ -253,6 +261,10 @@ button.small { padding: 4px 10px; font-size: 12px; }
 }
 
 #library-list { display: flex; flex-direction: column; gap: 8px; }
+
+#library-tools select {
+  min-width: 130px;
+}
 
 .lib-card {
   background: var(--surface);
@@ -414,14 +426,77 @@ button.small { padding: 4px 10px; font-size: 12px; }
 }
 .detail-actions { display: flex; gap: 8px; margin-top: 16px; }
 
+#template-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  z-index: 120;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#template-overlay.open { display: flex; }
+#template-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-top: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 22px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 82vh;
+  overflow-y: auto;
+}
+.template-section { margin-top: 16px; }
+.template-section label {
+  display: block;
+  color: var(--dim);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.template-list { display: flex; flex-direction: column; gap: 6px; }
+.template-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 9px;
+  font-size: 13px;
+}
+.template-add-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.template-add-row input { flex: 1; }
+.template-notes {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+}
+.template-empty {
+  color: var(--dim);
+  font-size: 13px;
+  padding: 8px 0;
+}
+
 .history-row {
   font-size: 13px;
   padding: 4px 0;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
+  gap: 10px;
 }
 .history-label { color: var(--dim); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 10px 0 4px; }
+.history-subtext { color: var(--dim); font-size: 11px; margin-top: 3px; }
 
 /* ---- RULES (offline reference viewer) ---- */
 #rules-stats {
@@ -600,6 +675,15 @@ button.small { padding: 4px 10px; font-size: 12px; }
   line-height: 1.5;
 }
 
+#rules-quickref-area {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
 mark {
   background: var(--accent-dim);
   color: #fff;
@@ -622,6 +706,38 @@ mark {
   flex: 1;
   flex-wrap: wrap;
   min-width: 0;
+}
+
+#recent-sessions {
+  margin-bottom: 16px;
+}
+
+.recent-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-session-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.recent-session-meta {
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.recent-session-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .session-tab {
@@ -678,6 +794,7 @@ mark {
 }
 .session-title { font-size: 18px; font-weight: 700; }
 .session-actions { display: flex; gap: 6px; }
+.session-meta { color: var(--dim); font-size: 12px; margin-bottom: 10px; }
 
 .players-row {
   display: flex;
@@ -895,6 +1012,17 @@ mark {
 .add-field-row select { font-size: 13px; padding: 5px 8px; }
 .add-field-row input[type=text] { font-size: 13px; padding: 5px 8px; }
 
+.session-notes-wrap {
+  margin-top: 16px;
+}
+
+.session-notes-area {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  font-size: 13px;
+}
+
 /* ---- NEW SESSION DIALOG ---- */
 #new-session-overlay {
   display: none;
@@ -1065,6 +1193,30 @@ mark {
 }
 
 @media (max-width: 700px) {
+  #search-row,
+  .toolbar,
+  #rules-body,
+  .detail-top,
+  .recent-session-card,
+  .history-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #rules-results-col {
+    width: auto;
+  }
+
+  .lib-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lib-card-actions,
+  .recent-session-actions {
+    width: 100%;
+  }
+
   #bgg-attribution {
     right: 10px;
     bottom: 8px;
@@ -1081,6 +1233,9 @@ mark {
 <div id="app-header">
   <div id="app-title">K.I.N.G. <span>Kelly's Infinite Navigator for Games</span></div>
   <div id="header-controls">
+    <button class="ghost small" onclick="exportAllData()">Backup</button>
+    <button class="ghost small" onclick="importAllDataClick()">Restore</button>
+    <input type="file" id="import-all-input" style="display:none" accept=".json" onchange="importAllData(event)">
     <select id="theme-select" onchange="setTheme(this.value)" title="Color theme">
       <option value="midnight">Midnight</option>
       <option value="tavern">Tavern</option>
@@ -1095,6 +1250,8 @@ mark {
   <button class="nav-btn active" onclick="showSection('library')">Library</button>
   <button class="nav-btn" onclick="showSection('rules')">Rules</button>
   <button class="nav-btn" onclick="showSection('sessions')">Sessions</button>
+  <button class="nav-btn" onclick="showSection('picker')">Picker</button>
+  <button class="nav-btn" onclick="showSection('history')">History</button>
 </nav>
 
 <div id="main-content">
@@ -1109,6 +1266,43 @@ mark {
       Search checks games you have already viewed first, then asks BGG if needed. You can search by name, or paste a BoardGameGeek URL or numeric BGG ID.
     </div>
     <div id="search-results"></div>
+    <div id="library-tools" class="toolbar">
+      <select id="library-sort">
+        <option value="favorite">Favorites First</option>
+        <option value="name">Name</option>
+        <option value="recent">Recently Added</option>
+        <option value="weight">Weight</option>
+        <option value="time">Play Time</option>
+      </select>
+      <select id="library-player-filter">
+        <option value="">Any Player Count</option>
+        <option value="1">1+</option>
+        <option value="2">2+</option>
+        <option value="3">3+</option>
+        <option value="4">4+</option>
+        <option value="5">5+</option>
+        <option value="6">6+</option>
+      </select>
+      <select id="library-time-filter">
+        <option value="">Any Play Time</option>
+        <option value="30">Up to 30 min</option>
+        <option value="60">Up to 60 min</option>
+        <option value="90">Up to 90 min</option>
+        <option value="120">Up to 120 min</option>
+      </select>
+      <select id="library-weight-filter">
+        <option value="">Any Weight</option>
+        <option value="2">Up to 2.0</option>
+        <option value="3">Up to 3.0</option>
+        <option value="4">Up to 4.0</option>
+      </select>
+      <select id="library-status-filter">
+        <option value="">Any Shelf</option>
+        <option value="ready">Ready Tonight</option>
+        <option value="want">Want To Try</option>
+        <option value="shelved">Shelved</option>
+      </select>
+    </div>
     <div class="section-label">Your Library</div>
     <div id="library-list"></div>
     <div id="library-empty">No games yet. Search above to add games from BGG. Viewed games are remembered locally after that.</div>
@@ -1136,8 +1330,52 @@ mark {
       <div id="session-tabs"></div>
       <button onclick="openNewSession()">+ New Session</button>
     </div>
+    <div id="recent-sessions"></div>
     <div id="session-empty">No open sessions. Start one by clicking + New Session.</div>
     <div id="session-content"></div>
+  </div>
+
+  <div id="section-picker" class="section">
+    <div class="section-label">Game Night Picker</div>
+    <div class="toolbar">
+      <select id="picker-player-count">
+        <option value="">Any Player Count</option>
+        <option value="2">2 players</option>
+        <option value="3">3 players</option>
+        <option value="4">4 players</option>
+        <option value="5">5 players</option>
+        <option value="6">6 players</option>
+      </select>
+      <select id="picker-time-limit">
+        <option value="">Any Duration</option>
+        <option value="30">30 min max</option>
+        <option value="60">60 min max</option>
+        <option value="90">90 min max</option>
+        <option value="120">120 min max</option>
+      </select>
+      <select id="picker-weight-limit">
+        <option value="">Any Weight</option>
+        <option value="2">2.0 max</option>
+        <option value="3">3.0 max</option>
+        <option value="4">4.0 max</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:6px;color:var(--dim);font-size:13px">
+        <input type="checkbox" id="picker-favorites-only">
+        Favorites only
+      </label>
+      <button onclick="renderPickerResults()">Pick Games</button>
+    </div>
+    <div id="picker-results"></div>
+  </div>
+
+  <div id="section-history" class="section">
+    <div class="section-label">Play History</div>
+    <div id="history-stats"></div>
+    <div class="toolbar">
+      <input type="text" id="history-search" placeholder="Search history by game or player">
+      <button class="ghost small danger" onclick="clearHistory()">Clear History</button>
+    </div>
+    <div id="history-list"></div>
   </div>
 
 </div>
@@ -1146,6 +1384,13 @@ mark {
 <div id="game-detail-overlay" onclick="closeDetailIfBg(event)">
   <div id="game-detail-panel">
     <div id="gdp-content"></div>
+  </div>
+</div>
+
+<!-- TEMPLATE EDITOR OVERLAY -->
+<div id="template-overlay" onclick="closeOverlayIfBg(event, 'template-overlay')">
+  <div id="template-panel">
+    <div id="template-content"></div>
   </div>
 </div>
 
@@ -1226,11 +1471,17 @@ async function bggFetch(bggUrl) {
 const BGG_SEARCH = 'https://boardgamegeek.com/xmlapi2/search?type=boardgame,boardgameexpansion&query=';
 const BGG_THING = 'https://boardgamegeek.com/xmlapi2/thing?stats=1&id=';
 const PLAYER_COLORS = ['#5b8dee','#4fa86a','#c4931a','#c84040','#9b72cf','#4fb8d4'];
+const RECENT_SESSIONS_KEY = 'king_recent_sessions';
 const COLOR_PALETTE = [
   '#5b8dee','#4fa86a','#c4931a','#c84040','#9b72cf','#4fb8d4',
   '#e06f3a','#e84393','#50c8b4','#c2c42a','#7ec83a','#9a9a9a'
 ];
 const LIBRARY_LIMIT = 50;
+const LIBRARY_SHELF_OPTIONS = {
+  ready: 'Ready Tonight',
+  want: 'Want To Try',
+  shelved: 'Shelved'
+};
 
 let library = [];          // [{id, name, year, details}]
 let sessions = [];         // session objects
@@ -1240,6 +1491,8 @@ let rulesQuery = '';
 let rulesActiveFilters = new Set();
 let rulesSelectedId = null;
 let endingSessionId = null;
+let editingTemplateGameId = null;
+let recentSessions = [];
 
 // ============================================================
 // THEME
@@ -1265,6 +1518,50 @@ function migrateLibraryData(library) {
 
     if (typeof game.favorite !== 'boolean') {
       game.favorite = false;
+    }
+
+    if (!game.sessionTemplate) {
+      game.sessionTemplate = {
+        trackers: [],
+        notes: '',
+        playerDefaults: []
+      };
+    } else {
+      game.sessionTemplate.trackers = Array.isArray(game.sessionTemplate.trackers)
+        ? game.sessionTemplate.trackers.map((tracker, index) => {
+            if (tracker && typeof tracker === 'object') {
+              return {
+                id: tracker.id || `tmpl_${index}_${game.id || 'game'}`,
+                label: String(tracker.label || '').trim() || `Tracker ${index + 1}`,
+                pinned: !!tracker.pinned
+              };
+            }
+            const label = String(tracker || '').trim();
+            return label ? {
+              id: `tmpl_${index}_${game.id || 'game'}`,
+              label,
+              pinned: false
+            } : null;
+          }).filter(Boolean)
+        : [];
+      game.sessionTemplate.notes = typeof game.sessionTemplate.notes === 'string'
+        ? game.sessionTemplate.notes
+        : '';
+      game.sessionTemplate.playerDefaults = Array.isArray(game.sessionTemplate.playerDefaults)
+        ? game.sessionTemplate.playerDefaults
+        : [];
+    }
+
+    if (typeof game.quickRef !== 'string') {
+      game.quickRef = '';
+    }
+
+    if (!LIBRARY_SHELF_OPTIONS[game.shelfStatus]) {
+      game.shelfStatus = 'ready';
+    }
+
+    if (!game.addedAt) {
+      game.addedAt = Date.now();
     }
 
     if (!game.thumbnail) {
@@ -1410,9 +1707,13 @@ function init() {
   bggCache = loadBGGCache();
   hydrateBGGCacheFromLibrary();
   sessions = JSON.parse(localStorage.getItem('king_sessions') || '[]');
+  recentSessions = loadRecentSessions();
   renderLibrary();
   renderRulesSection();
   renderSessionTabs();
+  renderRecentSessions();
+  renderHistorySection();
+  renderPickerResults();
   if (sessions.length > 0) {
     activateSession(sessions[0].id);
   }
@@ -1437,6 +1738,16 @@ function init() {
       }
     }
   });
+
+  ['library-sort', 'library-player-filter', 'library-time-filter', 'library-weight-filter', 'library-status-filter'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => renderLibrary());
+  });
+
+  ['picker-player-count', 'picker-time-limit', 'picker-weight-limit', 'picker-favorites-only'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => renderPickerResults());
+  });
+
+  document.getElementById('history-search').addEventListener('input', () => renderHistorySection());
 }
 
 // ============================================================
@@ -1447,7 +1758,7 @@ function showSection(name) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('section-' + name).classList.add('active');
   const btns = document.querySelectorAll('.nav-btn');
-  const idx = ['library', 'rules', 'sessions'].indexOf(name);
+  const idx = ['library', 'rules', 'sessions', 'picker', 'history'].indexOf(name);
   if (btns[idx]) btns[idx].classList.add('active');
 }
 
@@ -1485,13 +1796,28 @@ function renderLibrary() {
     empty.style.display = '';
     return;
   }
+  const filteredLibrary = getFilteredLibrary();
+  if (filteredLibrary.length === 0) {
+    empty.style.display = '';
+    empty.textContent = 'No games match the current library filters.';
+    return;
+  }
   empty.style.display = 'none';
-  const sortedLibrary = library
+  empty.textContent = 'No games yet. Search above to add games from BGG. Viewed games are remembered locally after that.';
+  const sortBy = document.getElementById('library-sort')?.value || 'favorite';
+  const sortedLibrary = filteredLibrary
     .map((game, index) => ({ game, index }))
     .sort((a, b) => {
-      if (!!a.game.favorite !== !!b.game.favorite) {
-        return a.game.favorite ? -1 : 1;
+      if (sortBy === 'favorite') {
+        if (!!a.game.favorite !== !!b.game.favorite) {
+          return a.game.favorite ? -1 : 1;
+        }
+        return a.index - b.index;
       }
+      if (sortBy === 'name') return a.game.name.localeCompare(b.game.name);
+      if (sortBy === 'recent') return (b.game.addedAt || 0) - (a.game.addedAt || 0);
+      if (sortBy === 'weight') return (parseFloat(b.game.details?.weight || '0') || 0) - (parseFloat(a.game.details?.weight || '0') || 0);
+      if (sortBy === 'time') return (parseInt(a.game.details?.maxplaytime || '0', 10) || 0) - (parseInt(b.game.details?.maxplaytime || '0', 10) || 0);
       return a.index - b.index;
     })
     .map(entry => entry.game);
@@ -1510,6 +1836,7 @@ function renderLibrary() {
     const players = game.details
       ? `${game.details.minplayers}–${game.details.maxplayers}p &bull; ${game.details.minplaytime}–${game.details.maxplaytime} min`
       : '';
+    const shelf = LIBRARY_SHELF_OPTIONS[game.shelfStatus] || LIBRARY_SHELF_OPTIONS.ready;
 
     card.innerHTML = `
       <div class="thumb-wrap">
@@ -1517,7 +1844,7 @@ function renderLibrary() {
       </div>
       <div class="lib-card-info">
         <div class="lib-card-name">${esc(game.name)} ${weightLabel}</div>
-        <div class="lib-card-meta">${game.year ? game.year : ''}${players ? ' &bull; ' + players : ''}</div>
+        <div class="lib-card-meta">${game.year ? game.year : ''}${players ? ' &bull; ' + players : ''}${shelf ? ' &bull; ' + esc(shelf) : ''}</div>
       </div>
       <div class="lib-card-actions">
         <button
@@ -1547,6 +1874,7 @@ function toggleFavorite(id) {
   game.favorite = !game.favorite;
   saveLibrary();
   renderLibrary();
+  renderPickerResults();
 }
 
 function removeFromLibrary(id) {
@@ -1560,6 +1888,31 @@ function removeFromLibrary(id) {
   }
   renderRulesSection();
   populateNewSessionGames();
+  renderHistorySection();
+  renderPickerResults();
+}
+
+function getFilteredLibrary() {
+  const minPlayers = parseInt(document.getElementById('library-player-filter')?.value || '0', 10) || 0;
+  const maxTime = parseInt(document.getElementById('library-time-filter')?.value || '0', 10) || 0;
+  const maxWeight = parseFloat(document.getElementById('library-weight-filter')?.value || '0') || 0;
+  const status = document.getElementById('library-status-filter')?.value || '';
+  return library.filter(game => {
+    if (status && game.shelfStatus !== status) return false;
+    if (minPlayers) {
+      const maxPlayers = parseInt(game.details?.maxplayers || '0', 10) || 0;
+      if (maxPlayers && maxPlayers < minPlayers) return false;
+    }
+    if (maxTime) {
+      const gameTime = parseInt(game.details?.maxplaytime || '0', 10) || 0;
+      if (gameTime && gameTime > maxTime) return false;
+    }
+    if (maxWeight) {
+      const gameWeight = parseFloat(game.details?.weight || '0') || 0;
+      if (gameWeight && gameWeight > maxWeight) return false;
+    }
+    return true;
+  });
 }
 
 // Detect whether input is a BGG URL, a bare numeric ID, or a text search.
@@ -1683,6 +2036,7 @@ async function searchBGG() {
       const btn = e.currentTarget;
       addToLibraryWithDetails(id, entry.name, entry.year, entry.details || catalogToDetails(entry), btn);
     });
+    row.addEventListener('click', () => openSearchResultDetail(entry));
     resultsEl.appendChild(row);
     attachSearchThumbnail(row, id, entry, index);
   });
@@ -1806,6 +2160,7 @@ function showSingleResult(resultsEl, id, name, year, details, note = '') {
     const btn = e.currentTarget;
     addToLibraryWithDetails(sid, name, year, details, btn);
   });
+  row.addEventListener('click', () => openSearchResultDetail({ id: sid, name, year, details: details || null }));
   resultsEl.appendChild(row);
   attachSearchThumbnail(row, sid, details || {});
 }
@@ -1829,6 +2184,9 @@ async function addToLibrary(id, name, year, btnEl) {
     name,
     year,
     details,
+    quickRef: '',
+    shelfStatus: 'ready',
+    addedAt: Date.now(),
     thumbnail:
       details?.thumbnail ||
       details?.image ||
@@ -1838,6 +2196,7 @@ async function addToLibrary(id, name, year, btnEl) {
   renderLibrary();
   renderRulesSection();
   populateNewSessionGames();
+  renderPickerResults();
 
   if (btnEl) {
     btnEl.textContent = 'Saved';
@@ -1971,6 +2330,9 @@ async function addToLibraryWithDetails(id, name, year, details, btnEl) {
     name,
     year,
     details,
+    quickRef: '',
+    shelfStatus: 'ready',
+    addedAt: Date.now(),
     thumbnail:
       details?.thumbnail ||
       details?.image ||
@@ -1980,16 +2342,40 @@ async function addToLibraryWithDetails(id, name, year, details, btnEl) {
   renderLibrary();
   renderRulesSection();
   populateNewSessionGames();
+  renderPickerResults();
   if (btnEl) { btnEl.textContent = 'Saved'; btnEl.classList.add('saved'); btnEl.disabled = false; }
 }
 
 function openGameDetail(id) {
   const game = getGame(id);
   if (!game) return;
-  const d = game.details;
+  renderGameDetailOverlay({
+    id,
+    name: game.name,
+    year: game.year,
+    details: game.details,
+    thumbnail: game.thumbnail
+  });
+}
+
+function openSearchResultDetail(entry) {
+  renderGameDetailOverlay({
+    id: String(entry.id),
+    name: entry.name,
+    year: entry.year,
+    details: entry.details || catalogToDetails(entry),
+    thumbnail: entry.thumbnail || entry.details?.thumbnail || entry.details?.image || ''
+  });
+}
+
+function renderGameDetailOverlay(payload) {
+  const id = String(payload.id);
+  const game = getGame(id);
+  const source = game || payload;
+  const d = source.details;
   const history = getGameHistory(id);
   const weight = d ? parseFloat(d.weight) : 0;
-  const cover = String(game.thumbnail || d?.thumbnail || d?.image || '').trim();
+  const cover = String(source.thumbnail || d?.thumbnail || d?.image || '').trim();
   const recommendations = d
     ? [d.bestPlayers, d.recommendedPlayers].filter(Boolean)
     : [];
@@ -2000,17 +2386,19 @@ function openGameDetail(id) {
   if (history.length > 0) {
     histHTML = '<div class="history-label">Play History</div>';
     history.slice(-10).reverse().forEach(h => {
-      histHTML += `<div class="history-row"><span>${esc(h.date)} &bull; ${esc(h.players.join(', '))}</span><span>${h.winner ? esc(h.winner) : 'No winner recorded'}</span></div>`;
+      const summary = summarizeHistoryEntry(h);
+      histHTML += `<div class="history-row"><span><div>${esc(h.date)} &bull; ${esc(h.players.join(', '))}</div>${summary ? `<div class="history-subtext">${esc(summary)}</div>` : ''}</span><span>${h.winner ? esc(h.winner) : 'No winner recorded'}</span></div>`;
     });
   }
 
+  const inLibrary = !!game;
   document.getElementById('gdp-content').innerHTML = `
     <div class="detail-top">
       ${cover ? `<div class="detail-cover"><img src="${esc(cover)}" alt="" loading="lazy" onerror="this.style.display='none'"></div>` : ''}
       <div class="detail-body">
-        <h2>${esc(game.name)}</h2>
+        <h2>${esc(source.name)}</h2>
         <div class="meta">
-          ${game.year ? esc(game.year) : ''}
+          ${source.year ? esc(source.year) : ''}
           ${d ? ` &bull; ${esc(d.minplayers)}–${esc(d.maxplayers)} players &bull; ${esc(d.minplaytime)}–${esc(d.maxplaytime)} min` : ''}
           ${weight > 0 ? ` &bull; Weight ${weight.toFixed(1)}` : ''}
         </div>
@@ -2020,13 +2408,261 @@ function openGameDetail(id) {
     ${d && d.description ? `<div class="desc">${esc(d.description)}</div>` : ''}
     ${categories.length ? `<div class="detail-tags">${categories.map(c => `<span class="detail-tag">${esc(c)}</span>`).join('')}</div>` : ''}
     ${mechanics.length ? `<div class="detail-tags">${mechanics.map(m => `<span class="detail-tag">${esc(m)}</span>`).join('')}</div>` : ''}
+    ${inLibrary ? `
+      <div class="template-section">
+        <label>Quick Reference</label>
+        <textarea id="detail-quickref-area" class="template-notes" placeholder="Setup notes, teach order, gotchas, endgame trigger.">${esc(game.quickRef || '')}</textarea>
+      </div>
+      <div class="template-section">
+        <label>Shelf Status</label>
+        <select id="detail-shelf-status">
+          <option value="ready"${game.shelfStatus === 'ready' ? ' selected' : ''}>Ready Tonight</option>
+          <option value="want"${game.shelfStatus === 'want' ? ' selected' : ''}>Want To Try</option>
+          <option value="shelved"${game.shelfStatus === 'shelved' ? ' selected' : ''}>Shelved</option>
+        </select>
+      </div>
+    ` : ''}
     ${histHTML}
     <div class="detail-actions">
-      <button onclick="startSessionForGame('${id}'); document.getElementById('game-detail-overlay').classList.remove('open')">Play Session</button>
+      ${inLibrary
+        ? `<button onclick="startSessionForGame('${id}'); document.getElementById('game-detail-overlay').classList.remove('open')">Play Session</button>
+           <button class="ghost" onclick="toggleFavorite('${id}')">${game.favorite ? 'Unfavorite' : 'Favorite'}</button>
+           <button class="ghost" onclick="openTemplateEditor('${id}')">Edit Template</button>`
+        : `<button onclick="addSearchDetailToLibrary('${id}')">Add To Library</button>`}
       <button class="ghost" onclick="document.getElementById('game-detail-overlay').classList.remove('open')">Close</button>
     </div>
   `;
+  if (inLibrary) {
+    document.getElementById('detail-quickref-area').addEventListener('input', e => {
+      game.quickRef = e.target.value;
+      saveLibrary();
+      if (rulesSelectedId === id) renderRulesDetail(game);
+    });
+    document.getElementById('detail-shelf-status').addEventListener('change', e => {
+      game.shelfStatus = e.target.value;
+      saveLibrary();
+      renderLibrary();
+      renderPickerResults();
+    });
+  }
   document.getElementById('game-detail-overlay').classList.add('open');
+}
+
+async function addSearchDetailToLibrary(id) {
+  const cached = getCachedBGGGame(id);
+  if (cached) {
+    await addToLibraryWithDetails(id, cached.name, cached.year, cached.details || catalogToDetails(cached));
+  } else {
+    try {
+      const details = await fetchBGGDetails(id);
+      await addToLibraryWithDetails(id, details?._name || 'Unknown', details?._year || '', details);
+    } catch (e) {
+      alert('Could not add this game right now.');
+      return;
+    }
+  }
+  document.getElementById('game-detail-overlay').classList.remove('open');
+}
+
+function getDefaultSessionTemplate() {
+  return {
+    trackers: [],
+    notes: '',
+    playerDefaults: []
+  };
+}
+
+function ensureSessionTemplate(game) {
+  if (!game.sessionTemplate) {
+    game.sessionTemplate = getDefaultSessionTemplate();
+  }
+  if (!Array.isArray(game.sessionTemplate.trackers)) game.sessionTemplate.trackers = [];
+  if (typeof game.sessionTemplate.notes !== 'string') game.sessionTemplate.notes = '';
+  if (!Array.isArray(game.sessionTemplate.playerDefaults)) game.sessionTemplate.playerDefaults = [];
+  return game.sessionTemplate;
+}
+
+function openTemplateEditor(gameId) {
+  const game = getGame(gameId);
+  if (!game) return;
+  editingTemplateGameId = gameId;
+  ensureSessionTemplate(game);
+  renderTemplateEditor();
+  document.getElementById('template-overlay').classList.add('open');
+}
+
+function renderTemplateEditor() {
+  const game = getGame(editingTemplateGameId);
+  if (!game) return;
+  const template = ensureSessionTemplate(game);
+  const el = document.getElementById('template-content');
+
+  el.innerHTML = `
+    <h3 id="template-title"></h3>
+    <div class="template-section">
+      <label>Trackers</label>
+      <div id="template-trackers" class="template-list"></div>
+      <div class="template-add-row">
+        <input id="template-tracker-input" type="text" placeholder="Tracker name">
+        <button class="small" onclick="addTemplateTracker()">Add</button>
+      </div>
+    </div>
+    <div class="template-section">
+      <label>Default Notes</label>
+      <textarea id="template-notes-input" class="template-notes" placeholder="Default notes for new sessions"></textarea>
+    </div>
+    <div class="template-section">
+      <label>Default Player Roles</label>
+      <div id="template-roles" class="template-list"></div>
+      <div class="template-add-row">
+        <input id="template-role-input" type="text" placeholder="Role name">
+        <button class="small" onclick="addTemplateRole()">Add</button>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button class="ghost" onclick="closeOverlay('template-overlay')">Close</button>
+    </div>
+  `;
+
+  document.getElementById('template-title').textContent = `${game.name} Template`;
+  document.getElementById('template-notes-input').value = template.notes;
+  document.getElementById('template-notes-input').addEventListener('input', e => {
+    template.notes = e.target.value;
+    saveLibrary();
+  });
+
+  renderTemplateLists(template);
+}
+
+function renderTemplateLists(template) {
+  const trackersEl = document.getElementById('template-trackers');
+  trackersEl.innerHTML = '';
+  if (template.trackers.length === 0) {
+    trackersEl.innerHTML = '<div class="template-empty">No template trackers yet.</div>';
+  } else {
+    template.trackers.forEach((tracker, index) => {
+      const row = document.createElement('div');
+      row.className = 'template-row';
+      const label = document.createElement('span');
+      label.textContent = `${tracker.pinned ? '★ ' : ''}${tracker.label}`;
+      const actions = document.createElement('div');
+      actions.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+      const pinBtn = document.createElement('button');
+      pinBtn.className = 'ghost small';
+      pinBtn.textContent = tracker.pinned ? 'Unpin' : 'Pin';
+      pinBtn.addEventListener('click', () => toggleTemplateTrackerPin(index));
+      const upBtn = document.createElement('button');
+      upBtn.className = 'ghost small';
+      upBtn.textContent = 'Up';
+      upBtn.disabled = index === 0;
+      upBtn.addEventListener('click', () => moveTemplateTracker(index, -1));
+      const downBtn = document.createElement('button');
+      downBtn.className = 'ghost small';
+      downBtn.textContent = 'Down';
+      downBtn.disabled = index === template.trackers.length - 1;
+      downBtn.addEventListener('click', () => moveTemplateTracker(index, 1));
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'ghost small danger';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => removeTemplateTracker(index));
+      row.appendChild(label);
+      actions.appendChild(pinBtn);
+      actions.appendChild(upBtn);
+      actions.appendChild(downBtn);
+      actions.appendChild(removeBtn);
+      row.appendChild(actions);
+      trackersEl.appendChild(row);
+    });
+  }
+
+  const rolesEl = document.getElementById('template-roles');
+  rolesEl.innerHTML = '';
+  if (template.playerDefaults.length === 0) {
+    rolesEl.innerHTML = '<div class="template-empty">No default player roles yet.</div>';
+  } else {
+    template.playerDefaults.forEach((name, index) => {
+      const row = document.createElement('div');
+      row.className = 'template-row';
+      const label = document.createElement('span');
+      label.textContent = name;
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'ghost small danger';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => removeTemplateRole(index));
+      row.appendChild(label);
+      row.appendChild(removeBtn);
+      rolesEl.appendChild(row);
+    });
+  }
+}
+
+function addTemplateTracker() {
+  const game = getGame(editingTemplateGameId);
+  if (!game) return;
+  const template = ensureSessionTemplate(game);
+  const input = document.getElementById('template-tracker-input');
+  const name = input.value.trim();
+  if (!name) return;
+  template.trackers.push({
+    id: `tmpl_${Date.now()}`,
+    label: name,
+    pinned: false
+  });
+  saveLibrary();
+  input.value = '';
+  renderTemplateLists(template);
+}
+
+function toggleTemplateTrackerPin(index) {
+  const game = getGame(editingTemplateGameId);
+  if (!game) return;
+  const template = ensureSessionTemplate(game);
+  template.trackers[index].pinned = !template.trackers[index].pinned;
+  saveLibrary();
+  renderTemplateLists(template);
+}
+
+function moveTemplateTracker(index, delta) {
+  const game = getGame(editingTemplateGameId);
+  if (!game) return;
+  const template = ensureSessionTemplate(game);
+  const next = index + delta;
+  if (next < 0 || next >= template.trackers.length) return;
+  const [tracker] = template.trackers.splice(index, 1);
+  template.trackers.splice(next, 0, tracker);
+  saveLibrary();
+  renderTemplateLists(template);
+}
+
+function removeTemplateTracker(index) {
+  const game = getGame(editingTemplateGameId);
+  if (!game) return;
+  const template = ensureSessionTemplate(game);
+  template.trackers.splice(index, 1);
+  saveLibrary();
+  renderTemplateLists(template);
+}
+
+function addTemplateRole() {
+  const game = getGame(editingTemplateGameId);
+  if (!game) return;
+  const template = ensureSessionTemplate(game);
+  const input = document.getElementById('template-role-input');
+  const name = input.value.trim();
+  if (!name) return;
+  template.playerDefaults.push(name);
+  saveLibrary();
+  input.value = '';
+  renderTemplateLists(template);
+}
+
+function removeTemplateRole(index) {
+  const game = getGame(editingTemplateGameId);
+  if (!game) return;
+  const template = ensureSessionTemplate(game);
+  template.playerDefaults.splice(index, 1);
+  saveLibrary();
+  renderTemplateLists(template);
 }
 
 function getGameHistory(gameId) {
@@ -2038,6 +2674,111 @@ function saveHistoryEntry(entry) {
   const all = JSON.parse(localStorage.getItem('king_history') || '[]');
   all.push(entry);
   localStorage.setItem('king_history', JSON.stringify(all));
+}
+
+function summarizeHistoryEntry(entry) {
+  if (!entry || !Array.isArray(entry.summaryFields) || entry.summaryFields.length === 0) return '';
+  return entry.summaryFields.map(field => {
+    if (Array.isArray(field.values)) {
+      return `${field.label}: ${field.values.join(', ')}`;
+    }
+    return `${field.label}: ${field.value}`;
+  }).join(' | ');
+}
+
+function loadRecentSessions() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECENT_SESSIONS_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveRecentSessions() {
+  localStorage.setItem(RECENT_SESSIONS_KEY, JSON.stringify(recentSessions.slice(0, 12)));
+}
+
+function stashRecentSession(sess, reason = 'closed') {
+  if (!sess || !sess.id) return;
+  const snapshot = JSON.parse(JSON.stringify(sess));
+  recentSessions = [{
+    ...snapshot,
+    recentReason: reason,
+    recentAt: Date.now()
+  }, ...recentSessions.filter(item => item.id !== sess.id)].slice(0, 12);
+  saveRecentSessions();
+  renderRecentSessions();
+}
+
+function renderRecentSessions() {
+  const el = document.getElementById('recent-sessions');
+  if (!el) return;
+  if (recentSessions.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = '<div class="section-label">Recent Sessions</div>';
+  const list = document.createElement('div');
+  list.className = 'recent-session-list';
+  recentSessions.forEach(sess => {
+    const card = document.createElement('div');
+    card.className = 'recent-session-card';
+    const info = document.createElement('div');
+    const title = document.createElement('div');
+    title.style.fontWeight = '700';
+    title.textContent = sess.gameName;
+    const meta = document.createElement('div');
+    meta.className = 'recent-session-meta';
+    meta.textContent = `${sess.players.length} players • ${sess.recentReason} • ${new Date(sess.recentAt || Date.now()).toLocaleString()}`;
+    info.appendChild(title);
+    info.appendChild(meta);
+    const actions = document.createElement('div');
+    actions.className = 'recent-session-actions';
+    const resumeBtn = document.createElement('button');
+    resumeBtn.className = 'small';
+    resumeBtn.textContent = 'Resume';
+    resumeBtn.addEventListener('click', () => resumeRecentSession(sess.id));
+    const duplicateBtn = document.createElement('button');
+    duplicateBtn.className = 'ghost small';
+    duplicateBtn.textContent = 'Duplicate';
+    duplicateBtn.addEventListener('click', () => duplicateRecentSession(sess.id));
+    const dismissBtn = document.createElement('button');
+    dismissBtn.className = 'ghost small danger';
+    dismissBtn.textContent = 'Dismiss';
+    dismissBtn.addEventListener('click', () => dismissRecentSession(sess.id));
+    actions.appendChild(resumeBtn);
+    actions.appendChild(duplicateBtn);
+    actions.appendChild(dismissBtn);
+    card.appendChild(info);
+    card.appendChild(actions);
+    list.appendChild(card);
+  });
+  el.appendChild(list);
+}
+
+function resumeRecentSession(id) {
+  const sess = recentSessions.find(item => item.id === id);
+  if (!sess) return;
+  const clone = JSON.parse(JSON.stringify(sess));
+  clone.id = 'sess_' + Date.now();
+  delete clone.recentReason;
+  delete clone.recentAt;
+  sessions.push(clone);
+  saveSessions();
+  renderSessionTabs();
+  activateSession(clone.id);
+  showSection('sessions');
+}
+
+function duplicateRecentSession(id) {
+  resumeRecentSession(id);
+}
+
+function dismissRecentSession(id) {
+  recentSessions = recentSessions.filter(item => item.id !== id);
+  saveRecentSessions();
+  renderRecentSessions();
 }
 
 // ============================================================
@@ -2314,6 +3055,21 @@ function renderRulesDetail(game) {
     el.appendChild(tags);
   }
 
+  const quickRefLbl = document.createElement('div');
+  quickRefLbl.className = 'rules-notes-label';
+  quickRefLbl.textContent = 'Quick Reference';
+  el.appendChild(quickRefLbl);
+
+  const quickRefArea = document.createElement('textarea');
+  quickRefArea.id = 'rules-quickref-area';
+  quickRefArea.placeholder = 'Setup notes, teach order, gotchas, endgame trigger.';
+  quickRefArea.value = game.quickRef || '';
+  quickRefArea.addEventListener('input', () => {
+    game.quickRef = quickRefArea.value;
+    saveLibrary();
+  });
+  el.appendChild(quickRefArea);
+
   const notesLbl = document.createElement('div');
   notesLbl.className = 'rules-notes-label';
   notesLbl.textContent = 'Notes';
@@ -2454,11 +3210,12 @@ function createSession() {
   const d = game.details || {};
   const cats = (d.categories || []).map(c => c.toLowerCase());
   const isTeam = cats.some(c => c.includes('team') || c.includes('cooperative'));
+  const template = ensureSessionTemplate(game);
 
   const players = [];
   const playerColors = [];
   for (let i = 0; i < playerCount; i++) {
-    players.push('Player ' + (i + 1));
+    players.push(template.playerDefaults[i] || 'Player ' + (i + 1));
     playerColors.push(PLAYER_COLORS[i % PLAYER_COLORS.length]);
   }
 
@@ -2485,6 +3242,30 @@ function createSession() {
     teams.push(players.slice(half));
   }
 
+  const templateCustomFields = template.trackers
+    .map((tracker, index) => ({
+      label: String(tracker?.label || '').trim(),
+      pinned: !!tracker?.pinned
+    }))
+    .filter(entry => entry.label)
+    .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned))
+    .map((entry, index) => {
+      const field = {
+        id: `tf_${Date.now()}_${index}`,
+        type: 'counter',
+        label: entry.label,
+        perPlayer: true,
+        deleteable: true,
+        renameable: true,
+        pinned: entry.pinned,
+        values: {}
+      };
+      players.forEach((_, pi) => {
+        field.values[pi] = 0;
+      });
+      return field;
+    });
+
   const session = {
     id: 'sess_' + Date.now(),
     gameId,
@@ -2494,7 +3275,10 @@ function createSession() {
     playerColors,
     teams,
     fields,
-    customFields: [],
+    customFields: templateCustomFields,
+    trackers: template.trackers.slice(),
+    notes: template.notes || '',
+    updatedAt: Date.now(),
     ended: false
   };
 
@@ -2526,6 +3310,8 @@ function renderSessionTabs() {
 }
 
 function closeSessionTab(id) {
+  const closing = sessions.find(s => s.id === id);
+  if (closing) stashRecentSession(closing, 'closed');
   sessions = sessions.filter(s => s.id !== id);
   saveSessions();
   if (activeSessionId === id) {
@@ -2571,6 +3357,11 @@ function renderSessionPanel(id) {
   `;
   panel.appendChild(hdr);
 
+  const meta = document.createElement('div');
+  meta.className = 'session-meta';
+  meta.textContent = `Started ${sess.created}${sess.updatedAt ? ` • Last changed ${new Date(sess.updatedAt).toLocaleString()}` : ''}`;
+  panel.appendChild(meta);
+
   // Players row
   const playersRow = document.createElement('div');
   playersRow.className = 'players-row';
@@ -2597,7 +3388,8 @@ function renderSessionPanel(id) {
   }
 
   // All fields (generated + custom)
-  const allFields = [...sess.fields, ...sess.customFields];
+  const allFields = [...sess.fields, ...sess.customFields]
+    .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
 
   if (allFields.length > 0) {
     const globalFields = allFields.filter(f => !f.perPlayer);
@@ -2622,6 +3414,21 @@ function renderSessionPanel(id) {
 
   // Add custom field zone
   panel.appendChild(buildAddFieldZone(id, sess));
+
+  const notesWrap = document.createElement('div');
+  notesWrap.className = 'session-notes-wrap';
+  notesWrap.innerHTML = '<div class="fields-section-header">Session Notes</div>';
+  const notesArea = document.createElement('textarea');
+  notesArea.className = 'session-notes-area';
+  notesArea.placeholder = 'Tonight only: house rules, reminders, weird edge cases.';
+  notesArea.value = sess.notes || '';
+  notesArea.addEventListener('input', () => {
+    sess.notes = notesArea.value;
+    sess.updatedAt = Date.now();
+    saveSessions();
+  });
+  notesWrap.appendChild(notesArea);
+  panel.appendChild(notesWrap);
 
   el.appendChild(panel);
 }
@@ -2715,6 +3522,8 @@ function buildFieldControl(sessionId, field, playerIndex) {
     } else {
       field.value = v;
     }
+    const sess = sessions.find(s => s.id === sessionId);
+    if (sess) sess.updatedAt = Date.now();
     saveSessions();
   };
 
@@ -2935,6 +3744,7 @@ function buildAddFieldZone(sessionId, sess) {
     }
 
     sess.customFields.push(newField);
+    sess.updatedAt = Date.now();
     saveSessions();
     nameInput.value = '';
     renderSessionPanel(sessionId);
@@ -2983,6 +3793,7 @@ function renamePlayer(sessionId, playerIndex, chipEl) {
       chipEl.style.color = hex;
       colorRow.querySelectorAll('.chip-color-swatch').forEach(s => s.classList.remove('selected'));
       sw.classList.add('selected');
+      sess.updatedAt = Date.now();
       saveSessions();
     });
     colorRow.appendChild(sw);
@@ -2991,6 +3802,7 @@ function renamePlayer(sessionId, playerIndex, chipEl) {
   input.onblur = () => {
     const newName = input.value.trim() || sess.players[playerIndex];
     sess.players[playerIndex] = newName;
+    sess.updatedAt = Date.now();
     saveSessions();
     renderSessionPanel(sessionId);
   };
@@ -3031,11 +3843,44 @@ function confirmEndSession() {
     gameName: sess.gameName,
     date: new Date().toLocaleDateString(),
     players: sess.players,
-    winner: winner || null
+    winner: winner || null,
+    notes: sess.notes || '',
+    summaryFields: buildSessionSummaryFields(sess)
   });
   closeOverlay('end-session-overlay');
-  closeSessionTab(endingSessionId);
+  sessions = sessions.filter(s => s.id !== endingSessionId);
+  saveSessions();
+  renderSessionTabs();
+  renderHistorySection();
+  if (activeSessionId === endingSessionId) {
+    activeSessionId = sessions.length > 0 ? sessions[sessions.length - 1].id : null;
+  }
+  if (activeSessionId) {
+    activateSession(activeSessionId);
+  } else {
+    document.getElementById('session-content').classList.remove('visible');
+    document.getElementById('session-empty').style.display = '';
+  }
   endingSessionId = null;
+}
+
+function buildSessionSummaryFields(sess) {
+  const allFields = [...(sess.fields || []), ...(sess.customFields || [])];
+  return allFields
+    .filter(field => ['Score', 'Turn', 'Round'].includes(field.label) || field.pinned)
+    .slice(0, 5)
+    .map(field => {
+      if (field.perPlayer) {
+        return {
+          label: field.label,
+          values: sess.players.map((player, index) => `${player}: ${field.values?.[index] ?? 0}`)
+        };
+      }
+      return {
+        label: field.label,
+        value: field.value ?? ''
+      };
+    });
 }
 
 function exportSession(id) {
@@ -3068,12 +3913,186 @@ function importSession(e) {
       saveSessions();
       renderSessionTabs();
       activateSession(sess.id);
+      renderRecentSessions();
     } catch (err) {
       alert('Could not import session: ' + err.message);
     }
   };
   reader.readAsText(file);
   e.target.value = '';
+}
+
+function renderHistorySection() {
+  const listEl = document.getElementById('history-list');
+  const statsEl = document.getElementById('history-stats');
+  const query = (document.getElementById('history-search')?.value || '').toLowerCase().trim();
+  const all = JSON.parse(localStorage.getItem('king_history') || '[]');
+  const filtered = all.filter(entry => {
+    if (!query) return true;
+    return entry.gameName.toLowerCase().includes(query) ||
+      (entry.players || []).some(player => String(player).toLowerCase().includes(query));
+  }).reverse();
+
+  const counts = {};
+  all.forEach(entry => {
+    counts[entry.gameName] = (counts[entry.gameName] || 0) + 1;
+  });
+  const mostPlayed = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  statsEl.innerHTML = all.length
+    ? `<div class="toolbar"><div class="rules-stat"><strong>${all.length}</strong> logged plays</div><div class="rules-stat"><strong>${Object.keys(counts).length}</strong> games played</div>${mostPlayed ? `<div class="rules-stat"><strong>${esc(mostPlayed[0])}</strong> most played (${mostPlayed[1]})</div>` : ''}</div>`
+    : '';
+
+  listEl.innerHTML = '';
+  if (!filtered.length) {
+    listEl.innerHTML = '<div id="library-empty">No history entries yet.</div>';
+    return;
+  }
+
+  filtered.forEach(entry => {
+    const row = document.createElement('div');
+    row.className = 'lib-card';
+    const info = document.createElement('div');
+    info.className = 'lib-card-info';
+    const title = document.createElement('div');
+    title.className = 'lib-card-name';
+    title.textContent = entry.gameName;
+    const meta = document.createElement('div');
+    meta.className = 'lib-card-meta';
+    meta.textContent = `${entry.date} • ${entry.players.join(', ')}${entry.winner ? ` • Winner: ${entry.winner}` : ''}`;
+    info.appendChild(title);
+    info.appendChild(meta);
+    const detail = [summarizeHistoryEntry(entry), entry.notes].filter(Boolean).join(' • ');
+    if (detail) {
+      const sub = document.createElement('div');
+      sub.className = 'history-subtext';
+      sub.textContent = detail;
+      info.appendChild(sub);
+    }
+    row.appendChild(info);
+    listEl.appendChild(row);
+  });
+}
+
+function clearHistory() {
+  if (!confirm('Clear all saved K.I.N.G. play history?')) return;
+  localStorage.removeItem('king_history');
+  renderHistorySection();
+}
+
+function renderPickerResults() {
+  const el = document.getElementById('picker-results');
+  if (!el) return;
+  const playerCount = parseInt(document.getElementById('picker-player-count')?.value || '0', 10) || 0;
+  const timeLimit = parseInt(document.getElementById('picker-time-limit')?.value || '0', 10) || 0;
+  const weightLimit = parseFloat(document.getElementById('picker-weight-limit')?.value || '0') || 0;
+  const favoritesOnly = !!document.getElementById('picker-favorites-only')?.checked;
+  const candidates = library.filter(game => {
+    if (game.shelfStatus === 'shelved') return false;
+    if (favoritesOnly && !game.favorite) return false;
+    if (playerCount) {
+      const min = parseInt(game.details?.minplayers || '0', 10) || 0;
+      const max = parseInt(game.details?.maxplayers || '0', 10) || 0;
+      if ((min && playerCount < min) || (max && playerCount > max)) return false;
+    }
+    if (timeLimit) {
+      const time = parseInt(game.details?.maxplaytime || '0', 10) || 0;
+      if (time && time > timeLimit) return false;
+    }
+    if (weightLimit) {
+      const weight = parseFloat(game.details?.weight || '0') || 0;
+      if (weight && weight > weightLimit) return false;
+    }
+    return true;
+  }).sort((a, b) => {
+    const favoriteDelta = Number(!!b.favorite) - Number(!!a.favorite);
+    if (favoriteDelta) return favoriteDelta;
+    return (parseInt(a.details?.maxplaytime || '0', 10) || 0) - (parseInt(b.details?.maxplaytime || '0', 10) || 0);
+  }).slice(0, 5);
+
+  el.innerHTML = '';
+  if (!candidates.length) {
+    el.innerHTML = '<div id="library-empty">No library games fit those picker settings.</div>';
+    return;
+  }
+
+  candidates.forEach(game => {
+    const card = document.createElement('div');
+    card.className = 'lib-card';
+    card.innerHTML = `
+      <div class="lib-card-info">
+        <div class="lib-card-name">${esc(game.name)}</div>
+        <div class="lib-card-meta">${esc(LIBRARY_SHELF_OPTIONS[game.shelfStatus] || 'Ready Tonight')} • ${esc(game.details?.minplayers || '?')}–${esc(game.details?.maxplayers || '?')} players • ${esc(game.details?.maxplaytime || '?')} min</div>
+      </div>
+      <div class="lib-card-actions">
+        <button class="ghost small" onclick="openGameDetail('${game.id}')">Details</button>
+        <button class="small" onclick="startSessionForGame('${game.id}')">Play</button>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function exportAllData() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    library,
+    sessions,
+    recentSessions,
+    history: JSON.parse(localStorage.getItem('king_history') || '[]'),
+    notes: JSON.parse(localStorage.getItem('king_notes') || '{}'),
+    theme: localStorage.getItem('king_theme') || 'midnight',
+    bggCache
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'king-backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importAllDataClick() {
+  document.getElementById('import-all-input').click();
+}
+
+function importAllData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const payload = JSON.parse(ev.target.result);
+      library = migrateLibraryData(Array.isArray(payload.library) ? payload.library : []);
+      sessions = Array.isArray(payload.sessions) ? payload.sessions : [];
+      recentSessions = Array.isArray(payload.recentSessions) ? payload.recentSessions : [];
+      bggCache = Array.isArray(payload.bggCache) ? payload.bggCache : [];
+      localStorage.setItem('king_library', JSON.stringify(library));
+      localStorage.setItem('king_sessions', JSON.stringify(sessions));
+      localStorage.setItem(RECENT_SESSIONS_KEY, JSON.stringify(recentSessions));
+      localStorage.setItem('king_history', JSON.stringify(Array.isArray(payload.history) ? payload.history : []));
+      localStorage.setItem('king_notes', JSON.stringify(payload.notes && typeof payload.notes === 'object' ? payload.notes : {}));
+      localStorage.setItem(BGG_CACHE_KEY, JSON.stringify(bggCache));
+      setTheme(payload.theme || 'midnight');
+      renderLibrary();
+      renderRulesSection();
+      renderSessionTabs();
+      renderRecentSessions();
+      renderHistorySection();
+      renderPickerResults();
+      if (sessions.length > 0) {
+        activateSession(sessions[0].id);
+      } else {
+        document.getElementById('session-content').classList.remove('visible');
+        document.getElementById('session-empty').style.display = '';
+      }
+      alert('K.I.N.G. backup restored.');
+    } catch (err) {
+      alert('Could not restore backup: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 // ============================================================

@@ -34,8 +34,11 @@ Experimental site with live tool work and Cloudflare Functions.
 - Improved K.I.N.G. local cached search ranking with lightweight scoring across title, categories, and mechanics.
 - Added backward-compatible library favorites with favorite-first rendering and local-only toggle behavior.
 - Added defensive BGG suggested-player parsing plus richer game detail and rules detail cards with covers, recommendations, and compact tags.
+- Added optional per-game session templates in K.I.N.G. with tracker names, default notes, player roles, and a game-detail template editor.
+- Expanded K.I.N.G. into a fuller local game-night cockpit: library sort/filter controls, shelf status, quick-reference notes, search-result detail overlays, recent-session resume/duplicate cards, in-session notes, richer end-session history snapshots, a dedicated history tab, a game-night picker, and full backup/restore for all local K.I.N.G. data.
 
 ## Next Recommended Step
 - Track any `.env`, KV, or deployment assumptions here whenever alarm work is touched.
 - Add `BGG_API_TOKEN` to the Cloudflare Pages environment for NOFNWAY Lab after registering/approving the app with BoardGameGeek.
 - If K.I.N.G. moves closer to public rollout, replace the in-memory `/api/bgg` limiter with KV-backed rate limiting.
+- Browser-preview K.I.N.G. and verify the new flows end-to-end: search-result detail add, shelf/status filtering, recent-session resume, history rendering, and full backup/restore import.
