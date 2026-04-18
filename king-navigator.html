@@ -1200,14 +1200,54 @@ mark {
 }
 
 @media (max-width: 700px) {
+  #app-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 14px;
+  }
+
+  #app-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  #app-title span {
+    margin-left: 0;
+  }
+
+  #header-controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  #main-nav {
+    flex-wrap: wrap;
+  }
+
+  .nav-btn {
+    flex: 1 1 33.333%;
+    min-width: 0;
+    padding: 12px 14px;
+  }
+
   #search-row,
   .toolbar,
   #rules-body,
   .detail-top,
   .recent-session-card,
-  .history-row {
+  .history-row,
+  .detail-actions,
+  .template-row,
+  .template-add-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .detail-actions > *,
+  .template-row > *,
+  .template-add-row > * {
+    width: 100%;
   }
 
   #rules-results-col {
@@ -1224,13 +1264,62 @@ mark {
     width: 100%;
   }
 
+  .session-actions,
+  .recent-session-actions,
+  .template-row > div:last-child {
+    flex-wrap: wrap;
+  }
+
+  button,
+  button.small,
+  .result-add-btn,
+  .favorite-btn,
+  .counter-btn {
+    min-height: 40px;
+  }
+
+  button,
+  button.small,
+  .result-add-btn {
+    padding: 10px 14px;
+  }
+
+  .favorite-btn,
+  .counter-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .token,
+  .token-pool-add {
+    width: 22px;
+    height: 22px;
+  }
+
+  #game-detail-overlay,
+  #template-overlay {
+    padding: 10px;
+  }
+
+  #game-detail-panel,
+  #template-panel {
+    padding: 18px;
+    max-height: 88vh;
+  }
+
   #bgg-attribution {
-    right: 10px;
+    right: 8px;
     bottom: 8px;
+    padding: 5px 8px;
+    gap: 6px;
   }
 
   #bgg-attribution img {
-    height: 28px;
+    height: 24px;
+  }
+
+  #bgg-attribution span {
+    font-size: 11px;
   }
 }
 </style>
