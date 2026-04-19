@@ -38,6 +38,7 @@ Experimental site with live tool work and Cloudflare Functions.
 - Expanded K.I.N.G. into a fuller local game-night cockpit: library sort/filter controls, shelf status, quick-reference notes, search-result detail overlays, recent-session resume/duplicate cards, in-session notes, richer end-session history snapshots, a dedicated history tab, a game-night picker, and full backup/restore for all local K.I.N.G. data.
 - Added a UI-clarity pass to K.I.N.G. with helper copy for library filters, backup scope, rules shortcuts, session persistence, picker behavior, history scope, quick reference, templates, and in-session editing gestures.
 - Added a mobile-fit pass to K.I.N.G. so the header and nav wrap cleanly on phones, touch targets are larger during play, and detail/template overlays stack their controls instead of forcing cramped horizontal rows.
+- Expanded K.I.N.G.'s next-priority session layer: last-played tracking in the library, broader keyboard shortcuts, a visible save-status indicator, template-driven setup assistant and victory reminders, active turn-order controls, session undo, richer history stats, duration logging, and normalization for imported/restored sessions and history.
 
 ## Next Recommended Step
 - Track any `.env`, KV, or deployment assumptions here whenever alarm work is touched.

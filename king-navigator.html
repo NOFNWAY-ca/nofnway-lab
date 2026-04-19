@@ -108,6 +108,21 @@ body {
   flex-shrink: 0;
 }
 
+#save-status {
+  font-size: 12px;
+  color: var(--dim);
+  min-width: 72px;
+  text-align: right;
+}
+
+#save-status.saving {
+  color: var(--warn);
+}
+
+#save-status.saved {
+  color: var(--success);
+}
+
 #theme-select {
   background: var(--bg);
   border: 1px solid var(--border);
@@ -803,6 +818,82 @@ mark {
 .session-actions { display: flex; gap: 6px; }
 .session-meta { color: var(--dim); font-size: 12px; margin-bottom: 10px; }
 
+.session-callout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.session-callout {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+.session-callout-title {
+  color: var(--dim);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.session-callout-body {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.session-callout-body ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.session-callout-body li + li {
+  margin-top: 4px;
+}
+
+.turn-order-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  flex-wrap: wrap;
+}
+
+.turn-order-status {
+  min-width: 0;
+}
+
+.turn-order-status strong {
+  display: block;
+  font-size: 15px;
+}
+
+.turn-order-meta {
+  color: var(--dim);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.turn-order-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.player-chip.active-turn {
+  background: rgba(91, 141, 238, 0.12);
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
 .players-row {
   display: flex;
   gap: 8px;
@@ -1239,7 +1330,8 @@ mark {
   .history-row,
   .detail-actions,
   .template-row,
-  .template-add-row {
+  .template-add-row,
+  .turn-order-bar {
     flex-direction: column;
     align-items: stretch;
   }
@@ -1266,7 +1358,8 @@ mark {
 
   .session-actions,
   .recent-session-actions,
-  .template-row > div:last-child {
+  .template-row > div:last-child,
+  .turn-order-actions {
     flex-wrap: wrap;
   }
 
@@ -1332,6 +1425,7 @@ mark {
     <button class="ghost small" onclick="exportAllData()" title="Export your whole K.I.N.G. library, sessions, notes, history, and settings">Backup</button>
     <button class="ghost small" onclick="importAllDataClick()" title="Restore a whole K.I.N.G. backup file">Restore</button>
     <input type="file" id="import-all-input" style="display:none" accept=".json" onchange="importAllData(event)">
+    <div id="save-status" aria-live="polite">Saved</div>
     <select id="theme-select" onchange="setTheme(this.value)" title="Color theme">
       <option value="midnight">Midnight</option>
       <option value="tavern">Tavern</option>
@@ -1594,6 +1688,34 @@ let rulesSelectedId = null;
 let endingSessionId = null;
 let editingTemplateGameId = null;
 let recentSessions = [];
+let saveStatusTimer = null;
+
+function setSaveStatus(state, detail = '') {
+  const el = document.getElementById('save-status');
+  if (!el) return;
+  el.className = state ? state : '';
+  if (state === 'saving') {
+    el.textContent = 'Saving...';
+    return;
+  }
+  const suffix = detail ? ` ${detail}` : '';
+  el.textContent = `Saved${suffix}`;
+}
+
+function pulseSavedStatus() {
+  if (saveStatusTimer) clearTimeout(saveStatusTimer);
+  const stamp = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  setSaveStatus('saved', stamp);
+  saveStatusTimer = setTimeout(() => {
+    setSaveStatus('', '');
+  }, 2200);
+}
+
+function writeStorage(key, value) {
+  setSaveStatus('saving');
+  localStorage.setItem(key, value);
+  pulseSavedStatus();
+}
 
 // ============================================================
 // THEME
@@ -1657,6 +1779,10 @@ function migrateLibraryData(library) {
       game.quickRef = '';
     }
 
+    if (typeof game.lastPlayedAt !== 'number') {
+      game.lastPlayedAt = 0;
+    }
+
     if (!LIBRARY_SHELF_OPTIONS[game.shelfStatus]) {
       game.shelfStatus = 'ready';
     }
@@ -1675,8 +1801,179 @@ function migrateLibraryData(library) {
       }
     }
 
-    return game;
+	    return game;
   });
+}
+
+function getDefaultSessionTemplate() {
+  return {
+    trackers: [],
+    notes: '',
+    playerDefaults: [],
+    setupSteps: '',
+    victoryCondition: ''
+  };
+}
+
+function ensureSessionTemplate(game) {
+  if (!game.sessionTemplate) {
+    game.sessionTemplate = getDefaultSessionTemplate();
+  }
+  if (!Array.isArray(game.sessionTemplate.trackers)) game.sessionTemplate.trackers = [];
+  if (typeof game.sessionTemplate.notes !== 'string') game.sessionTemplate.notes = '';
+  if (!Array.isArray(game.sessionTemplate.playerDefaults)) game.sessionTemplate.playerDefaults = [];
+  if (typeof game.sessionTemplate.setupSteps !== 'string') game.sessionTemplate.setupSteps = '';
+  if (typeof game.sessionTemplate.victoryCondition !== 'string') game.sessionTemplate.victoryCondition = '';
+  return game.sessionTemplate;
+}
+
+function normalizeHistoryEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  const players = Array.isArray(entry.players) ? entry.players.map(player => String(player || '').trim()).filter(Boolean) : [];
+  const gameName = String(entry.gameName || '').trim();
+  if (!gameName) return null;
+  const summaryFields = Array.isArray(entry.summaryFields)
+    ? entry.summaryFields.map(field => {
+        if (!field || typeof field !== 'object' || !field.label) return null;
+        return {
+          label: String(field.label),
+          value: typeof field.value === 'string' || typeof field.value === 'number' ? field.value : '',
+          values: Array.isArray(field.values) ? field.values.map(value => String(value)) : null
+        };
+      }).filter(Boolean)
+    : [];
+  return {
+    gameId: entry.gameId ? String(entry.gameId) : '',
+    gameName,
+    date: String(entry.date || new Date().toLocaleDateString()),
+    players,
+    winner: entry.winner ? String(entry.winner) : null,
+    notes: typeof entry.notes === 'string' ? entry.notes : '',
+    summaryFields,
+    durationMinutes: Number.isFinite(Number(entry.durationMinutes)) ? Math.max(0, Math.round(Number(entry.durationMinutes))) : null
+  };
+}
+
+function getHistoryEntries() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('king_history') || '[]');
+    return Array.isArray(parsed) ? parsed.map(normalizeHistoryEntry).filter(Boolean) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveHistoryEntries(entries) {
+  writeStorage('king_history', JSON.stringify(entries));
+}
+
+function normalizeSessionData(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map((sess, index) => {
+    if (!sess || typeof sess !== 'object') return null;
+    const game = sess.gameId ? getGame(sess.gameId) : null;
+    const template = game ? ensureSessionTemplate(game) : getDefaultSessionTemplate();
+    const players = Array.isArray(sess.players) ? sess.players.map((player, playerIndex) => String(player || `Player ${playerIndex + 1}`)) : [];
+    const startedAt = Number.isFinite(Number(sess.startedAt))
+      ? Number(sess.startedAt)
+      : Date.now();
+    return {
+      ...sess,
+      id: String(sess.id || `sess_${Date.now()}_${index}`),
+      gameId: sess.gameId ? String(sess.gameId) : '',
+      gameName: String(sess.gameName || game?.name || 'Unknown Game'),
+      created: typeof sess.created === 'string' && sess.created ? sess.created : new Date(startedAt).toLocaleDateString(),
+      startedAt,
+      players,
+      playerColors: Array.isArray(sess.playerColors) && sess.playerColors.length === players.length
+        ? sess.playerColors
+        : players.map((_, playerIndex) => PLAYER_COLORS[playerIndex % PLAYER_COLORS.length]),
+      fields: Array.isArray(sess.fields) ? sess.fields : [],
+      customFields: Array.isArray(sess.customFields) ? sess.customFields : [],
+      trackers: Array.isArray(sess.trackers) ? sess.trackers : [],
+      notes: typeof sess.notes === 'string' ? sess.notes : '',
+      activePlayerIndex: players.length
+        ? Math.min(players.length - 1, Math.max(0, parseInt(sess.activePlayerIndex, 10) || 0))
+        : 0,
+      turnDirection: sess.turnDirection === -1 ? -1 : 1,
+      setupSteps: typeof sess.setupSteps === 'string' ? sess.setupSteps : template.setupSteps || '',
+      victoryCondition: typeof sess.victoryCondition === 'string' ? sess.victoryCondition : template.victoryCondition || '',
+      undoStack: []
+    };
+  }).filter(Boolean);
+}
+
+function serializeSession(sess) {
+  if (!sess || typeof sess !== 'object') return null;
+  const clone = JSON.parse(JSON.stringify(sess));
+  delete clone.undoStack;
+  return clone;
+}
+
+function cloneSessionSnapshot(sess) {
+  return serializeSession(sess);
+}
+
+function applySessionSnapshot(sess, snapshot) {
+  if (!sess || !snapshot) return;
+  const keepUndo = Array.isArray(sess.undoStack) ? sess.undoStack : [];
+  Object.keys(sess).forEach(key => {
+    if (key !== 'undoStack') delete sess[key];
+  });
+  Object.assign(sess, JSON.parse(JSON.stringify(snapshot)));
+  sess.undoStack = keepUndo;
+}
+
+function pushSessionUndo(sess) {
+  if (!sess) return;
+  if (!Array.isArray(sess.undoStack)) sess.undoStack = [];
+  const snapshot = cloneSessionSnapshot(sess);
+  if (!snapshot) return;
+  sess.undoStack.push(snapshot);
+  if (sess.undoStack.length > 25) sess.undoStack.shift();
+}
+
+function undoSession(sessionId) {
+  const sess = sessions.find(session => session.id === sessionId);
+  if (!sess || !Array.isArray(sess.undoStack) || sess.undoStack.length === 0) return;
+  const snapshot = sess.undoStack.pop();
+  applySessionSnapshot(sess, snapshot);
+  sess.updatedAt = Date.now();
+  saveSessions();
+  renderSessionTabs();
+  renderSessionPanel(sessionId);
+}
+
+function getSessionFieldByLabel(sess, label) {
+  const needle = String(label || '').trim().toLowerCase();
+  return [...(sess.fields || []), ...(sess.customFields || [])].find(field => String(field.label || '').trim().toLowerCase() === needle);
+}
+
+function bumpSessionCounter(sess, label, delta) {
+  const field = getSessionFieldByLabel(sess, label);
+  if (!field || field.type !== 'counter' || field.perPlayer) return;
+  const nextValue = (parseInt(field.value || '0', 10) || 0) + delta;
+  field.value = ['turn', 'round'].includes(String(label || '').toLowerCase())
+    ? Math.max(1, nextValue)
+    : nextValue;
+}
+
+function formatRelativeLastPlayed(timestamp) {
+  if (!timestamp) return '';
+  const diff = Date.now() - timestamp;
+  const dayMs = 24 * 60 * 60 * 1000;
+  if (diff < dayMs) return 'Played today';
+  if (diff < dayMs * 2) return 'Played yesterday';
+  const days = Math.round(diff / dayMs);
+  if (days < 7) return `Played ${days} days ago`;
+  return `Played ${new Date(timestamp).toLocaleDateString()}`;
+}
+
+function splitBulletLines(text) {
+  return String(text || '')
+    .split(/\r?\n/)
+    .map(line => line.replace(/^[-*]\s*/, '').trim())
+    .filter(Boolean);
 }
 
 function loadBGGCache() {
@@ -1689,7 +1986,7 @@ function loadBGGCache() {
 }
 
 function saveBGGCache() {
-  localStorage.setItem(BGG_CACHE_KEY, JSON.stringify(bggCache.slice(0, 500)));
+  writeStorage(BGG_CACHE_KEY, JSON.stringify(bggCache.slice(0, 500)));
 }
 
 function normalizeCachedGame(id, name, year, details = null) {
@@ -1807,7 +2104,7 @@ function init() {
   library = migrateLibraryData(JSON.parse(localStorage.getItem('king_library') || '[]'));
   bggCache = loadBGGCache();
   hydrateBGGCacheFromLibrary();
-  sessions = JSON.parse(localStorage.getItem('king_sessions') || '[]');
+  sessions = normalizeSessionData(JSON.parse(localStorage.getItem('king_sessions') || '[]'));
   recentSessions = loadRecentSessions();
   renderLibrary();
   renderRulesSection();
@@ -1831,12 +2128,37 @@ function init() {
   });
 
   document.addEventListener('keydown', e => {
-    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    const tag = document.activeElement?.tagName || '';
+    const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    if (e.key === '/' && !typing) {
       const rulesSection = document.getElementById('section-rules');
       if (rulesSection.classList.contains('active')) {
         e.preventDefault();
         document.getElementById('rules-search').focus();
+        return;
       }
+    }
+    if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (document.querySelector('#new-session-overlay.open, #end-session-overlay.open, #template-overlay.open, #game-detail-overlay.open')) return;
+    const key = e.key.toLowerCase();
+    if (key === 'n') {
+      e.preventDefault();
+      openNewSession();
+    } else if (key === 'l') {
+      e.preventDefault();
+      showSection('library');
+    } else if (key === 'r') {
+      e.preventDefault();
+      showSection('rules');
+    } else if (key === 's') {
+      e.preventDefault();
+      showSection('sessions');
+    } else if (key === 'p') {
+      e.preventDefault();
+      showSection('picker');
+    } else if (key === 'h') {
+      e.preventDefault();
+      showSection('history');
     }
   });
 
@@ -1882,7 +2204,7 @@ function closeDetailIfBg(e) {
 // LIBRARY
 // ============================================================
 function saveLibrary() {
-  localStorage.setItem('king_library', JSON.stringify(library));
+  writeStorage('king_library', JSON.stringify(library));
 }
 
 function getGame(id) {
@@ -1938,6 +2260,7 @@ function renderLibrary() {
       ? `${game.details.minplayers}–${game.details.maxplayers}p &bull; ${game.details.minplaytime}–${game.details.maxplaytime} min`
       : '';
     const shelf = LIBRARY_SHELF_OPTIONS[game.shelfStatus] || LIBRARY_SHELF_OPTIONS.ready;
+    const lastPlayed = formatRelativeLastPlayed(game.lastPlayedAt);
 
     card.innerHTML = `
       <div class="thumb-wrap">
@@ -1945,7 +2268,7 @@ function renderLibrary() {
       </div>
       <div class="lib-card-info">
         <div class="lib-card-name">${esc(game.name)} ${weightLabel}</div>
-        <div class="lib-card-meta">${game.year ? game.year : ''}${players ? ' &bull; ' + players : ''}${shelf ? ' &bull; ' + esc(shelf) : ''}</div>
+        <div class="lib-card-meta">${game.year ? game.year : ''}${players ? ' &bull; ' + players : ''}${shelf ? ' &bull; ' + esc(shelf) : ''}${lastPlayed ? ' &bull; ' + esc(lastPlayed) : ''}</div>
       </div>
       <div class="lib-card-actions">
         <button
@@ -2288,6 +2611,7 @@ async function addToLibrary(id, name, year, btnEl) {
     quickRef: '',
     shelfStatus: 'ready',
     addedAt: Date.now(),
+    lastPlayedAt: 0,
     thumbnail:
       details?.thumbnail ||
       details?.image ||
@@ -2502,6 +2826,7 @@ function renderGameDetailOverlay(payload) {
           ${source.year ? esc(source.year) : ''}
           ${d ? ` &bull; ${esc(d.minplayers)}–${esc(d.maxplayers)} players &bull; ${esc(d.minplaytime)}–${esc(d.maxplaytime)} min` : ''}
           ${weight > 0 ? ` &bull; Weight ${weight.toFixed(1)}` : ''}
+          ${game?.lastPlayedAt ? ` &bull; ${esc(formatRelativeLastPlayed(game.lastPlayedAt))}` : ''}
         </div>
         ${recommendations.length ? `<div class="detail-submeta">${recommendations.map(r => esc(r)).join('<br>')}</div>` : ''}
       </div>
@@ -2566,24 +2891,6 @@ async function addSearchDetailToLibrary(id) {
   document.getElementById('game-detail-overlay').classList.remove('open');
 }
 
-function getDefaultSessionTemplate() {
-  return {
-    trackers: [],
-    notes: '',
-    playerDefaults: []
-  };
-}
-
-function ensureSessionTemplate(game) {
-  if (!game.sessionTemplate) {
-    game.sessionTemplate = getDefaultSessionTemplate();
-  }
-  if (!Array.isArray(game.sessionTemplate.trackers)) game.sessionTemplate.trackers = [];
-  if (typeof game.sessionTemplate.notes !== 'string') game.sessionTemplate.notes = '';
-  if (!Array.isArray(game.sessionTemplate.playerDefaults)) game.sessionTemplate.playerDefaults = [];
-  return game.sessionTemplate;
-}
-
 function openTemplateEditor(gameId) {
   const game = getGame(gameId);
   if (!game) return;
@@ -2601,7 +2908,7 @@ function renderTemplateEditor() {
 
   el.innerHTML = `
     <h3 id="template-title"></h3>
-    <div class="helper-copy">Templates shape new sessions for this game. Pinned trackers rise to the top, role names prefill players, and default notes carry into every new session.</div>
+    <div class="helper-copy">Templates shape new sessions for this game. Pinned trackers rise to the top, role names prefill players, and setup, victory, and default notes carry into every new session.</div>
     <div class="template-section">
       <label>Trackers</label>
       <div id="template-trackers" class="template-list"></div>
@@ -2613,6 +2920,14 @@ function renderTemplateEditor() {
     <div class="template-section">
       <label>Default Notes</label>
       <textarea id="template-notes-input" class="template-notes" placeholder="Default notes for new sessions"></textarea>
+    </div>
+    <div class="template-section">
+      <label>Setup Assistant</label>
+      <textarea id="template-setup-input" class="template-notes" placeholder="One step per line: shuffle deck, deal cards, set starting resources."></textarea>
+    </div>
+    <div class="template-section">
+      <label>Victory Reminder</label>
+      <textarea id="template-victory-input" class="template-notes" placeholder="How this game ends and what decides the winner."></textarea>
     </div>
     <div class="template-section">
       <label>Default Player Roles</label>
@@ -2629,8 +2944,18 @@ function renderTemplateEditor() {
 
   document.getElementById('template-title').textContent = `${game.name} Template`;
   document.getElementById('template-notes-input').value = template.notes;
+  document.getElementById('template-setup-input').value = template.setupSteps;
+  document.getElementById('template-victory-input').value = template.victoryCondition;
   document.getElementById('template-notes-input').addEventListener('input', e => {
     template.notes = e.target.value;
+    saveLibrary();
+  });
+  document.getElementById('template-setup-input').addEventListener('input', e => {
+    template.setupSteps = e.target.value;
+    saveLibrary();
+  });
+  document.getElementById('template-victory-input').addEventListener('input', e => {
+    template.victoryCondition = e.target.value;
     saveLibrary();
   });
 
@@ -2769,14 +3094,16 @@ function removeTemplateRole(index) {
 }
 
 function getGameHistory(gameId) {
-  const all = JSON.parse(localStorage.getItem('king_history') || '[]');
+  const all = getHistoryEntries();
   return all.filter(h => h.gameId === gameId);
 }
 
 function saveHistoryEntry(entry) {
-  const all = JSON.parse(localStorage.getItem('king_history') || '[]');
-  all.push(entry);
-  localStorage.setItem('king_history', JSON.stringify(all));
+  const all = getHistoryEntries();
+  const normalized = normalizeHistoryEntry(entry);
+  if (!normalized) return;
+  all.push(normalized);
+  saveHistoryEntries(all);
 }
 
 function summarizeHistoryEntry(entry) {
@@ -2792,14 +3119,23 @@ function summarizeHistoryEntry(entry) {
 function loadRecentSessions() {
   try {
     const parsed = JSON.parse(localStorage.getItem(RECENT_SESSIONS_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? normalizeSessionData(parsed).map((sess, index) => ({
+      ...sess,
+      recentReason: parsed[index]?.recentReason || 'closed',
+      recentAt: parsed[index]?.recentAt || Date.now()
+    })) : [];
   } catch (e) {
     return [];
   }
 }
 
 function saveRecentSessions() {
-  localStorage.setItem(RECENT_SESSIONS_KEY, JSON.stringify(recentSessions.slice(0, 12)));
+  const payload = recentSessions.slice(0, 12).map(sess => ({
+    ...serializeSession(sess),
+    recentReason: sess.recentReason || 'closed',
+    recentAt: sess.recentAt || Date.now()
+  }));
+  writeStorage(RECENT_SESSIONS_KEY, JSON.stringify(payload));
 }
 
 function stashRecentSession(sess, reason = 'closed') {
@@ -2863,7 +3199,8 @@ function renderRecentSessions() {
 function resumeRecentSession(id) {
   const sess = recentSessions.find(item => item.id === id);
   if (!sess) return;
-  const clone = JSON.parse(JSON.stringify(sess));
+  const clone = normalizeSessionData([JSON.parse(JSON.stringify(sess))])[0];
+  if (!clone) return;
   clone.id = 'sess_' + Date.now();
   delete clone.recentReason;
   delete clone.recentAt;
@@ -2900,7 +3237,7 @@ function saveNote(gameId, text) {
   } else {
     delete notes[gameId];
   }
-  localStorage.setItem('king_notes', JSON.stringify(notes));
+  writeStorage('king_notes', JSON.stringify(notes));
 }
 
 function renderRulesSection() {
@@ -3053,6 +3390,7 @@ function renderRulesDetail(game) {
   const el = document.getElementById('rules-detail');
   el.innerHTML = '';
   const d = game.details;
+  const template = ensureSessionTemplate(game);
   const categories = Array.from(new Set(d?.categories || [])).filter(Boolean);
   const mechanics = Array.from(new Set(d?.mechanics || [])).filter(Boolean);
 
@@ -3173,6 +3511,28 @@ function renderRulesDetail(game) {
   });
   el.appendChild(quickRefArea);
 
+  if (template.setupSteps) {
+    const setupLbl = document.createElement('div');
+    setupLbl.className = 'rules-notes-label';
+    setupLbl.textContent = 'Setup Assistant';
+    el.appendChild(setupLbl);
+    const setupList = document.createElement('div');
+    setupList.className = 'rules-detail-desc';
+    setupList.innerHTML = `<ul>${splitBulletLines(template.setupSteps).map(step => `<li>${esc(step)}</li>`).join('')}</ul>`;
+    el.appendChild(setupList);
+  }
+
+  if (template.victoryCondition) {
+    const victoryLbl = document.createElement('div');
+    victoryLbl.className = 'rules-notes-label';
+    victoryLbl.textContent = 'Victory Reminder';
+    el.appendChild(victoryLbl);
+    const victoryText = document.createElement('div');
+    victoryText.className = 'rules-detail-desc';
+    victoryText.innerHTML = esc(template.victoryCondition).replace(/\n/g, '<br>');
+    el.appendChild(victoryText);
+  }
+
   const notesLbl = document.createElement('div');
   notesLbl.className = 'rules-notes-label';
   notesLbl.textContent = 'Notes';
@@ -3211,7 +3571,7 @@ function highlightText(text, query) {
 // SESSIONS
 // ============================================================
 function saveSessions() {
-  localStorage.setItem('king_sessions', JSON.stringify(sessions));
+  writeStorage('king_sessions', JSON.stringify(sessions.map(serializeSession).filter(Boolean)));
 }
 
 function populateNewSessionGames() {
@@ -3332,7 +3692,11 @@ function createSession() {
         f.values[i] = f.type === 'counter' ? 0 : f.type === 'toggle' ? false : f.type === 'token' ? 0 : '';
       });
     } else {
-      f.value = f.type === 'counter' ? 0 : f.type === 'toggle' ? false : f.type === 'token' ? 0 : '';
+      if (f.type === 'counter' && ['Turn', 'Round'].includes(f.label)) {
+        f.value = 1;
+      } else {
+        f.value = f.type === 'counter' ? 0 : f.type === 'toggle' ? false : f.type === 'token' ? 0 : '';
+      }
     }
   });
 
@@ -3374,6 +3738,7 @@ function createSession() {
     gameId,
     gameName: game.name,
     created: new Date().toLocaleDateString(),
+    startedAt: Date.now(),
     players,
     playerColors,
     teams,
@@ -3381,7 +3746,12 @@ function createSession() {
     customFields: templateCustomFields,
     trackers: template.trackers.slice(),
     notes: template.notes || '',
+    setupSteps: template.setupSteps || '',
+    victoryCondition: template.victoryCondition || '',
+    activePlayerIndex: 0,
+    turnDirection: 1,
     updatedAt: Date.now(),
+    undoStack: [],
     ended: false
   };
 
@@ -3437,6 +3807,32 @@ function activateSession(id) {
   document.getElementById('session-content').classList.add('visible');
 }
 
+function advanceTurnOrder(sessionId, delta) {
+  const sess = sessions.find(session => session.id === sessionId);
+  if (!sess || !Array.isArray(sess.players) || sess.players.length === 0) return;
+  pushSessionUndo(sess);
+  const count = sess.players.length;
+  const current = Math.min(count - 1, Math.max(0, parseInt(sess.activePlayerIndex, 10) || 0));
+  const next = (current + delta + count) % count;
+  if (delta > 0 && next === 0) bumpSessionCounter(sess, 'Turn', 1);
+  if (delta < 0 && current === 0) bumpSessionCounter(sess, 'Turn', -1);
+  sess.activePlayerIndex = next;
+  sess.turnDirection = delta < 0 ? -1 : 1;
+  sess.updatedAt = Date.now();
+  saveSessions();
+  renderSessionPanel(sessionId);
+}
+
+function setActivePlayer(sessionId, playerIndex) {
+  const sess = sessions.find(session => session.id === sessionId);
+  if (!sess || playerIndex < 0 || playerIndex >= sess.players.length) return;
+  pushSessionUndo(sess);
+  sess.activePlayerIndex = playerIndex;
+  sess.updatedAt = Date.now();
+  saveSessions();
+  renderSessionPanel(sessionId);
+}
+
 function renderSessionPanel(id) {
   const sess = sessions.find(s => s.id === id);
   if (!sess) return;
@@ -3449,26 +3845,71 @@ function renderSessionPanel(id) {
   // Header
   const hdr = document.createElement('div');
   hdr.className = 'session-header';
-  hdr.innerHTML = `
-    <div class="session-title">${esc(sess.gameName)}</div>
-    <div class="session-actions">
-      <button class="ghost small" onclick="exportSession('${id}')">Export</button>
-      <button class="ghost small" onclick="importSessionClick()">Import</button>
-      <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSession(event)">
-      <button class="small danger" onclick="openEndSession('${id}')">End Session</button>
-    </div>
+	  hdr.innerHTML = `
+	    <div class="session-title">${esc(sess.gameName)}</div>
+	    <div class="session-actions">
+	      <button class="ghost small" onclick="undoSession('${id}')" ${!Array.isArray(sess.undoStack) || sess.undoStack.length === 0 ? 'disabled' : ''}>Undo</button>
+	      <button class="ghost small" onclick="exportSession('${id}')">Export</button>
+	      <button class="ghost small" onclick="importSessionClick()">Import</button>
+	      <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSession(event)">
+	      <button class="small danger" onclick="openEndSession('${id}')">End Session</button>
+	    </div>
   `;
   panel.appendChild(hdr);
 
   const meta = document.createElement('div');
   meta.className = 'session-meta';
-  meta.textContent = `Started ${sess.created}${sess.updatedAt ? ` • Last changed ${new Date(sess.updatedAt).toLocaleString()}` : ''}`;
+  const durationMinutes = Math.max(0, Math.round((Date.now() - (sess.startedAt || Date.now())) / 60000));
+  meta.textContent = `Started ${sess.created}${durationMinutes ? ` • ${durationMinutes} min so far` : ''}${sess.updatedAt ? ` • Last changed ${new Date(sess.updatedAt).toLocaleString()}` : ''}`;
   panel.appendChild(meta);
 
   const sessionHint = document.createElement('div');
   sessionHint.className = 'helper-copy';
-  sessionHint.innerHTML = 'Click player chips to rename or recolor them. Click tracker labels to rename them, and click counter values to type a number directly.';
+  sessionHint.innerHTML = 'Shortcuts: <code>N</code> new session, <code>L</code> library, <code>R</code> rules, <code>S</code> sessions, <code>P</code> picker, <code>H</code> history. Click player chips to rename or recolor them, or shift-click them to set the active player. Click tracker labels to rename them, and click counter values to type a number directly.';
   panel.appendChild(sessionHint);
+
+  const calloutGrid = document.createElement('div');
+  calloutGrid.className = 'session-callout-grid';
+  const setupSteps = splitBulletLines(sess.setupSteps);
+  if (setupSteps.length) {
+    const setupCard = document.createElement('div');
+    setupCard.className = 'session-callout';
+    setupCard.innerHTML = `<div class="session-callout-title">Setup Assistant</div><div class="session-callout-body"><ul>${setupSteps.map(step => `<li>${esc(step)}</li>`).join('')}</ul></div>`;
+    calloutGrid.appendChild(setupCard);
+  }
+  if (sess.victoryCondition) {
+    const victoryCard = document.createElement('div');
+    victoryCard.className = 'session-callout';
+    victoryCard.innerHTML = `<div class="session-callout-title">Victory Reminder</div><div class="session-callout-body">${esc(sess.victoryCondition).replace(/\n/g, '<br>')}</div>`;
+    calloutGrid.appendChild(victoryCard);
+  }
+  if (calloutGrid.children.length > 0) {
+    panel.appendChild(calloutGrid);
+  }
+
+  if (sess.players.length > 0) {
+    const turnBar = document.createElement('div');
+    turnBar.className = 'turn-order-bar';
+    const status = document.createElement('div');
+    status.className = 'turn-order-status';
+    const activeName = sess.players[sess.activePlayerIndex] || sess.players[0];
+    status.innerHTML = `<strong>${esc(activeName)}</strong><div class="turn-order-meta">Active player • ${sess.turnDirection === -1 ? 'Reverse' : 'Forward'} order</div>`;
+    const actions = document.createElement('div');
+    actions.className = 'turn-order-actions';
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'ghost small';
+    prevBtn.textContent = 'Previous';
+    prevBtn.addEventListener('click', () => advanceTurnOrder(id, -1));
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'small';
+    nextBtn.textContent = 'Next Player';
+    nextBtn.addEventListener('click', () => advanceTurnOrder(id, 1));
+    actions.appendChild(prevBtn);
+    actions.appendChild(nextBtn);
+    turnBar.appendChild(status);
+    turnBar.appendChild(actions);
+    panel.appendChild(turnBar);
+  }
 
   // Players row
   const playersRow = document.createElement('div');
@@ -3476,15 +3917,21 @@ function renderSessionPanel(id) {
   playersRow.innerHTML = '<span style="color:var(--dim);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-right:4px">Players:</span>';
   sess.players.forEach((pname, i) => {
     const color = (sess.playerColors && sess.playerColors[i]) || PLAYER_COLORS[i % PLAYER_COLORS.length];
-    const chip = document.createElement('div');
-    chip.className = 'player-chip';
-    chip.title = 'Click to rename or change colour';
-    chip.style.borderColor = color;
-    chip.style.color = color;
-    chip.innerHTML = `<span>${esc(pname)}</span>`;
-    chip.addEventListener('click', () => renamePlayer(id, i, chip));
-    playersRow.appendChild(chip);
-  });
+	    const chip = document.createElement('div');
+	    chip.className = 'player-chip' + (i === sess.activePlayerIndex ? ' active-turn' : '');
+	    chip.title = 'Click to rename or change colour';
+	    chip.style.borderColor = color;
+	    chip.style.color = color;
+	    chip.innerHTML = `<span>${esc(pname)}</span>`;
+	    chip.addEventListener('click', e => {
+        if (e.shiftKey) {
+          setActivePlayer(id, i);
+          return;
+        }
+        renamePlayer(id, i, chip);
+      });
+	    playersRow.appendChild(chip);
+	  });
   panel.appendChild(playersRow);
 
   // Teams display
@@ -3530,10 +3977,20 @@ function renderSessionPanel(id) {
   notesArea.className = 'session-notes-area';
   notesArea.placeholder = 'Tonight only: house rules, reminders, weird edge cases.';
   notesArea.value = sess.notes || '';
+  let notesSnapshotTaken = false;
+  notesArea.addEventListener('focus', () => {
+    if (!notesSnapshotTaken) {
+      pushSessionUndo(sess);
+      notesSnapshotTaken = true;
+    }
+  });
   notesArea.addEventListener('input', () => {
     sess.notes = notesArea.value;
     sess.updatedAt = Date.now();
     saveSessions();
+  });
+  notesArea.addEventListener('blur', () => {
+    notesSnapshotTaken = false;
   });
   notesWrap.appendChild(notesArea);
   panel.appendChild(notesWrap);
@@ -3558,7 +4015,9 @@ function buildFieldRow(sessionId, field, sess) {
       input.value = field.label;
       input.onblur = () => {
         const newLabel = input.value.trim() || field.label;
+        if (newLabel !== field.label) pushSessionUndo(sess);
         field.label = newLabel;
+        sess.updatedAt = Date.now();
         saveSessions();
         renderSessionPanel(sessionId);
       };
@@ -3603,12 +4062,14 @@ function buildFieldRow(sessionId, field, sess) {
     del.title = 'Remove field';
     del.textContent = '×';
     del.addEventListener('click', () => {
+      pushSessionUndo(sess);
       const isCustom = sess.customFields.some(f => f.id === field.id);
       if (isCustom) {
         sess.customFields = sess.customFields.filter(f => f.id !== field.id);
       } else {
         sess.fields = sess.fields.filter(f => f.id !== field.id);
       }
+      sess.updatedAt = Date.now();
       saveSessions();
       renderSessionPanel(sessionId);
     });
@@ -3621,6 +4082,7 @@ function buildFieldRow(sessionId, field, sess) {
 function buildFieldControl(sessionId, field, playerIndex) {
   const pi = playerIndex;
   const isPerPlayer = pi !== null;
+  const sess = sessions.find(s => s.id === sessionId);
 
   const getValue = () => isPerPlayer ? (field.values || {})[pi] : field.value;
   const setValue = v => {
@@ -3630,7 +4092,6 @@ function buildFieldControl(sessionId, field, playerIndex) {
     } else {
       field.value = v;
     }
-    const sess = sessions.find(s => s.id === sessionId);
     if (sess) sess.updatedAt = Date.now();
     saveSessions();
   };
@@ -3649,8 +4110,16 @@ function buildFieldControl(sessionId, field, playerIndex) {
     inc.className = 'counter-btn';
     inc.textContent = '+';
 
-    dec.addEventListener('click', () => { setValue((getValue() ?? 0) - 1); val.textContent = getValue(); });
-    inc.addEventListener('click', () => { setValue((getValue() ?? 0) + 1); val.textContent = getValue(); });
+    dec.addEventListener('click', () => {
+      if (sess) pushSessionUndo(sess);
+      setValue((getValue() ?? 0) - 1);
+      val.textContent = getValue();
+    });
+    inc.addEventListener('click', () => {
+      if (sess) pushSessionUndo(sess);
+      setValue((getValue() ?? 0) + 1);
+      val.textContent = getValue();
+    });
 
     // Direct edit on click
     val.addEventListener('click', () => {
@@ -3660,6 +4129,7 @@ function buildFieldControl(sessionId, field, playerIndex) {
       input.style.cssText = 'width:50px;text-align:center;background:var(--surface2);border:1px solid var(--accent);color:var(--text);border-radius:4px;padding:2px;font-size:15px;font-weight:700';
       input.onblur = () => {
         const n = parseInt(input.value);
+        if ((getValue() ?? 0) !== (isNaN(n) ? 0 : n) && sess) pushSessionUndo(sess);
         setValue(isNaN(n) ? 0 : n);
         val.textContent = getValue();
         input.replaceWith(val);
@@ -3679,6 +4149,7 @@ function buildFieldControl(sessionId, field, playerIndex) {
     btn.className = 'toggle-btn' + ((getValue() ?? false) ? ' on' : '');
     btn.textContent = (getValue() ?? false) ? 'ON' : 'OFF';
     btn.addEventListener('click', () => {
+      if (sess) pushSessionUndo(sess);
       setValue(!(getValue() ?? false));
       btn.className = 'toggle-btn' + (getValue() ? ' on' : '');
       btn.textContent = getValue() ? 'ON' : 'OFF';
@@ -3696,14 +4167,22 @@ function buildFieldControl(sessionId, field, playerIndex) {
         const tok = document.createElement('div');
         tok.className = 'token';
         tok.title = 'Click to remove';
-        tok.addEventListener('click', () => { setValue((getValue() ?? 1) - 1); redraw(getValue()); });
+        tok.addEventListener('click', () => {
+          if (sess) pushSessionUndo(sess);
+          setValue((getValue() ?? 1) - 1);
+          redraw(getValue());
+        });
         pool.appendChild(tok);
       }
       const addBtn = document.createElement('button');
       addBtn.className = 'token-pool-add';
       addBtn.textContent = '+';
       addBtn.title = 'Add token';
-      addBtn.addEventListener('click', () => { setValue((getValue() ?? 0) + 1); redraw(getValue()); });
+      addBtn.addEventListener('click', () => {
+        if (sess) pushSessionUndo(sess);
+        setValue((getValue() ?? 0) + 1);
+        redraw(getValue());
+      });
       pool.appendChild(addBtn);
     };
 
@@ -3716,7 +4195,17 @@ function buildFieldControl(sessionId, field, playerIndex) {
     input.className = 'session-text-input';
     input.value = getValue() ?? '';
     input.placeholder = field.label;
+    let textSnapshotTaken = false;
+    input.addEventListener('focus', () => {
+      if (!textSnapshotTaken && sess) {
+        pushSessionUndo(sess);
+        textSnapshotTaken = true;
+      }
+    });
     input.addEventListener('input', () => setValue(input.value));
+    input.addEventListener('blur', () => {
+      textSnapshotTaken = false;
+    });
     return input;
 
   } else if (field.type === 'dice') {
@@ -3748,6 +4237,7 @@ function buildFieldControl(sessionId, field, playerIndex) {
     redrawHistory();
 
     rollBtn.addEventListener('click', () => {
+      if (sess) pushSessionUndo(sess);
       const rolled = Math.floor(Math.random() * sides) + 1;
       setValue(rolled);
       if (!field.rollHistory) field.rollHistory = [];
@@ -3851,6 +4341,7 @@ function buildAddFieldZone(sessionId, sess) {
       }
     }
 
+    pushSessionUndo(sess);
     sess.customFields.push(newField);
     sess.updatedAt = Date.now();
     saveSessions();
@@ -3896,6 +4387,7 @@ function renamePlayer(sessionId, playerIndex, chipEl) {
     sw.title = hex;
     sw.addEventListener('mousedown', e => {
       e.preventDefault(); // keep focus on the input
+      pushSessionUndo(sess);
       sess.playerColors[playerIndex] = hex;
       chipEl.style.borderColor = hex;
       chipEl.style.color = hex;
@@ -3909,6 +4401,7 @@ function renamePlayer(sessionId, playerIndex, chipEl) {
 
   input.onblur = () => {
     const newName = input.value.trim() || sess.players[playerIndex];
+    if (newName !== sess.players[playerIndex]) pushSessionUndo(sess);
     sess.players[playerIndex] = newName;
     sess.updatedAt = Date.now();
     saveSessions();
@@ -3946,6 +4439,7 @@ function confirmEndSession() {
   const sess = sessions.find(s => s.id === endingSessionId);
   if (!sess) return;
   const winner = document.getElementById('winner-select').value;
+  const durationMinutes = Math.max(0, Math.round((Date.now() - (sess.startedAt || Date.now())) / 60000));
   saveHistoryEntry({
     gameId: sess.gameId,
     gameName: sess.gameName,
@@ -3953,13 +4447,23 @@ function confirmEndSession() {
     players: sess.players,
     winner: winner || null,
     notes: sess.notes || '',
-    summaryFields: buildSessionSummaryFields(sess)
+    summaryFields: buildSessionSummaryFields(sess),
+    durationMinutes
   });
+  const game = getGame(sess.gameId);
+  if (game) {
+    game.lastPlayedAt = Date.now();
+    saveLibrary();
+  }
+  stashRecentSession(sess, 'ended');
   closeOverlay('end-session-overlay');
   sessions = sessions.filter(s => s.id !== endingSessionId);
   saveSessions();
   renderSessionTabs();
+  renderRecentSessions();
+  renderLibrary();
   renderHistorySection();
+  renderPickerResults();
   if (activeSessionId === endingSessionId) {
     activeSessionId = sessions.length > 0 ? sessions[sessions.length - 1].id : null;
   }
@@ -4014,8 +4518,9 @@ function importSession(e) {
   const reader = new FileReader();
   reader.onload = ev => {
     try {
-      const sess = JSON.parse(ev.target.result);
-      if (!sess.id || !sess.gameName || !sess.players) throw new Error('Invalid session file');
+      const parsed = JSON.parse(ev.target.result);
+      const sess = normalizeSessionData([parsed])[0];
+      if (!sess || !sess.gameName || !sess.players) throw new Error('Invalid session file');
       sess.id = 'sess_' + Date.now(); // new id to avoid collision
       sessions.push(sess);
       saveSessions();
@@ -4034,20 +4539,40 @@ function renderHistorySection() {
   const listEl = document.getElementById('history-list');
   const statsEl = document.getElementById('history-stats');
   const query = (document.getElementById('history-search')?.value || '').toLowerCase().trim();
-  const all = JSON.parse(localStorage.getItem('king_history') || '[]');
+  const all = getHistoryEntries();
   const filtered = all.filter(entry => {
     if (!query) return true;
-    return entry.gameName.toLowerCase().includes(query) ||
+    return String(entry.gameName || '').toLowerCase().includes(query) ||
       (entry.players || []).some(player => String(player).toLowerCase().includes(query));
   }).reverse();
 
   const counts = {};
+  const winnerCounts = {};
+  let playerTotal = 0;
+  let durationTotal = 0;
+  let durationCount = 0;
   all.forEach(entry => {
     counts[entry.gameName] = (counts[entry.gameName] || 0) + 1;
+    playerTotal += (entry.players || []).length;
+    if (entry.winner) winnerCounts[entry.winner] = (winnerCounts[entry.winner] || 0) + 1;
+    if (entry.durationMinutes) {
+      durationTotal += entry.durationMinutes;
+      durationCount += 1;
+    }
   });
   const mostPlayed = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  const topWinner = Object.entries(winnerCounts).sort((a, b) => b[1] - a[1])[0];
+  const averagePlayers = all.length ? (playerTotal / all.length).toFixed(1) : null;
+  const averageDuration = durationCount ? Math.round(durationTotal / durationCount) : null;
   statsEl.innerHTML = all.length
-    ? `<div class="toolbar"><div class="rules-stat"><strong>${all.length}</strong> logged plays</div><div class="rules-stat"><strong>${Object.keys(counts).length}</strong> games played</div>${mostPlayed ? `<div class="rules-stat"><strong>${esc(mostPlayed[0])}</strong> most played (${mostPlayed[1]})</div>` : ''}</div>`
+    ? `<div class="toolbar">
+        <div class="rules-stat"><strong>${all.length}</strong> logged plays</div>
+        <div class="rules-stat"><strong>${Object.keys(counts).length}</strong> games played</div>
+        ${mostPlayed ? `<div class="rules-stat"><strong>${esc(mostPlayed[0])}</strong> most played (${mostPlayed[1]})</div>` : ''}
+        ${topWinner ? `<div class="rules-stat"><strong>${esc(topWinner[0])}</strong> most wins (${topWinner[1]})</div>` : ''}
+        ${averagePlayers ? `<div class="rules-stat"><strong>${averagePlayers}</strong> avg players</div>` : ''}
+        ${averageDuration ? `<div class="rules-stat"><strong>${averageDuration} min</strong> avg duration</div>` : ''}
+      </div>`
     : '';
 
   listEl.innerHTML = '';
@@ -4066,7 +4591,7 @@ function renderHistorySection() {
     title.textContent = entry.gameName;
     const meta = document.createElement('div');
     meta.className = 'lib-card-meta';
-    meta.textContent = `${entry.date} • ${entry.players.join(', ')}${entry.winner ? ` • Winner: ${entry.winner}` : ''}`;
+    meta.textContent = `${entry.date} • ${entry.players.join(', ')}${entry.winner ? ` • Winner: ${entry.winner}` : ''}${entry.durationMinutes ? ` • ${entry.durationMinutes} min` : ''}`;
     info.appendChild(title);
     info.appendChild(meta);
     const detail = [summarizeHistoryEntry(entry), entry.notes].filter(Boolean).join(' • ');
@@ -4083,7 +4608,7 @@ function renderHistorySection() {
 
 function clearHistory() {
   if (!confirm('Clear all saved K.I.N.G. play history?')) return;
-  localStorage.removeItem('king_history');
+  writeStorage('king_history', JSON.stringify([]));
   renderHistorySection();
 }
 
@@ -4144,9 +4669,9 @@ function exportAllData() {
   const payload = {
     exportedAt: new Date().toISOString(),
     library,
-    sessions,
+    sessions: sessions.map(serializeSession).filter(Boolean),
     recentSessions,
-    history: JSON.parse(localStorage.getItem('king_history') || '[]'),
+    history: getHistoryEntries(),
     notes: JSON.parse(localStorage.getItem('king_notes') || '{}'),
     theme: localStorage.getItem('king_theme') || 'midnight',
     bggCache
@@ -4172,15 +4697,21 @@ function importAllData(event) {
     try {
       const payload = JSON.parse(ev.target.result);
       library = migrateLibraryData(Array.isArray(payload.library) ? payload.library : []);
-      sessions = Array.isArray(payload.sessions) ? payload.sessions : [];
-      recentSessions = Array.isArray(payload.recentSessions) ? payload.recentSessions : [];
+      sessions = normalizeSessionData(Array.isArray(payload.sessions) ? payload.sessions : []);
+      recentSessions = Array.isArray(payload.recentSessions)
+        ? normalizeSessionData(payload.recentSessions).map((sess, index) => ({
+            ...sess,
+            recentReason: payload.recentSessions[index]?.recentReason || 'closed',
+            recentAt: payload.recentSessions[index]?.recentAt || Date.now()
+          }))
+        : [];
       bggCache = Array.isArray(payload.bggCache) ? payload.bggCache : [];
-      localStorage.setItem('king_library', JSON.stringify(library));
-      localStorage.setItem('king_sessions', JSON.stringify(sessions));
-      localStorage.setItem(RECENT_SESSIONS_KEY, JSON.stringify(recentSessions));
-      localStorage.setItem('king_history', JSON.stringify(Array.isArray(payload.history) ? payload.history : []));
-      localStorage.setItem('king_notes', JSON.stringify(payload.notes && typeof payload.notes === 'object' ? payload.notes : {}));
-      localStorage.setItem(BGG_CACHE_KEY, JSON.stringify(bggCache));
+      saveLibrary();
+      saveSessions();
+      saveRecentSessions();
+      saveHistoryEntries(Array.isArray(payload.history) ? payload.history.map(normalizeHistoryEntry).filter(Boolean) : []);
+      writeStorage('king_notes', JSON.stringify(payload.notes && typeof payload.notes === 'object' ? payload.notes : {}));
+      writeStorage(BGG_CACHE_KEY, JSON.stringify(bggCache));
       setTheme(payload.theme || 'midnight');
       renderLibrary();
       renderRulesSection();
