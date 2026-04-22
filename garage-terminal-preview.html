@@ -917,7 +917,7 @@
 
     const GAME_CATALOG = [
       { id: "atomic-command", name: "ATOMIC COMMAND", description: "PROTECT THREE SILOS FROM FALLING WARHEADS." },
-      { id: "zeta-invaders", name: "ZETA INVADERS", description: "BREAK THE ALIEN ADVANCE BEFORE THEY REACH THE GROUND." },
+      { id: "zeta-invaders", name: "ZETA INVADERS", description: "ZETAN RAIDERS DESCEND IN WAVES. HOLD THE ROBCO BATTERY." },
       { id: "pipfall", name: "PIPFALL", description: "RUN THE WASTELAND, CLEAR HAZARDS, COLLECT CAPS." },
       { id: "red-menace", name: "RED MENACE", description: "CLIMB LADDERS, DODGE BARRELS, REACH THE CAPTIVE." },
       { id: "rad-pong", name: "RAD PONG", description: "SUPER MUTANTS BAT A LIVE GRENADE ACROSS THE WASTELAND." },
@@ -2120,237 +2120,309 @@
         draw(ctx2, w, h) {
           clearGameCanvas(ctx2, w, h);
           drawGameGrid(ctx2, w, h);
-          const scaleX = w / 720;
-          const scaleY = h / 1080;
-          ctx2.save();
-          ctx2.scale(scaleX, scaleY);
           const col = getThemeColor();
           const fnt = getComputedStyle(document.documentElement).getPropertyValue("--font");
           const red = "#ff4040";
+          const scale = Math.min(w / 720, h / 1080);
+          const offX = (w - 720 * scale) / 2;
+          const offY = (h - 1080 * scale) / 2;
+          ctx2.save();
+          ctx2.translate(offX, offY);
+          ctx2.scale(scale, scale);
 
-          // Ground terrain
+          // Ground
           ctx2.strokeStyle = col;
           ctx2.lineWidth = 2;
           ctx2.shadowColor = col;
           ctx2.shadowBlur = 8;
           ctx2.beginPath();
-          ctx2.moveTo(0, 1004);
-          for (let x = 0; x <= 720; x += 24) {
-            ctx2.lineTo(x, 1004 + Math.sin(x * 0.09) * 4);
+          ctx2.moveTo(0, 1006);
+          for (let gx = 0; gx <= 720; gx += 18) {
+            ctx2.lineTo(gx, 1006 + Math.sin(gx * 0.11) * 3);
           }
           ctx2.stroke();
+          ctx2.shadowBlur = 0;
 
-          // Silos
-          const siloLabels = ["I", "II", "III"];
-          game.silos.forEach((silo, idx) => {
+          // SILOS
+          ["I", "II", "III"].forEach((label, idx) => {
+            const silo = game.silos[idx];
+            const sx = silo.x;
             if (silo.alive) {
-              ctx2.strokeStyle = col;
               ctx2.shadowColor = col;
-              ctx2.shadowBlur = 14;
+              ctx2.shadowBlur = 8;
+              ctx2.lineWidth = 1.5;
+              // Base platform
+              ctx2.strokeStyle = col;
+              ctx2.fillStyle = hexToRgba(col, 0.1);
+              ctx2.fillRect(sx - 36, 998, 72, 8);
+              ctx2.strokeRect(sx - 36, 998, 72, 8);
+              // Main body
+              ctx2.fillStyle = hexToRgba(col, 0.07);
+              ctx2.fillRect(sx - 22, 928, 44, 70);
+              ctx2.strokeRect(sx - 22, 928, 44, 70);
+              // Armour bands
+              ctx2.shadowBlur = 0;
+              ctx2.strokeStyle = hexToRgba(col, 0.4);
+              ctx2.lineWidth = 1;
+              [945, 962, 979].forEach(function(by) {
+                ctx2.beginPath();
+                ctx2.moveTo(sx - 22, by);
+                ctx2.lineTo(sx + 22, by);
+                ctx2.stroke();
+              });
+              // Interior strut
+              ctx2.beginPath();
+              ctx2.moveTo(sx, 928);
+              ctx2.lineTo(sx, 998);
+              ctx2.stroke();
+              // Blast door cap
+              ctx2.strokeStyle = col;
               ctx2.lineWidth = 2;
+              ctx2.shadowColor = col;
+              ctx2.shadowBlur = 12;
+              ctx2.fillStyle = hexToRgba(col, 0.12);
               ctx2.beginPath();
-              ctx2.moveTo(silo.x - 22, 1004);
-              ctx2.lineTo(silo.x - 22, 966);
-              ctx2.lineTo(silo.x - 10, 950);
-              ctx2.lineTo(silo.x + 10, 950);
-              ctx2.lineTo(silo.x + 22, 966);
-              ctx2.lineTo(silo.x + 22, 1004);
+              ctx2.moveTo(sx - 22, 928);
+              ctx2.lineTo(sx - 11, 910);
+              ctx2.lineTo(sx + 11, 910);
+              ctx2.lineTo(sx + 22, 928);
+              ctx2.closePath();
+              ctx2.fill();
               ctx2.stroke();
-              ctx2.beginPath();
-              ctx2.moveTo(silo.x, 950);
-              ctx2.lineTo(silo.x, 938);
-              ctx2.moveTo(silo.x - 6, 942);
-              ctx2.lineTo(silo.x + 6, 942);
-              ctx2.stroke();
-              ctx2.shadowBlur = 4;
-              ctx2.fillStyle = col;
-              ctx2.font = "13px " + fnt;
-              ctx2.textAlign = "center";
-              ctx2.fillText("SILO " + siloLabels[idx], silo.x, 1022);
-            } else {
+              // Hatch lines on cap
+              ctx2.lineWidth = 1;
               ctx2.shadowBlur = 0;
               ctx2.strokeStyle = hexToRgba(col, 0.35);
+              ctx2.beginPath();
+              ctx2.moveTo(sx - 5, 910); ctx2.lineTo(sx - 8, 928);
+              ctx2.moveTo(sx + 5, 910); ctx2.lineTo(sx + 8, 928);
+              ctx2.stroke();
+              // Antenna mast
+              ctx2.strokeStyle = col;
+              ctx2.lineWidth = 1.5;
+              ctx2.shadowColor = col;
+              ctx2.shadowBlur = 8;
+              ctx2.beginPath();
+              ctx2.moveTo(sx, 910); ctx2.lineTo(sx, 888);
+              ctx2.stroke();
+              // Radar dish
+              ctx2.beginPath();
+              ctx2.moveTo(sx - 10, 888);
+              ctx2.quadraticCurveTo(sx, 880, sx + 10, 888);
+              ctx2.stroke();
+              ctx2.beginPath();
+              ctx2.moveTo(sx, 888); ctx2.lineTo(sx, 884);
+              ctx2.stroke();
+              // Label
+              ctx2.shadowBlur = 4;
+              ctx2.fillStyle = col;
+              ctx2.font = "14px " + fnt;
+              ctx2.textAlign = "center";
+              ctx2.fillText("SILO " + label, sx, 1024);
+              ctx2.shadowBlur = 0;
+            } else {
+              // Rubble
+              ctx2.shadowBlur = 0;
+              ctx2.strokeStyle = hexToRgba(col, 0.28);
               ctx2.lineWidth = 1.5;
               ctx2.beginPath();
-              ctx2.moveTo(silo.x - 28, 1004);
-              ctx2.lineTo(silo.x - 14, 990);
-              ctx2.lineTo(silo.x - 4, 996);
-              ctx2.lineTo(silo.x + 8, 984);
-              ctx2.lineTo(silo.x + 20, 992);
-              ctx2.lineTo(silo.x + 30, 1004);
+              ctx2.moveTo(sx - 34, 1006);
+              ctx2.lineTo(sx - 20, 994); ctx2.lineTo(sx - 8, 1000);
+              ctx2.lineTo(sx + 2, 986);  ctx2.lineTo(sx + 14, 994);
+              ctx2.lineTo(sx + 26, 988); ctx2.lineTo(sx + 36, 1006);
               ctx2.stroke();
-              ctx2.fillStyle = hexToRgba(red, 0.7);
-              ctx2.font = "11px " + fnt;
+              ctx2.strokeRect(sx - 28, 978, 14, 9);
+              ctx2.strokeRect(sx + 10, 974, 11, 10);
+              ctx2.strokeStyle = hexToRgba(red, 0.3);
+              ctx2.setLineDash([2, 4]);
+              ctx2.beginPath();
+              ctx2.moveTo(sx - 4, 978); ctx2.lineTo(sx - 9, 960);
+              ctx2.moveTo(sx + 8, 974); ctx2.lineTo(sx + 12, 956);
+              ctx2.stroke();
+              ctx2.setLineDash([]);
+              ctx2.fillStyle = hexToRgba(red, 0.65);
+              ctx2.font = "12px " + fnt;
               ctx2.textAlign = "center";
-              ctx2.fillText("DESTROYED", silo.x, 1022);
+              ctx2.fillText("DESTROYED", sx, 1024);
             }
           });
 
-          // Enemy missiles — red, glowing, with warhead dot and fading trail
-          game.enemyMissiles.forEach((missile) => {
+          // ENEMY MISSILES
+          game.enemyMissiles.forEach(function(missile) {
             if (missile.hit) return;
             const dx = missile.tx - missile.x;
             const dy = missile.ty - missile.y;
+            const angle = Math.atan2(dy, dx);
             const len = Math.hypot(dx, dy) || 1;
-            const ux = dx / len;
-            const uy = dy / len;
-            for (let t = 1; t <= 6; t++) {
-              const alpha = (6 - t) / 6 * 0.55;
-              ctx2.strokeStyle = hexToRgba(red, alpha);
-              ctx2.lineWidth = 2.5 - t * 0.3;
+            const ux = dx / len; const uy = dy / len;
+            for (let t = 1; t <= 9; t++) {
+              ctx2.strokeStyle = hexToRgba(red, (9 - t) / 9 * 0.55);
+              ctx2.lineWidth = Math.max(0.5, 2.8 - t * 0.25);
               ctx2.shadowColor = red;
-              ctx2.shadowBlur = 4;
+              ctx2.shadowBlur = t < 4 ? 8 : 0;
               ctx2.beginPath();
-              ctx2.moveTo(missile.x - ux * (t - 1) * 14, missile.y - uy * (t - 1) * 14);
-              ctx2.lineTo(missile.x - ux * t * 14, missile.y - uy * t * 14);
+              ctx2.moveTo(missile.x - ux * (t - 1) * 9, missile.y - uy * (t - 1) * 9);
+              ctx2.lineTo(missile.x - ux * t * 9, missile.y - uy * t * 9);
               ctx2.stroke();
             }
-            ctx2.fillStyle = red;
-            ctx2.shadowColor = red;
-            ctx2.shadowBlur = 14;
-            ctx2.beginPath();
-            ctx2.arc(missile.x, missile.y, 5, 0, Math.PI * 2);
-            ctx2.fill();
-            // Warhead triangle in direction of travel
             ctx2.save();
             ctx2.translate(missile.x, missile.y);
-            ctx2.rotate(Math.atan2(uy, ux));
+            ctx2.rotate(angle - Math.PI / 2);
+            ctx2.fillStyle = red;
+            ctx2.strokeStyle = red;
+            ctx2.shadowColor = red;
+            ctx2.shadowBlur = 16;
+            ctx2.lineWidth = 1;
+            ctx2.fillRect(-4, -2, 8, 14);
             ctx2.beginPath();
-            ctx2.moveTo(8, 0);
-            ctx2.lineTo(-4, -4);
-            ctx2.lineTo(-4, 4);
-            ctx2.closePath();
+            ctx2.moveTo(-4, -2); ctx2.lineTo(0, -13); ctx2.lineTo(4, -2);
+            ctx2.closePath(); ctx2.fill();
+            ctx2.beginPath();
+            ctx2.moveTo(-4, 10); ctx2.lineTo(-11, 19); ctx2.lineTo(-4, 14);
+            ctx2.closePath(); ctx2.fill();
+            ctx2.beginPath();
+            ctx2.moveTo(4, 10); ctx2.lineTo(11, 19); ctx2.lineTo(4, 14);
+            ctx2.closePath(); ctx2.fill();
+            ctx2.shadowBlur = 14;
+            ctx2.fillStyle = "rgba(255,180,0,0.75)";
+            ctx2.beginPath();
+            ctx2.arc(0, 17, 4, 0, Math.PI * 2);
             ctx2.fill();
             ctx2.restore();
             ctx2.shadowBlur = 0;
           });
 
-          // Player missiles — theme color, dashed trail, target reticle
-          game.missiles.forEach((missile) => {
+          // PLAYER MISSILES
+          game.missiles.forEach(function(missile) {
             if (missile.done) return;
             const dx = missile.tx - missile.x;
             const dy = missile.ty - missile.y;
+            const angle = Math.atan2(dy, dx);
             const len = Math.hypot(dx, dy) || 1;
-            ctx2.strokeStyle = col;
-            ctx2.lineWidth = 2;
-            ctx2.shadowColor = col;
-            ctx2.shadowBlur = 8;
-            ctx2.setLineDash([8, 5]);
+            const ux = dx / len; const uy = dy / len;
+            ctx2.strokeStyle = hexToRgba(col, 0.38);
+            ctx2.lineWidth = 1.5;
+            ctx2.shadowBlur = 0;
+            ctx2.setLineDash([7, 5]);
             ctx2.beginPath();
             ctx2.moveTo(missile.x, missile.y);
-            ctx2.lineTo(missile.x - (dx / len) * 50, missile.y - (dy / len) * 50);
+            ctx2.lineTo(missile.x - ux * 65, missile.y - uy * 65);
             ctx2.stroke();
             ctx2.setLineDash([]);
+            ctx2.save();
+            ctx2.translate(missile.x, missile.y);
+            ctx2.rotate(angle - Math.PI / 2);
             ctx2.fillStyle = col;
+            ctx2.shadowColor = col;
+            ctx2.shadowBlur = 12;
+            ctx2.fillRect(-3, -2, 6, 11);
             ctx2.beginPath();
-            ctx2.arc(missile.x, missile.y, 4, 0, Math.PI * 2);
-            ctx2.fill();
-            // Target reticle
-            ctx2.strokeStyle = hexToRgba(col, 0.45);
+            ctx2.moveTo(-3, -2); ctx2.lineTo(0, -11); ctx2.lineTo(3, -2);
+            ctx2.closePath(); ctx2.fill();
+            ctx2.beginPath();
+            ctx2.moveTo(-3, 8); ctx2.lineTo(-8, 14); ctx2.lineTo(-3, 11);
+            ctx2.closePath(); ctx2.fill();
+            ctx2.beginPath();
+            ctx2.moveTo(3, 8); ctx2.lineTo(8, 14); ctx2.lineTo(3, 11);
+            ctx2.closePath(); ctx2.fill();
+            ctx2.restore();
+            ctx2.strokeStyle = hexToRgba(col, 0.5);
             ctx2.lineWidth = 1;
             ctx2.shadowBlur = 0;
             ctx2.beginPath();
             ctx2.arc(missile.tx, missile.ty, 14, 0, Math.PI * 2);
             ctx2.stroke();
             ctx2.beginPath();
-            ctx2.moveTo(missile.tx - 20, missile.ty);
-            ctx2.lineTo(missile.tx + 20, missile.ty);
-            ctx2.moveTo(missile.tx, missile.ty - 20);
-            ctx2.lineTo(missile.tx, missile.ty + 20);
+            ctx2.moveTo(missile.tx - 22, missile.ty); ctx2.lineTo(missile.tx - 16, missile.ty);
+            ctx2.moveTo(missile.tx + 16, missile.ty); ctx2.lineTo(missile.tx + 22, missile.ty);
+            ctx2.moveTo(missile.tx, missile.ty - 22); ctx2.lineTo(missile.tx, missile.ty - 16);
+            ctx2.moveTo(missile.tx, missile.ty + 16); ctx2.lineTo(missile.tx, missile.ty + 22);
             ctx2.stroke();
           });
 
-          // Explosions — concentric glow rings
-          game.explosions.forEach((explosion) => {
-            const progress = explosion.r / explosion.max;
+          // EXPLOSIONS
+          game.explosions.forEach(function(expl) {
+            const progress = expl.r / expl.max;
             const alpha = Math.max(0, 1 - progress);
             ctx2.shadowColor = col;
-            ctx2.shadowBlur = 20;
-            ctx2.strokeStyle = hexToRgba(col, alpha * 0.9);
+            ctx2.shadowBlur = 24;
+            ctx2.strokeStyle = hexToRgba(col, alpha);
             ctx2.lineWidth = 2.5;
             ctx2.beginPath();
-            ctx2.arc(explosion.x, explosion.y, explosion.r, 0, Math.PI * 2);
+            ctx2.arc(expl.x, expl.y, expl.r, 0, Math.PI * 2);
             ctx2.stroke();
-            ctx2.fillStyle = hexToRgba(col, alpha * 0.08);
-            ctx2.beginPath();
-            ctx2.arc(explosion.x, explosion.y, explosion.r, 0, Math.PI * 2);
+            ctx2.fillStyle = hexToRgba(col, alpha * 0.09);
             ctx2.fill();
-            if (explosion.r > 18) {
-              ctx2.strokeStyle = hexToRgba(col, alpha * 0.4);
+            if (expl.r > 18) {
+              ctx2.strokeStyle = hexToRgba(col, alpha * 0.42);
               ctx2.lineWidth = 1;
+              ctx2.shadowBlur = 8;
               ctx2.beginPath();
-              ctx2.arc(explosion.x, explosion.y, explosion.r * 0.55, 0, Math.PI * 2);
+              ctx2.arc(expl.x, expl.y, expl.r * 0.52, 0, Math.PI * 2);
               ctx2.stroke();
             }
             ctx2.shadowBlur = 0;
           });
 
-          // HUD border
-          ctx2.strokeStyle = hexToRgba(col, 0.22);
+          // HUD
+          ctx2.strokeStyle = hexToRgba(col, 0.2);
           ctx2.lineWidth = 1;
           ctx2.strokeRect(8, 8, 704, 1064);
-
-          // In-canvas score / wave
+          ctx2.fillStyle = col;
           ctx2.shadowColor = col;
           ctx2.shadowBlur = 6;
-          ctx2.fillStyle = col;
-          ctx2.font = "20px " + fnt;
+          ctx2.font = "22px " + fnt;
           ctx2.textAlign = "left";
-          ctx2.fillText("WAVE " + game.wave, 24, 44);
+          ctx2.fillText("WAVE " + game.wave, 24, 46);
           ctx2.textAlign = "right";
-          ctx2.fillText("SCORE " + game.score, 696, 44);
+          ctx2.fillText(String(game.score), 696, 46);
+          ctx2.font = "12px " + fnt;
+          ctx2.fillStyle = hexToRgba(col, 0.5);
+          ctx2.fillText("SCORE", 660, 62);
           ctx2.textAlign = "center";
-
-          // Ammo pips
-          const pipX = 360 - ((game.missilesLeft - 1) * 9) / 2;
-          for (let i = 0; i < game.missilesLeft; i++) {
-            ctx2.fillStyle = hexToRgba(col, 0.7);
-            ctx2.fillRect(pipX + i * 9, 58, 5, 12);
+          const pipStart = 360 - (game.missilesLeft * 7) / 2;
+          for (let pi = 0; pi < game.missilesLeft; pi++) {
+            ctx2.fillStyle = hexToRgba(col, 0.65);
+            ctx2.fillRect(pipStart + pi * 7, 56, 5, 10);
           }
-
-          // Status message
+          ctx2.fillStyle = hexToRgba(col, 0.32);
+          ctx2.font = "11px " + fnt;
+          ctx2.fillText("AMMO", 360, 76);
           ctx2.shadowBlur = 4;
-          ctx2.fillStyle = hexToRgba(col, 0.8);
+          ctx2.fillStyle = hexToRgba(col, 0.78);
           ctx2.font = "16px " + fnt;
-          ctx2.fillText(game.message, 360, 86);
-
-          // Incoming warning pulse
+          ctx2.fillText(game.message, 360, 100);
           if (game.enemyMissiles.length > 0 && !game.gameOver) {
-            const pulse = 0.55 + Math.sin(Date.now() * 0.009) * 0.45;
+            const pulse = 0.6 + Math.sin(Date.now() * 0.01) * 0.4;
             ctx2.fillStyle = hexToRgba(red, pulse);
-            ctx2.font = "14px " + fnt;
-            ctx2.fillText("! INCOMING !", 360, 110);
+            ctx2.font = "13px " + fnt;
+            ctx2.fillText("! INCOMING !", 360, 120);
           }
-
-          // Flash
           ctx2.shadowBlur = 0;
           if (game.flashTimer > 0) {
-            ctx2.fillStyle = hexToRgba(red, game.flashTimer * 0.38);
+            ctx2.fillStyle = hexToRgba(red, game.flashTimer * 0.4);
             ctx2.fillRect(0, 0, 720, 1080);
           }
-
-          // Game over panel
           if (game.gameOver) {
-            ctx2.fillStyle = "rgba(0,0,0,0.68)";
-            ctx2.fillRect(80, 460, 560, 180);
-            ctx2.strokeStyle = hexToRgba(red, 0.85);
+            ctx2.fillStyle = "rgba(0,0,0,0.72)";
+            ctx2.fillRect(70, 450, 580, 200);
+            ctx2.strokeStyle = hexToRgba(red, 0.9);
             ctx2.lineWidth = 2;
             ctx2.shadowColor = red;
-            ctx2.shadowBlur = 16;
-            ctx2.strokeRect(80, 460, 560, 180);
+            ctx2.shadowBlur = 18;
+            ctx2.strokeRect(70, 450, 580, 200);
             ctx2.fillStyle = red;
-            ctx2.font = "30px " + fnt;
+            ctx2.font = "28px " + fnt;
             ctx2.textAlign = "center";
-            ctx2.fillText("VAULT DEFENCE FAILED", 360, 524);
+            ctx2.fillText("VAULT DEFENCE FAILED", 360, 516);
             ctx2.shadowBlur = 0;
-            ctx2.fillStyle = hexToRgba(col, 0.75);
-            ctx2.font = "18px " + fnt;
-            ctx2.fillText("FINAL SCORE  " + game.score, 360, 568);
+            ctx2.fillStyle = col;
+            ctx2.font = "20px " + fnt;
+            ctx2.fillText("FINAL SCORE  " + game.score, 360, 562);
             ctx2.fillStyle = hexToRgba(col, 0.45);
             ctx2.font = "14px " + fnt;
             ctx2.fillText("TAP RESTART TO PLAY AGAIN", 360, 600);
           }
-
           ctx2.restore();
         },
         meta() {
@@ -2419,21 +2491,32 @@
         cooldown: 0,
         dir: 1,
         enemySpeed: 22,
-        player: { x: 330, y: 980, w: 60, h: 24 },
+        player: { x: 327, y: 972, w: 66, h: 30 },
         bullets: [],
         enemyBullets: [],
         bunkers: [
-          { x: 96, hp: 8 },
-          { x: 246, hp: 8 },
-          { x: 396, hp: 8 },
-          { x: 546, hp: 8 }
+          { x: 84, y: 850, w: 92, h: 56, hp: 12, maxHp: 12, cells: [] },
+          { x: 224, y: 850, w: 92, h: 56, hp: 12, maxHp: 12, cells: [] },
+          { x: 404, y: 850, w: 92, h: 56, hp: 12, maxHp: 12, cells: [] },
+          { x: 544, y: 850, w: 92, h: 56, hp: 12, maxHp: 12, cells: [] }
         ],
         invaders: [],
-        message: "CLEAR THE INVADERS",
+        message: "HOLD THE LINE",
         gameOver: false,
-        winFlash: 0
+        winFlash: 0,
+        invulnerable: 0,
+        explosions: [],
+        stepTimer: 0,
+        stepInterval: 0.72,
+        animFrame: 0,
+        enemyFireTimer: 0.65,
+        saucer: null,
+        saucerTimer: 7,
+        messageTimer: 0,
+        formationDrop: 0
       };
       const restored = mergeGameState(defaults, savedData?.data);
+      restored.bunkers = (restored.bunkers || defaults.bunkers).map((bunker, index) => normalizeInvaderBunker(bunker, defaults.bunkers[index]));
       const game = {
         id: "zeta-invaders",
         name: "ZETA INVADERS",
@@ -2453,50 +2536,63 @@
             seedWave();
           }
           game.winFlash = Math.max(0, game.winFlash - dt);
+           game.invulnerable = Math.max(0, game.invulnerable - dt);
+          game.messageTimer = Math.max(0, game.messageTimer - dt);
+          game.stepTimer += dt;
+          game.enemyFireTimer -= dt;
+          game.saucerTimer -= dt;
+          game.formationDrop = Math.max(0, game.formationDrop - dt * 3.2);
+          game.explosions.forEach((blast) => blast.t += dt);
+          game.explosions = game.explosions.filter((blast) => blast.t < blast.life);
+          if (game.messageTimer <= 0 && !game.gameOver) {
+            game.message = game.saucer ? "SAUCER IN RANGE" : "HOLD THE LINE";
+          }
           if (game.gameOver) {
             return;
           }
           if (state.keys.arrowleft || state.keys.a) game.player.x -= 260 * dt;
           if (state.keys.arrowright || state.keys.d) game.player.x += 260 * dt;
-          game.player.x = clamp(game.player.x, 20, 640);
+          game.player.x = clamp(game.player.x, 16, 720 - game.player.w - 16);
           game.cooldown -= dt;
-          let turnAround = false;
-          game.invaders.forEach((invader) => {
-            if (!invader.alive) return;
-            invader.x += game.dir * game.enemySpeed * dt;
-            if (invader.x < 16 || invader.x > 668) {
-              turnAround = true;
-            }
-            if (Math.random() < 0.0008) {
-              game.enemyBullets.push({ x: invader.x + 18, y: invader.y + 20, vy: 250 + game.wave * 8 });
-            }
+          updateFormation(dt);
+          updateSaucer(dt);
+          game.bullets.forEach((bullet) => bullet.y -= bullet.vy * dt);
+          game.enemyBullets.forEach((bullet) => {
+            bullet.y += bullet.vy * dt;
+            bullet.phase = (bullet.phase || 0) + dt * bullet.wobble;
+            bullet.x += Math.sin(bullet.phase) * bullet.amp * dt;
           });
-          if (turnAround) {
-            game.dir *= -1;
-            game.invaders.forEach((invader) => {
-              invader.y += 18;
-            });
-          }
-          game.bullets.forEach((bullet) => bullet.y -= 450 * dt);
-          game.enemyBullets.forEach((bullet) => bullet.y += bullet.vy * dt);
           game.invaders.forEach((invader) => {
             if (!invader.alive) return;
             game.bullets.forEach((bullet) => {
-              if (!bullet.hit && hitRect(bullet.x, bullet.y, invader.x, invader.y, 36, 24)) {
+              if (!bullet.hit && hitRect(bullet.x, bullet.y, invader.x, invader.y, invader.w, invader.h)) {
                 bullet.hit = true;
                 invader.alive = false;
-                game.score += 20 + game.wave * 5;
-                game.enemySpeed += 1.05;
+                spawnInvaderExplosion(invader.x + invader.w / 2, invader.y + invader.h / 2, "alien");
+                game.score += invader.score;
+                game.enemySpeed += 0.7;
+                game.animFrame = 1 - game.animFrame;
                 playSound("beep");
               }
             });
-            if (invader.y > 860) {
-              invader.alive = false;
+            if (invader.y + invader.h > 860) {
               loseLife();
             }
           });
-          handleBunkerHits(game.bunkers, game.enemyBullets, false);
-          handleBunkerHits(game.bunkers, game.bullets, true);
+          if (game.saucer) {
+            game.bullets.forEach((bullet) => {
+              if (!bullet.hit && hitRect(bullet.x, bullet.y, game.saucer.x, game.saucer.y, game.saucer.w, game.saucer.h)) {
+                bullet.hit = true;
+                game.score += 125 + game.wave * 10;
+                spawnInvaderExplosion(game.saucer.x + game.saucer.w / 2, game.saucer.y + game.saucer.h / 2, "saucer");
+                game.saucer = null;
+                setMessage("SAUCER SCRAPPED", 0.9);
+                playSound("success");
+              }
+            });
+          }
+          handleInvaderBunkerHits(game.bunkers, game.enemyBullets);
+          handleInvaderBunkerHits(game.bunkers, game.bullets);
           game.enemyBullets.forEach((bullet) => {
             if (hitRect(bullet.x, bullet.y, game.player.x, game.player.y, game.player.w, game.player.h)) {
               bullet.hit = true;
@@ -2505,13 +2601,17 @@
           });
           if (!aliveInvaders() && !game.gameOver) {
             game.wave += 1;
-            game.score += 150;
-            game.enemySpeed = 22 + game.wave * 4;
+            game.score += 150 + game.wave * 20;
+            game.enemySpeed = 22 + game.wave * 2.5;
             game.bullets = [];
             game.enemyBullets = [];
             game.dir = 1;
             game.winFlash = 0.4;
-            game.message = "WAVE " + game.wave;
+            game.stepTimer = 0;
+            game.enemyFireTimer = 0.55;
+            game.stepInterval = 0.72;
+            restoreBunkers(2);
+            setMessage("WAVE " + game.wave, 1.2);
             seedWave();
             playSound("success");
           }
@@ -2527,22 +2627,22 @@
           ctx2.scale(scaleX, scaleY);
           ctx2.strokeStyle = getCss("--text");
           ctx2.fillStyle = getCss("--text");
-          ctx2.strokeRect(game.player.x, game.player.y, game.player.w, game.player.h);
+          drawZetaInvadersBackdrop(ctx2, game);
+          drawZetaPlayerCannon(ctx2, game.player, game.invulnerable > 0);
           game.invaders.forEach((invader) => {
             if (!invader.alive) return;
-            ctx2.strokeRect(invader.x, invader.y, 36, 24);
-            ctx2.beginPath();
-            ctx2.moveTo(invader.x + 6, invader.y + 24);
-            ctx2.lineTo(invader.x + 18, invader.y + 34);
-            ctx2.lineTo(invader.x + 30, invader.y + 24);
-            ctx2.stroke();
+            drawZetaInvaderSprite(ctx2, invader, game.animFrame);
           });
+          if (game.saucer) {
+            drawZetaSaucer(ctx2, game.saucer, game.animFrame);
+          }
           game.bunkers.forEach((bunker) => {
             if (bunker.hp <= 0) return;
-            ctx2.strokeRect(bunker.x, 860, 78, 44);
-            drawCenteredText(ctx2, String(bunker.hp), bunker.x + 39, 888, 14);
+            drawZetaBunker(ctx2, bunker);
           });
-          game.bullets.concat(game.enemyBullets).forEach((bullet) => ctx2.fillRect(bullet.x, bullet.y, 4, 12));
+          game.bullets.forEach((bullet) => drawZetaPlayerBolt(ctx2, bullet));
+          game.enemyBullets.forEach((bullet) => drawZetaEnemyBolt(ctx2, bullet));
+          game.explosions.forEach((blast) => drawZetaExplosion(ctx2, blast));
           drawCenteredText(ctx2, game.message, 360, 72, 18);
           if (game.winFlash > 0) {
             ctx2.fillStyle = hexToRgba(getThemeColor(), game.winFlash * 0.25);
@@ -2561,7 +2661,9 @@
             summary: "SCORE " + game.score + " | WAVE " + game.wave,
             data: snapshotGameState(game, [
               "wave", "score", "lives", "cooldown", "dir", "enemySpeed", "player", "bullets",
-              "enemyBullets", "bunkers", "invaders", "message", "gameOver", "winFlash"
+              "enemyBullets", "bunkers", "invaders", "message", "gameOver", "winFlash", "invulnerable",
+              "explosions", "stepTimer", "stepInterval", "animFrame", "enemyFireTimer", "saucer", "saucerTimer",
+              "messageTimer", "formationDrop"
             ])
           };
         },
@@ -2573,30 +2675,48 @@
       };
       function seedWave() {
         game.invaders = [];
-        for (let row = 0; row < 4; row += 1) {
-          for (let col = 0; col < 7; col += 1) {
-            game.invaders.push({ x: 70 + col * 82, y: 110 + row * 60, alive: true });
+        const rowTypes = ["overseer", "raider", "raider", "drone", "drone"];
+        for (let row = 0; row < 5; row += 1) {
+          for (let col = 0; col < 8; col += 1) {
+            const type = rowTypes[row];
+            game.invaders.push({
+              x: 56 + col * 76,
+              y: 120 + row * 58,
+              alive: true,
+              type,
+              w: 42,
+              h: 28,
+              row,
+              col,
+              score: type === "overseer" ? 40 : type === "raider" ? 30 : 20
+            });
           }
         }
+        game.dir = 1;
+        game.stepTimer = 0;
+        game.enemyFireTimer = Math.max(0.26, 0.7 - game.wave * 0.03);
+        game.stepInterval = 0.72;
+        game.saucerTimer = 5.5;
       }
       function aliveInvaders() {
         return game.invaders.filter((invader) => invader.alive).length;
       }
       function fire() {
-        if (game.cooldown > 0 || game.gameOver) {
+        if (game.cooldown > 0 || game.gameOver || game.bullets.length) {
           return;
         }
-        game.bullets.push({ x: game.player.x + 28, y: game.player.y - 8 });
-        game.cooldown = 0.32;
+        game.bullets.push({ x: game.player.x + game.player.w / 2 - 2, y: game.player.y - 8, vy: 520 });
+        game.cooldown = 0.28;
         playSound("click");
       }
       function loseLife() {
-        if (game.invulnerable) {
+        if (game.invulnerable > 0 || game.gameOver) {
           return;
         }
         game.lives -= 1;
         game.invulnerable = 0.8;
-        game.message = "HULL BREACH";
+        spawnInvaderExplosion(game.player.x + game.player.w / 2, game.player.y + 12, "player");
+        setMessage("BATTERY HIT", 0.8);
         game.bullets = [];
         game.enemyBullets = [];
         playSound("error");
@@ -2604,7 +2724,102 @@
           game.gameOver = true;
           storeHighScore(game.id, game.score);
         }
-        setTimeout(() => { game.invulnerable = 0; game.message = "CLEAR THE INVADERS"; }, 450);
+      }
+      function updateFormation(dt) {
+        const alive = game.invaders.filter((invader) => invader.alive);
+        if (!alive.length) {
+          return;
+        }
+        const edgeLeft = Math.min(...alive.map((invader) => invader.x));
+        const edgeRight = Math.max(...alive.map((invader) => invader.x + invader.w));
+        const step = 10 + game.wave * 0.8;
+        const dropStep = 22;
+        const pace = 0.82 - Math.min(0.56, (40 - alive.length) * 0.012) - Math.min(0.12, game.wave * 0.018);
+        game.stepInterval = Math.max(0.11, pace);
+        if (game.stepTimer >= game.stepInterval) {
+          game.stepTimer = 0;
+          let hitEdge = false;
+          if (game.dir < 0 && edgeLeft - step < 20) hitEdge = true;
+          if (game.dir > 0 && edgeRight + step > 700) hitEdge = true;
+          if (hitEdge) {
+            game.dir *= -1;
+            game.formationDrop = 1;
+            alive.forEach((invader) => {
+              invader.y += dropStep;
+            });
+          } else {
+            alive.forEach((invader) => {
+              invader.x += game.dir * step;
+            });
+          }
+          game.animFrame = 1 - game.animFrame;
+          playSound("beep");
+        }
+        if (game.enemyFireTimer <= 0) {
+          fireEnemyVolley();
+          game.enemyFireTimer = Math.max(0.18, 0.86 - game.wave * 0.04 - (40 - alive.length) * 0.008);
+        }
+      }
+      function fireEnemyVolley() {
+        const shooters = bottomInvadersByColumn();
+        if (!shooters.length) {
+          return;
+        }
+        const shooter = shooters[Math.floor(Math.random() * shooters.length)];
+        game.enemyBullets.push({
+          x: shooter.x + shooter.w / 2,
+          y: shooter.y + shooter.h,
+          vy: 280 + game.wave * 14,
+          amp: 18 + Math.random() * 10,
+          wobble: 6 + Math.random() * 4,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+      function bottomInvadersByColumn() {
+        const map = new Map();
+        game.invaders.forEach((invader) => {
+          if (!invader.alive) return;
+          const current = map.get(invader.col);
+          if (!current || invader.y > current.y) {
+            map.set(invader.col, invader);
+          }
+        });
+        return Array.from(map.values());
+      }
+      function updateSaucer(dt) {
+        if (game.saucer) {
+          game.saucer.x += game.saucer.vx * dt;
+          if (game.saucer.x < -game.saucer.w - 20 || game.saucer.x > 740) {
+            game.saucer = null;
+            game.saucerTimer = 6 + Math.random() * 5;
+          }
+          return;
+        }
+        if (game.saucerTimer <= 0) {
+          const fromLeft = Math.random() > 0.5;
+          game.saucer = {
+            x: fromLeft ? -72 : 740,
+            y: 74,
+            w: 62,
+            h: 24,
+            vx: fromLeft ? 110 : -110
+          };
+          game.saucerTimer = 8 + Math.random() * 7;
+          setMessage("UNIDENTIFIED CONTACT", 0.8);
+        }
+      }
+      function restoreBunkers(amount) {
+        game.bunkers.forEach((bunker) => {
+          bunker.hp = Math.min(bunker.maxHp, bunker.hp + amount);
+          repairBunkerCells(bunker);
+        });
+      }
+      function setMessage(text, duration) {
+        game.message = text;
+        game.messageTimer = duration;
+      }
+      function spawnInvaderExplosion(x, y, kind) {
+        game.explosions.push({ x, y, kind, t: 0, life: kind === "player" ? 0.46 : 0.3 });
       }
       return game;
     }
@@ -3589,6 +3804,71 @@
       }, {}));
     }
 
+    function normalizeInvaderBunker(bunker, fallback) {
+      const base = {
+        x: fallback?.x ?? bunker.x ?? 0,
+        y: fallback?.y ?? bunker.y ?? 850,
+        w: fallback?.w ?? bunker.w ?? 92,
+        h: fallback?.h ?? bunker.h ?? 56,
+        hp: bunker.hp ?? fallback?.hp ?? 12,
+        maxHp: bunker.maxHp ?? fallback?.maxHp ?? 12,
+        cells: Array.isArray(bunker.cells) ? bunker.cells.slice(0, 15) : []
+      };
+      while (base.cells.length < 15) {
+        base.cells.push(true);
+      }
+      if (!base.cells.some(Boolean)) {
+        base.cells = base.cells.map((_, index) => index < Math.max(0, base.hp) ? true : false);
+      }
+      repairBunkerCells(base);
+      return base;
+    }
+
+    function repairBunkerCells(bunker) {
+      const target = Math.max(0, Math.min(bunker.maxHp, Math.round(bunker.hp)));
+      const current = bunker.cells.filter(Boolean).length;
+      if (current > target) {
+        let remove = current - target;
+        for (let i = bunker.cells.length - 1; i >= 0 && remove > 0; i -= 1) {
+          if (bunker.cells[i]) {
+            bunker.cells[i] = false;
+            remove -= 1;
+          }
+        }
+      } else if (current < target) {
+        let add = target - current;
+        for (let i = 0; i < bunker.cells.length && add > 0; i += 1) {
+          if (!bunker.cells[i]) {
+            bunker.cells[i] = true;
+            add -= 1;
+          }
+        }
+      }
+    }
+
+    function damageInvaderBunker(bunker) {
+      if (bunker.hp <= 0) {
+        return;
+      }
+      bunker.hp -= 1;
+      const liveCells = bunker.cells.map((alive, index) => alive ? index : -1).filter((index) => index >= 0);
+      if (liveCells.length) {
+        const hitIndex = liveCells[Math.floor(Math.random() * liveCells.length)];
+        bunker.cells[hitIndex] = false;
+      }
+    }
+
+    function handleInvaderBunkerHits(bunkers, bullets) {
+      bunkers.forEach((bunker) => {
+        bullets.forEach((bullet) => {
+          if (bunker.hp > 0 && !bullet.hit && hitRect(bullet.x, bullet.y, bunker.x, bunker.y, bunker.w, bunker.h)) {
+            damageInvaderBunker(bunker);
+            bullet.hit = true;
+          }
+        });
+      });
+    }
+
     function updateHomingMissiles(missiles, dt) {
       missiles.forEach((missile) => {
         const dx = missile.tx - missile.x;
@@ -3607,6 +3887,162 @@
       const nearestX = clamp(cx, rx, rx + rw);
       const nearestY = clamp(cy, ry, ry + rh);
       return Math.hypot(cx - nearestX, cy - nearestY) <= r;
+    }
+
+    function drawZetaInvadersBackdrop(ctx2, game) {
+      ctx2.save();
+      ctx2.globalAlpha = 0.2;
+      for (let x = 44; x < 720; x += 128) {
+        ctx2.beginPath();
+        ctx2.moveTo(x, 1010);
+        ctx2.lineTo(x + 20, 944);
+        ctx2.lineTo(x + 40, 1010);
+        ctx2.stroke();
+      }
+      ctx2.restore();
+      drawLine(ctx2, 20, 936, 700, 936);
+      drawCenteredText(ctx2, "ROBCO BATTERY COMMAND", 360, 1018, 14);
+      drawCenteredText(ctx2, "WAVE " + game.wave, 104, 56, 14);
+      if (game.saucer) {
+        drawCenteredText(ctx2, "SKY CONTACT", 604, 56, 12);
+      }
+    }
+
+    function drawZetaPlayerCannon(ctx2, player, invulnerable) {
+      ctx2.save();
+      if (invulnerable) {
+        ctx2.globalAlpha = 0.35 + Math.sin(performance.now() * 0.02) * 0.25;
+      }
+      ctx2.strokeRect(player.x + 12, player.y + 12, player.w - 24, 14);
+      ctx2.strokeRect(player.x + 20, player.y + 4, player.w - 40, 10);
+      ctx2.beginPath();
+      ctx2.moveTo(player.x + player.w / 2, player.y - 10);
+      ctx2.lineTo(player.x + player.w / 2, player.y + 8);
+      ctx2.moveTo(player.x + 8, player.y + player.h);
+      ctx2.lineTo(player.x + 18, player.y + 18);
+      ctx2.lineTo(player.x + player.w - 18, player.y + 18);
+      ctx2.lineTo(player.x + player.w - 8, player.y + player.h);
+      ctx2.stroke();
+      ctx2.restore();
+    }
+
+    function drawZetaInvaderSprite(ctx2, invader, frame) {
+      const x = invader.x;
+      const y = invader.y;
+      const wobble = frame ? 2 : -2;
+      ctx2.strokeRect(x + 8, y + 6, invader.w - 16, invader.h - 12);
+      if (invader.type === "overseer") {
+        ctx2.beginPath();
+        ctx2.moveTo(x + 8, y + 10);
+        ctx2.lineTo(x + invader.w / 2, y);
+        ctx2.lineTo(x + invader.w - 8, y + 10);
+        ctx2.moveTo(x + 12, y + invader.h - 6);
+        ctx2.lineTo(x + 6, y + invader.h + wobble);
+        ctx2.moveTo(x + invader.w - 12, y + invader.h - 6);
+        ctx2.lineTo(x + invader.w - 6, y + invader.h - wobble);
+        ctx2.stroke();
+      } else if (invader.type === "raider") {
+        ctx2.beginPath();
+        ctx2.moveTo(x + 6, y + 12);
+        ctx2.lineTo(x, y + 6);
+        ctx2.moveTo(x + invader.w - 6, y + 12);
+        ctx2.lineTo(x + invader.w, y + 6);
+        ctx2.moveTo(x + 10, y + invader.h - 4);
+        ctx2.lineTo(x + 4, y + invader.h + wobble);
+        ctx2.moveTo(x + invader.w - 10, y + invader.h - 4);
+        ctx2.lineTo(x + invader.w - 4, y + invader.h - wobble);
+        ctx2.stroke();
+      } else {
+        ctx2.beginPath();
+        ctx2.moveTo(x + 8, y + 8);
+        ctx2.lineTo(x + 2, y + 18);
+        ctx2.moveTo(x + invader.w - 8, y + 8);
+        ctx2.lineTo(x + invader.w - 2, y + 18);
+        ctx2.moveTo(x + 10, y + invader.h - 4);
+        ctx2.lineTo(x + 10 + wobble, y + invader.h + 8);
+        ctx2.moveTo(x + invader.w - 10, y + invader.h - 4);
+        ctx2.lineTo(x + invader.w - 10 - wobble, y + invader.h + 8);
+        ctx2.stroke();
+      }
+      ctx2.beginPath();
+      ctx2.moveTo(x + 14, y + 14);
+      ctx2.lineTo(x + 18, y + 14);
+      ctx2.moveTo(x + invader.w - 18, y + 14);
+      ctx2.lineTo(x + invader.w - 14, y + 14);
+      ctx2.stroke();
+    }
+
+    function drawZetaSaucer(ctx2, saucer, frame) {
+      ctx2.strokeRect(saucer.x + 8, saucer.y + 8, saucer.w - 16, saucer.h - 10);
+      ctx2.beginPath();
+      ctx2.moveTo(saucer.x, saucer.y + 18);
+      ctx2.lineTo(saucer.x + 10, saucer.y + 8);
+      ctx2.lineTo(saucer.x + saucer.w - 10, saucer.y + 8);
+      ctx2.lineTo(saucer.x + saucer.w, saucer.y + 18);
+      ctx2.stroke();
+      ctx2.beginPath();
+      ctx2.moveTo(saucer.x + 14, saucer.y + saucer.h);
+      ctx2.lineTo(saucer.x + 18 + frame * 2, saucer.y + saucer.h + 8);
+      ctx2.moveTo(saucer.x + saucer.w - 14, saucer.y + saucer.h);
+      ctx2.lineTo(saucer.x + saucer.w - 18 - frame * 2, saucer.y + saucer.h + 8);
+      ctx2.stroke();
+    }
+
+    function drawZetaBunker(ctx2, bunker) {
+      ctx2.save();
+      ctx2.strokeRect(bunker.x, bunker.y + 12, bunker.w, bunker.h - 12);
+      ctx2.clearRect(bunker.x + bunker.w / 2 - 12, bunker.y + bunker.h - 16, 24, 24);
+      const cols = 5;
+      const rows = 3;
+      const cellW = bunker.w / cols;
+      const cellH = (bunker.h - 10) / rows;
+      bunker.cells.forEach((alive, index) => {
+        if (!alive) return;
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        const pad = 3;
+        ctx2.strokeRect(
+          bunker.x + col * cellW + pad,
+          bunker.y + row * cellH + pad,
+          cellW - pad * 2,
+          cellH - pad * 2
+        );
+      });
+      ctx2.restore();
+    }
+
+    function drawZetaPlayerBolt(ctx2, bullet) {
+      ctx2.fillRect(bullet.x, bullet.y, 4, 16);
+      ctx2.fillRect(bullet.x - 3, bullet.y + 5, 10, 2);
+    }
+
+    function drawZetaEnemyBolt(ctx2, bullet) {
+      ctx2.beginPath();
+      ctx2.moveTo(bullet.x, bullet.y);
+      ctx2.lineTo(bullet.x - 6, bullet.y + 10);
+      ctx2.lineTo(bullet.x + 3, bullet.y + 18);
+      ctx2.lineTo(bullet.x - 3, bullet.y + 28);
+      ctx2.stroke();
+    }
+
+    function drawZetaExplosion(ctx2, blast) {
+      const progress = blast.t / blast.life;
+      const radius = 8 + progress * (blast.kind === "saucer" ? 34 : blast.kind === "player" ? 28 : 18);
+      ctx2.save();
+      ctx2.globalAlpha = 1 - progress;
+      for (let i = 0; i < 2; i += 1) {
+        ctx2.beginPath();
+        ctx2.arc(blast.x, blast.y, radius - i * 8, 0, Math.PI * 2);
+        ctx2.stroke();
+      }
+      for (let i = 0; i < 8; i += 1) {
+        const angle = (Math.PI * 2 * i) / 8;
+        ctx2.beginPath();
+        ctx2.moveTo(blast.x + Math.cos(angle) * radius * 0.35, blast.y + Math.sin(angle) * radius * 0.35);
+        ctx2.lineTo(blast.x + Math.cos(angle) * radius, blast.y + Math.sin(angle) * radius);
+        ctx2.stroke();
+      }
+      ctx2.restore();
     }
 
     function drawPipfallBackdrop(ctx2, game) {

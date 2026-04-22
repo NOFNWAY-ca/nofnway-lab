@@ -9,6 +9,7 @@ Experimental site with live tool work and Cloudflare Functions.
 - `king-navigator.html` and `functions/api/bgg.js`
 
 ## Recent Changes
+- Refreshed the temporary `garage-terminal-preview.html` mobile test page with the rebuilt `ZETA INVADERS` pass, including original arcade-style sprites, stepped formation pacing, saucer runs, bunker damage visuals, and stronger wave behavior.
 - Added a temporary `garage-terminal-preview.html` page to NOFNWAY Lab for mobile testing of the Fallout-style garage terminal app, plus a matching temporary landing-page card.
 - Added shared sync workflow so Codex and Claude use the same handoff file.
 - Gave `charlie-bug/` a kid-facing art polish pass: smoother illustrated canvas rendering, brighter title screen, stronger collectible rings, richer garden/path depth, and cleaner HUD/joystick styling while preserving touch, keyboard, and gamepad controls.
