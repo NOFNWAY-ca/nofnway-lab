@@ -580,6 +580,36 @@
       opacity: 0.24;
     }
 
+    #wireCanvas {
+      width: 100%;
+      aspect-ratio: 1;
+      display: block;
+      touch-action: none;
+      cursor: pointer;
+      border: 1px solid var(--line);
+    }
+
+    .wire-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0 10px;
+    }
+
+    .wire-status {
+      font-size: 13px;
+    }
+
+    .wire-powered {
+      color: var(--ok);
+    }
+
+    .wire-hint {
+      text-align: center;
+      color: var(--muted);
+      padding-top: 8px;
+    }
+
     .game-overlay {
       display: none;
       flex-direction: column;
@@ -778,30 +808,40 @@
     <div class="hack-shell">
       <div class="hack-header">
         <div>
-          <div class="title">ROBCO SECURITY ACCESS</div>
-          <div class="subline">ENTER PASSWORD NOW</div>
+          <div class="title">ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL</div>
+          <div class="subline" id="hackSubline">ENTER PASSWORD NOW</div>
         </div>
         <div class="controls-row">
-          <div>
+          <div id="attemptsSection">
             <div class="tiny">ATTEMPTS REMAINING</div>
             <div class="attempts" id="attemptsView"></div>
           </div>
           <button id="hackSettingsBtn">SETTINGS</button>
         </div>
       </div>
-      <div class="hack-panel">
-        <div class="section-head">
-          <div class="section-title">MEMORY DUMP</div>
-          <button id="regenHackBtn">RELOAD</button>
+      <div id="hackGameContent">
+        <div class="hack-panel">
+          <div class="section-head">
+            <div class="section-title">MEMORY DUMP</div>
+            <button id="regenHackBtn">RELOAD</button>
+          </div>
+          <div class="hack-grid" id="hackGrid"></div>
         </div>
-        <div class="hack-grid" id="hackGrid"></div>
+        <div class="hack-panel">
+          <div class="section-head">
+            <div class="section-title">TERMINAL LOG</div>
+            <button id="hackHelpBtn">HELP</button>
+          </div>
+          <div class="hack-log" id="hackLog"></div>
+        </div>
       </div>
-      <div class="hack-panel">
-        <div class="section-head">
-          <div class="section-title">TERMINAL LOG</div>
-          <button id="hackHelpBtn">HELP</button>
+      <div id="wireGameContent" class="hidden">
+        <div class="wire-status-bar">
+          <div class="tiny">CONDUIT STATUS</div>
+          <div id="wireStatus" class="wire-status">INITIALIZING...</div>
         </div>
-        <div class="hack-log" id="hackLog"></div>
+        <canvas id="wireCanvas"></canvas>
+        <div class="tiny wire-hint">TAP TILES TO ROTATE — ALIGN ALL CONDUITS TO POWER SOURCE</div>
       </div>
     </div>
   </div>
@@ -919,7 +959,7 @@
       { id: "atomic-command", name: "ATOMIC COMMAND", description: "PROTECT THREE SILOS FROM FALLING WARHEADS." },
       { id: "zeta-invaders", name: "ZETA INVADERS", description: "ZETAN RAIDERS DESCEND IN WAVES. HOLD THE ROBCO BATTERY." },
       { id: "pipfall", name: "PIPFALL", description: "RUN THE WASTELAND, CLEAR HAZARDS, COLLECT CAPS." },
-      { id: "red-menace", name: "RED MENACE", description: "CLIMB LADDERS, DODGE BARRELS, REACH THE CAPTIVE." },
+      { id: "red-menace", name: "RED MENACE", description: "ASCEND THE GIRDER MAZE, EVADE BARRELS, RESCUE THE DWELLER." },
       { id: "rad-pong", name: "RAD PONG", description: "SUPER MUTANTS BAT A LIVE GRENADE ACROSS THE WASTELAND." },
       { id: "zeta-launch", name: "ZETA LAUNCH PROTOCOL", description: "STACK ROCKET STAGES TRUE OR WATCH THE LAUNCH FAIL." }
     ];
@@ -942,6 +982,7 @@
       haDevices: {},
       haConnected: false,
       hackGame: null,
+      wireGame: null,
       audioReady: false,
       audioCtx: null,
       activeGame: null,
@@ -989,6 +1030,12 @@
       activeThemeLabel: document.getElementById("activeThemeLabel"),
       topline: document.getElementById("topline"),
       hackOverlay: document.getElementById("hackOverlay"),
+      hackGameContent: document.getElementById("hackGameContent"),
+      wireGameContent: document.getElementById("wireGameContent"),
+      wireCanvas: document.getElementById("wireCanvas"),
+      wireStatus: document.getElementById("wireStatus"),
+      hackSubline: document.getElementById("hackSubline"),
+      attemptsSection: document.getElementById("attemptsSection"),
       hackGrid: document.getElementById("hackGrid"),
       attemptsView: document.getElementById("attemptsView"),
       hackLog: document.getElementById("hackLog"),
@@ -1236,10 +1283,18 @@
         el.hackOverlay.classList.remove("active");
         return;
       }
-      createHackGame();
+      if (Math.random() < 0.5) {
+        createWireGame();
+      } else {
+        createHackGame();
+      }
     }
 
     function createHackGame() {
+      el.wireGameContent.classList.add("hidden");
+      el.hackGameContent.classList.remove("hidden");
+      el.attemptsSection.classList.remove("hidden");
+      el.hackSubline.textContent = "ENTER PASSWORD NOW";
       const words = shuffle([
         "SECURITY", "OVERSEER", "WORKSHOP", "DELIVERY", "MONITORS", "OVERHAUL",
         "BACKROOM", "HARDWARE", "BASEMENT", "FREEZERS", "WARHEADS", "TERMINAL",
@@ -1425,6 +1480,214 @@
         }
       }
       return likeness;
+    }
+
+    // ---- Wire Puzzle (Conduit Alignment) ----
+    const WIRE_SIZE = 4;
+    const WIRE_DIRS = [
+      { bit: 1, dr: -1, dc: 0, opp: 4 },
+      { bit: 2, dr: 0,  dc: 1, opp: 8 },
+      { bit: 4, dr: 1,  dc: 0, opp: 1 },
+      { bit: 8, dr: 0,  dc: -1, opp: 2 }
+    ];
+
+    function wireRotateMask(mask) {
+      let out = 0;
+      if (mask & 1) out |= 2;
+      if (mask & 2) out |= 4;
+      if (mask & 4) out |= 8;
+      if (mask & 8) out |= 1;
+      return out;
+    }
+
+    function wireGenerate() {
+      const n = WIRE_SIZE * WIRE_SIZE;
+      const cells = Array.from({ length: n }, () => ({ solved: 0, current: 0 }));
+      const visited = new Array(n).fill(false);
+      const idx = (r, c) => r * WIRE_SIZE + c;
+      function dfs(r, c) {
+        visited[idx(r, c)] = true;
+        const dirs = shuffle([...WIRE_DIRS]);
+        for (const d of dirs) {
+          const nr = r + d.dr;
+          const nc = c + d.dc;
+          if (nr >= 0 && nr < WIRE_SIZE && nc >= 0 && nc < WIRE_SIZE && !visited[idx(nr, nc)]) {
+            cells[idx(r, c)].solved |= d.bit;
+            cells[idx(nr, nc)].solved |= d.opp;
+            dfs(nr, nc);
+          }
+        }
+      }
+      dfs(0, 0);
+      cells.forEach((cell) => {
+        const rotations = Math.floor(Math.random() * 4);
+        cell.current = cell.solved;
+        for (let i = 0; i < rotations; i++) cell.current = wireRotateMask(cell.current);
+      });
+      return cells;
+    }
+
+    function wireComputePower(cells) {
+      const powered = new Set([0]);
+      const queue = [0];
+      const idx = (r, c) => r * WIRE_SIZE + c;
+      while (queue.length) {
+        const i = queue.shift();
+        const r = Math.floor(i / WIRE_SIZE);
+        const c = i % WIRE_SIZE;
+        for (const d of WIRE_DIRS) {
+          const nr = r + d.dr;
+          const nc = c + d.dc;
+          if (nr < 0 || nr >= WIRE_SIZE || nc < 0 || nc >= WIRE_SIZE) continue;
+          const ni = idx(nr, nc);
+          if (powered.has(ni)) continue;
+          if ((cells[i].current & d.bit) && (cells[ni].current & d.opp)) {
+            powered.add(ni);
+            queue.push(ni);
+          }
+        }
+      }
+      return powered;
+    }
+
+    function createWireGame() {
+      if (state.wireGame && state.wireGame._listening) {
+        el.wireCanvas.removeEventListener("click", wireHandleClick);
+        el.wireCanvas.removeEventListener("touchend", wireHandleTap);
+      }
+      el.hackGameContent.classList.add("hidden");
+      el.wireGameContent.classList.remove("hidden");
+      el.attemptsSection.classList.add("hidden");
+      el.hackSubline.textContent = "CONDUIT ALIGNMENT REQUIRED";
+      state.wireGame = { cells: wireGenerate(), won: false, _listening: true };
+      el.wireCanvas.addEventListener("click", wireHandleClick);
+      el.wireCanvas.addEventListener("touchend", wireHandleTap);
+      renderWireGame();
+    }
+
+    function renderWireGame() {
+      const powered = wireComputePower(state.wireGame.cells);
+      const won = powered.size === WIRE_SIZE * WIRE_SIZE;
+      state.wireGame.won = won;
+      const total = WIRE_SIZE * WIRE_SIZE;
+      el.wireStatus.textContent = won ? "ALL CONDUITS ACTIVE" : powered.size + " / " + total + " NODES POWERED";
+      el.wireStatus.className = "wire-status" + (won ? " wire-powered" : "");
+      drawWireCanvas(powered, won);
+      if (won) {
+        playSound("success");
+        setTimeout(() => {
+          el.wireGameContent.classList.add("hidden");
+          el.hackOverlay.classList.remove("active");
+          el.wireCanvas.removeEventListener("click", wireHandleClick);
+          el.wireCanvas.removeEventListener("touchend", wireHandleTap);
+          state.wireGame = null;
+        }, 900);
+      }
+    }
+
+    function drawWireCanvas(powered, won) {
+      const canvas = el.wireCanvas;
+      const size = canvas.offsetWidth || 320;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      const cellSize = size / WIRE_SIZE;
+      const half = cellSize / 2;
+      const pipeW = Math.max(4, Math.round(cellSize * 0.2));
+      const themeColors = {
+        green: { bg: "#0a1a0a", dim: "#112211", pipe: "#20c20e", glow: "#20c20e", source: "#f9a825" },
+        amber: { bg: "#1a1200", dim: "#261a00", pipe: "#ffb300", glow: "#ffb300", source: "#f9a825" },
+        blue:  { bg: "#050e1a", dim: "#0a152a", pipe: "#2288ff", glow: "#22ddff", source: "#f9a825" },
+        red:   { bg: "#1a0505", dim: "#2a0808", pipe: "#ff3333", glow: "#ff6600", source: "#f9a825" }
+      };
+      const col = themeColors[state.settings.theme] || themeColors.green;
+      ctx.clearRect(0, 0, size, size);
+
+      for (let r = 0; r < WIRE_SIZE; r++) {
+        for (let c = 0; c < WIRE_SIZE; c++) {
+          const i = r * WIRE_SIZE + c;
+          const cx = c * cellSize;
+          const cy = r * cellSize;
+          const isPowered = powered.has(i);
+          const isSource = i === 0;
+          const mask = state.wireGame.cells[i].current;
+
+          ctx.fillStyle = isPowered ? col.dim : col.bg;
+          ctx.fillRect(cx + 1, cy + 1, cellSize - 2, cellSize - 2);
+
+          ctx.strokeStyle = "rgba(255,255,255,0.06)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(cx + 0.5, cy + 0.5, cellSize - 1, cellSize - 1);
+
+          const pipeColor = isSource ? col.source : (isPowered ? col.pipe : "rgba(255,255,255,0.18)");
+
+          if (isPowered || isSource) {
+            ctx.shadowColor = isSource ? col.source : col.glow;
+            ctx.shadowBlur = 10;
+          }
+
+          ctx.strokeStyle = pipeColor;
+          ctx.lineWidth = pipeW;
+          ctx.lineCap = "square";
+          ctx.beginPath();
+          if (mask & 1) { ctx.moveTo(cx + half, cy + half); ctx.lineTo(cx + half, cy + 2); }
+          if (mask & 2) { ctx.moveTo(cx + half, cy + half); ctx.lineTo(cx + cellSize - 2, cy + half); }
+          if (mask & 4) { ctx.moveTo(cx + half, cy + half); ctx.lineTo(cx + half, cy + cellSize - 2); }
+          if (mask & 8) { ctx.moveTo(cx + half, cy + half); ctx.lineTo(cx + 2, cy + half); }
+          ctx.stroke();
+
+          ctx.fillStyle = pipeColor;
+          ctx.fillRect(cx + half - pipeW / 2, cy + half - pipeW / 2, pipeW, pipeW);
+
+          ctx.shadowBlur = 0;
+
+          if (isSource) {
+            ctx.strokeStyle = col.source;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = col.source;
+            ctx.shadowBlur = 6;
+            ctx.strokeRect(cx + 4, cy + 4, cellSize - 8, cellSize - 8);
+            ctx.shadowBlur = 0;
+          }
+        }
+      }
+
+      if (won) {
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillRect(0, 0, size, size);
+        ctx.shadowColor = col.glow;
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = col.pipe;
+        ctx.font = "bold " + Math.round(size / 9) + "px 'Share Tech Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("ACCESS GRANTED", size / 2, size / 2);
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function wireHandleClick(e) {
+      e.preventDefault();
+      const rect = el.wireCanvas.getBoundingClientRect();
+      wireTapAt(e.clientX - rect.left, e.clientY - rect.top, rect.width, rect.height);
+    }
+
+    function wireHandleTap(e) {
+      e.preventDefault();
+      if (!e.changedTouches.length) return;
+      const t = e.changedTouches[0];
+      const rect = el.wireCanvas.getBoundingClientRect();
+      wireTapAt(t.clientX - rect.left, t.clientY - rect.top, rect.width, rect.height);
+    }
+
+    function wireTapAt(x, y, w, h) {
+      if (!state.wireGame || state.wireGame.won) return;
+      const c = Math.floor((x / w) * WIRE_SIZE);
+      const r = Math.floor((y / h) * WIRE_SIZE);
+      if (r < 0 || r >= WIRE_SIZE || c < 0 || c >= WIRE_SIZE) return;
+      state.wireGame.cells[r * WIRE_SIZE + c].current = wireRotateMask(state.wireGame.cells[r * WIRE_SIZE + c].current);
+      playSound("click");
+      renderWireGame();
     }
 
     async function startPolling() {
@@ -3324,6 +3587,8 @@
         player: { x: 70, y: 904, w: 28, h: 44, vy: 0, climbing: false },
         barrels: [],
         barrelTimer: 1.1,
+        barrelPhase: 0,
+        invulnerable: 0,
         gameOver: false,
         message: "REACH THE VAULT DWELLER"
       };
@@ -3340,15 +3605,19 @@
           { label: "◄", handler: (on) => state.keys.arrowleft = on },
           { label: "▲", handler: (on) => state.keys.arrowup = on },
           { label: "►", handler: (on) => state.keys.arrowright = on },
-          { label: "◄", handler: (on) => state.keys.arrowleft = on },
           { label: "JUMP", handler: (on) => on && jump() },
           { label: "▼", handler: (on) => state.keys.arrowdown = on }
         ],
         update(dt) {
           if (savedData && !game.loaded) {
             game.loaded = true;
+            if (typeof game.invulnerable !== "number") {
+              game.invulnerable = game.invulnerable ? 0.4 : 0;
+            }
           }
           if (game.gameOver) return;
+          game.invulnerable = Math.max(0, game.invulnerable - dt);
+          game.barrelPhase += dt * 6;
           const ladder = activeLadder();
           if (ladder && state.keys.arrowup) {
             game.player.climbing = true;
@@ -3375,10 +3644,19 @@
           game.barrelTimer -= dt;
           if (game.barrelTimer <= 0) {
             game.barrelTimer = Math.max(0.55, 1.6 - game.level * 0.07);
-            game.barrels.push({ x: 580, y: 138, vx: -120 - game.level * 10, floor: 4, radius: 14 });
+            game.barrels.push({
+              x: 580,
+              y: 138,
+              vx: -120 - game.level * 10,
+              floor: 4,
+              radius: 14,
+              spin: 0,
+              heat: 0.7 + Math.random() * 0.3
+            });
           }
           game.barrels.forEach((barrel) => {
             barrel.x += barrel.vx * dt;
+            barrel.spin = (barrel.spin || 0) + (barrel.vx / Math.max(8, barrel.radius * 3.2)) * dt;
             const floor = platforms[Math.max(0, Math.min(platforms.length - 1, barrel.floor))];
             barrel.y = platformY(floor, barrel.x) - barrel.radius;
             if (barrel.x <= floor.x1 + 10 || barrel.x >= floor.x2 - 10) {
@@ -3386,6 +3664,7 @@
               barrel.floor = clamp(barrel.floor, 0, platforms.length - 1);
               barrel.vx *= -1;
               game.score += 5;
+              playSound("beep");
             }
             if (circleHitsRect(barrel.x, barrel.y, barrel.radius, game.player.x, game.player.y, game.player.w, game.player.h)) {
               loseLife();
@@ -3412,21 +3691,11 @@
           ctx2.scale(scaleX, scaleY);
           ctx2.strokeStyle = getCss("--text");
           ctx2.fillStyle = getCss("--text");
-          platforms.forEach((platform) => {
-            ctx2.beginPath();
-            ctx2.moveTo(platform.x1, platformY(platform, platform.x1));
-            ctx2.lineTo(platform.x2, platformY(platform, platform.x2));
-            ctx2.stroke();
-          });
-          ladders.forEach((ladder) => ctx2.strokeRect(ladder.x, ladder.y2, 20, ladder.y1 - ladder.y2));
-          ctx2.strokeRect(game.player.x, game.player.y, game.player.w, game.player.h);
-          ctx2.strokeRect(game.mutant.x, game.mutant.y, game.mutant.w, game.mutant.h);
-          ctx2.strokeRect(game.target.x, game.target.y, game.target.w, game.target.h);
-          game.barrels.forEach((barrel) => {
-            ctx2.beginPath();
-            ctx2.arc(barrel.x, barrel.y, barrel.radius, 0, Math.PI * 2);
-            ctx2.stroke();
-          });
+          drawRedMenaceBackdrop(ctx2, game, platforms, ladders, platformY);
+          game.barrels.forEach((barrel) => drawRedMenaceBarrel(ctx2, barrel));
+          drawRedMenaceMutant(ctx2, game.mutant, game.level);
+          drawRedMenaceCaptive(ctx2, game.target, game.level);
+          drawRedMenaceRunner(ctx2, game.player, game.invulnerable > 0);
           drawCenteredText(ctx2, game.message, 360, 70, 18);
           if (game.gameOver) {
             drawCenteredText(ctx2, "THE MUTANT PREVAILS", 360, 520, 28);
@@ -3439,7 +3708,7 @@
         serialize() {
           return {
             summary: "SCORE " + game.score + " | LEVEL " + game.level,
-            data: snapshotGameState(game, ["level", "score", "lives", "player", "barrels", "barrelTimer", "gameOver", "message"])
+            data: snapshotGameState(game, ["level", "score", "lives", "player", "barrels", "barrelTimer", "barrelPhase", "invulnerable", "gameOver", "message"])
           };
         },
         onKeyDown(event) {
@@ -3469,22 +3738,24 @@
         playSound("click");
       }
       function loseLife() {
-        if (game.invulnerable) return;
+        if (game.invulnerable > 0) return;
         game.lives -= 1;
-        game.invulnerable = true;
+        game.invulnerable = 0.75;
         game.player.x = 70;
         game.player.y = 904;
         game.player.vy = 0;
         game.barrels = [];
         game.message = "BARREL HIT";
         playSound("error");
-        setTimeout(() => {
-          game.invulnerable = false;
-          game.message = "REACH THE VAULT DWELLER";
-        }, 600);
         if (game.lives <= 0) {
           game.gameOver = true;
           storeHighScore(game.id, game.score);
+        } else {
+          window.setTimeout(() => {
+            if (!game.gameOver) {
+              game.message = "REACH THE VAULT DWELLER";
+            }
+          }, 600);
         }
       }
       return game;
@@ -4163,6 +4434,203 @@
         ctx2.lineTo(x + Math.cos(angle) * outer, y + Math.sin(angle) * outer);
         ctx2.stroke();
       }
+      ctx2.restore();
+    }
+
+    function drawRedMenaceBackdrop(ctx2, game, platforms, ladders, platformY) {
+      ctx2.save();
+      ctx2.globalAlpha = 0.18;
+      for (let i = 0; i < 34; i += 1) {
+        const x = 24 + (i * 41) % 720;
+        const y = 108 + (i * 73) % 960;
+        ctx2.beginPath();
+        ctx2.moveTo(x, y);
+        ctx2.lineTo(x + 6, y + 10);
+        ctx2.lineTo(x - 6, y + 10);
+        ctx2.closePath();
+        ctx2.stroke();
+      }
+      ctx2.restore();
+      drawCenteredText(ctx2, "ROBCO GIRDERS - LEVEL " + game.level, 360, 48, 14);
+      drawCenteredText(ctx2, "BARREL THREAT " + Math.min(9, game.level), 596, 48, 12);
+      drawLine(ctx2, 24, 1002, 696, 1002);
+      platforms.forEach((platform, index) => drawRedMenacePlatform(ctx2, platform, index, platformY));
+      ladders.forEach((ladder) => drawRedMenaceLadder(ctx2, ladder));
+      ctx2.save();
+      ctx2.globalAlpha = 0.3;
+      ctx2.strokeRect(520, 84, 168, 70);
+      ctx2.beginPath();
+      ctx2.moveTo(532, 148);
+      ctx2.lineTo(676, 148);
+      ctx2.stroke();
+      ctx2.restore();
+    }
+
+    function drawRedMenacePlatform(ctx2, platform, index, platformY) {
+      const y1 = platformY(platform, platform.x1);
+      const y2 = platformY(platform, platform.x2);
+      const slope = (y2 - y1) / (platform.x2 - platform.x1);
+      ctx2.save();
+      ctx2.lineWidth = 3;
+      ctx2.beginPath();
+      ctx2.moveTo(platform.x1, y1);
+      ctx2.lineTo(platform.x2, y2);
+      ctx2.stroke();
+      ctx2.lineWidth = 1.5;
+      for (let x = platform.x1 + 18; x < platform.x2; x += 56) {
+        const y = y1 + (x - platform.x1) * slope;
+        ctx2.beginPath();
+        ctx2.moveTo(x - 14, y - 10);
+        ctx2.lineTo(x + 14, y + 10);
+        ctx2.moveTo(x - 14, y + 10);
+        ctx2.lineTo(x + 14, y - 10);
+        ctx2.stroke();
+        ctx2.beginPath();
+        ctx2.arc(x - 18, y, 1.5, 0, Math.PI * 2);
+        ctx2.arc(x + 18, y, 1.5, 0, Math.PI * 2);
+        ctx2.stroke();
+      }
+      if (index > 0 && index < 5) {
+        const labelX = platform.x1 + 54;
+        const labelY = y1 + slope * 54 - 18;
+        drawCenteredText(ctx2, "G" + (index + 1), labelX, labelY, 10);
+      }
+      ctx2.restore();
+    }
+
+    function drawRedMenaceLadder(ctx2, ladder) {
+      ctx2.save();
+      ctx2.strokeRect(ladder.x, ladder.y2, 20, ladder.y1 - ladder.y2);
+      for (let y = ladder.y2 + 12; y < ladder.y1 - 6; y += 18) {
+        ctx2.beginPath();
+        ctx2.moveTo(ladder.x + 2, y);
+        ctx2.lineTo(ladder.x + 18, y);
+        ctx2.stroke();
+      }
+      ctx2.restore();
+    }
+
+    function drawRedMenaceRunner(ctx2, player, invulnerable) {
+      ctx2.save();
+      ctx2.translate(player.x, player.y);
+      if (invulnerable) {
+        ctx2.globalAlpha = 0.35 + Math.sin(performance.now() * 0.03) * 0.25;
+      }
+      const frame = Math.floor(performance.now() / 120) % 2;
+      const center = player.w / 2;
+      const headX = center + (player.climbing ? 0 : (frame === 0 ? -1.5 : 1.5));
+      ctx2.strokeRect(headX - 7, 0, 14, 14);
+      ctx2.beginPath();
+      ctx2.moveTo(center, 14);
+      ctx2.lineTo(center, 29);
+      ctx2.moveTo(center - 9, 18);
+      ctx2.lineTo(center + 9, player.climbing ? 20 : 23);
+      if (player.climbing) {
+        ctx2.moveTo(center - 7, 17);
+        ctx2.lineTo(center - 13, 27);
+        ctx2.moveTo(center + 7, 21);
+        ctx2.lineTo(center + 13, 31);
+        ctx2.moveTo(center, 29);
+        ctx2.lineTo(center - 7, 42);
+        ctx2.moveTo(center, 29);
+        ctx2.lineTo(center + 7, 42);
+      } else if (player.vy !== 0) {
+        ctx2.moveTo(center, 29);
+        ctx2.lineTo(center - 10, 38);
+        ctx2.moveTo(center, 29);
+        ctx2.lineTo(center + 12, 35);
+      } else {
+        ctx2.moveTo(center, 29);
+        ctx2.lineTo(center - 9, frame === 0 ? 41 : 36);
+        ctx2.moveTo(center, 29);
+        ctx2.lineTo(center + 9, frame === 0 ? 36 : 41);
+      }
+      ctx2.stroke();
+      ctx2.restore();
+    }
+
+    function drawRedMenaceMutant(ctx2, mutant, level) {
+      ctx2.save();
+      ctx2.translate(mutant.x, mutant.y);
+      const snarl = Math.sin(performance.now() * 0.003) * 2;
+      ctx2.strokeRect(10, 12, 42, 22);
+      ctx2.beginPath();
+      ctx2.moveTo(4, 24);
+      ctx2.lineTo(14, 12);
+      ctx2.lineTo(14, 36);
+      ctx2.moveTo(58, 24);
+      ctx2.lineTo(48, 12);
+      ctx2.lineTo(48, 36);
+      ctx2.moveTo(22, 34);
+      ctx2.lineTo(18, 48);
+      ctx2.moveTo(40, 34);
+      ctx2.lineTo(44, 48);
+      ctx2.moveTo(18, 18);
+      ctx2.lineTo(22, 18 + snarl);
+      ctx2.moveTo(40, 18);
+      ctx2.lineTo(36, 18 + snarl);
+      ctx2.moveTo(23, 28);
+      ctx2.lineTo(39, 28);
+      ctx2.moveTo(18, 8);
+      ctx2.lineTo(22, 2);
+      ctx2.moveTo(44, 8);
+      ctx2.lineTo(40, 2);
+      ctx2.stroke();
+      drawCenteredText(ctx2, "MUTANT", 31, -4, 10);
+      drawCenteredText(ctx2, "MK " + level, 31, 62, 10);
+      ctx2.restore();
+    }
+
+    function drawRedMenaceCaptive(ctx2, target, level) {
+      ctx2.save();
+      ctx2.translate(target.x, target.y);
+      const pulse = 0.35 + ((Math.sin(performance.now() * 0.005) + 1) * 0.2);
+      ctx2.globalAlpha = pulse;
+      ctx2.beginPath();
+      ctx2.moveTo(17, -8);
+      ctx2.lineTo(24, 8);
+      ctx2.lineTo(10, 8);
+      ctx2.closePath();
+      ctx2.stroke();
+      ctx2.globalAlpha = 1;
+      ctx2.strokeRect(10, 4, 14, 14);
+      ctx2.beginPath();
+      ctx2.moveTo(17, 18);
+      ctx2.lineTo(17, 32);
+      ctx2.moveTo(8, 23);
+      ctx2.lineTo(26, 23);
+      ctx2.moveTo(17, 32);
+      ctx2.lineTo(10, 42);
+      ctx2.moveTo(17, 32);
+      ctx2.lineTo(24, 42);
+      ctx2.stroke();
+      drawCenteredText(ctx2, "DWELLER", 17, 58, 10);
+      if (level >= 4) {
+        drawCenteredText(ctx2, "HOLD FAST", 17, -18, 10);
+      }
+      ctx2.restore();
+    }
+
+    function drawRedMenaceBarrel(ctx2, barrel) {
+      ctx2.save();
+      ctx2.translate(barrel.x, barrel.y);
+      ctx2.rotate(barrel.spin || 0);
+      ctx2.beginPath();
+      ctx2.arc(0, 0, barrel.radius, 0, Math.PI * 2);
+      ctx2.stroke();
+      ctx2.strokeRect(-barrel.radius + 3, -barrel.radius + 5, (barrel.radius - 3) * 2, (barrel.radius - 5) * 2);
+      ctx2.beginPath();
+      ctx2.moveTo(-barrel.radius + 1, -4);
+      ctx2.lineTo(barrel.radius - 1, 4);
+      ctx2.moveTo(-barrel.radius + 1, 4);
+      ctx2.lineTo(barrel.radius - 1, -4);
+      ctx2.stroke();
+      ctx2.restore();
+      ctx2.save();
+      ctx2.globalAlpha = 0.16 * (barrel.heat || 1);
+      ctx2.beginPath();
+      ctx2.arc(barrel.x, barrel.y, barrel.radius + 7, 0, Math.PI * 2);
+      ctx2.stroke();
       ctx2.restore();
     }
 
