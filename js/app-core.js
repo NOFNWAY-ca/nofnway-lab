@@ -249,6 +249,12 @@
       window.addEventListener("keyup", (event) => {
         state.keys[event.key.toLowerCase()] = false;
       });
+      window.addEventListener("blur", resetInputState);
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          resetInputState();
+        }
+      });
       document.addEventListener("pointerdown", initAudioContext, { once: true });
     }
 
@@ -356,6 +362,10 @@
       root.style.setProperty("--glow", theme.glow);
       el.topline.textContent = "LOCAL ACCESS NODE | " + themeName.toUpperCase() + " PROFILE";
       renderSettingsButtons();
+    }
+
+    function resetInputState() {
+      state.keys = {};
     }
 
     function maybeShowHackScreen() {
@@ -493,7 +503,7 @@
     }
 
     function appendHackLog(line, silent = false) {
-      if (!silent) {
+      if (!silent && state.hackGame) {
         state.hackGame.logs.push(line);
       }
       const entry = document.createElement("div");
@@ -603,7 +613,7 @@
       }
       dfs(0, 0);
       cells.forEach((cell) => {
-        const rotations = Math.floor(Math.random() * 4);
+        const rotations = Math.floor(Math.random() * 3) + 1;
         cell.current = cell.solved;
         for (let i = 0; i < rotations; i++) cell.current = wireRotateMask(cell.current);
       });
@@ -642,7 +652,9 @@
       el.wireGameContent.classList.remove("hidden");
       el.attemptsSection.classList.add("hidden");
       el.hackSubline.textContent = "CONDUIT ALIGNMENT REQUIRED";
-      state.wireGame = { cells: wireGenerate(), won: false, _listening: true };
+      let cells;
+      do { cells = wireGenerate(); } while (wireComputePower(cells).size === WIRE_SIZE * WIRE_SIZE);
+      state.wireGame = { cells, won: false, _listening: true };
       el.wireCanvas.addEventListener("click", wireHandleClick);
       el.wireCanvas.addEventListener("touchend", wireHandleTap);
       requestAnimationFrame(renderWireGame);

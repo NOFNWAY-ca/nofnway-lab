@@ -9,6 +9,7 @@ Experimental site with live tool work and Cloudflare Functions.
 - `king-navigator.html` and `functions/api/bgg.js`
 
 ## Recent Changes
+- Refreshed the temporary `garage-terminal-preview.html` mobile test page with a bug-sweep pass that clears stuck inputs on blur, tab hide, game launch/exit, and touch-control pointer cancellation.
 - Refreshed the temporary `garage-terminal-preview.html` mobile test page with the refactored multi-file garage terminal build, including external JS modules, storage migration guards, and quieter Home Assistant offline alerting.
 - Refreshed the temporary `garage-terminal-preview.html` mobile test page with the rebuilt `RED MENACE` pass, including authored girder-stage art, character silhouettes, animated barrels, and cleaner in-game feedback.
 - Refreshed the temporary `garage-terminal-preview.html` mobile test page with the rebuilt `ZETA INVADERS` pass, including original arcade-style sprites, stepped formation pacing, saucer runs, bunker damage visuals, and stronger wave behavior.

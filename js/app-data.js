@@ -522,6 +522,7 @@
         return;
       }
       stopGameLoop();
+      resetInputState();
       el.gameCanvas.onclick = null;
       state.activeGame = factory(savedData);
       el.gameTitle.textContent = state.activeGame.name;
@@ -550,8 +551,20 @@
         const press = (value) => {
           control.handler(value);
         };
-        button.addEventListener("pointerdown", () => press(true));
-        button.addEventListener("pointerup", () => press(false));
+        button.addEventListener("pointerdown", (event) => {
+          if (button.setPointerCapture) {
+            button.setPointerCapture(event.pointerId);
+          }
+          press(true);
+        });
+        button.addEventListener("pointerup", (event) => {
+          if (button.releasePointerCapture && button.hasPointerCapture?.(event.pointerId)) {
+            button.releasePointerCapture(event.pointerId);
+          }
+          press(false);
+        });
+        button.addEventListener("pointercancel", () => press(false));
+        button.addEventListener("lostpointercapture", () => press(false));
         button.addEventListener("pointerleave", () => press(false));
         el.touchControls.appendChild(button);
       });
@@ -586,6 +599,7 @@
         storeGameSave(state.activeGame.id, state.activeGame.serialize());
       }
       stopGameLoop();
+      resetInputState();
       el.gameCanvas.onclick = null;
       state.activeGame = null;
       el.gameOverlay.classList.remove("active");
