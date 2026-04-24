@@ -448,6 +448,144 @@ button.small { padding: 4px 10px; font-size: 12px; }
 }
 .detail-actions { display: flex; gap: 8px; margin-top: 16px; }
 
+#collection-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  z-index: 130;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#collection-overlay.open { display: flex; }
+#collection-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-top: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 22px;
+  max-width: 720px;
+  width: 100%;
+  max-height: 84vh;
+  overflow-y: auto;
+}
+#collection-panel h3 {
+  margin-bottom: 6px;
+  font-size: 18px;
+}
+.collection-subtext {
+  color: var(--dim);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.collection-error {
+  color: #fff;
+  background: rgba(192, 57, 43, 0.16);
+  border: 1px solid rgba(192, 57, 43, 0.45);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.collection-warning {
+  color: var(--warn);
+  background: rgba(230, 126, 34, 0.12);
+  border: 1px solid rgba(230, 126, 34, 0.35);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.collection-progress {
+  height: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 12px 0 8px;
+}
+.collection-progress > div {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.15s;
+}
+.collection-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.collection-stat {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.collection-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  align-items: center;
+}
+.collection-controls input[type="text"] {
+  flex: 1;
+  min-width: 180px;
+}
+.collection-list {
+  max-height: 340px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+}
+.collection-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.collection-row:last-child { border-bottom: none; }
+.collection-row label {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  cursor: pointer;
+}
+.collection-row input[type="checkbox"] {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+.collection-row-body {
+  flex: 1;
+  min-width: 0;
+}
+.collection-row-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+.collection-row-meta {
+  color: var(--dim);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.collection-row-extra {
+  color: var(--dim);
+  font-size: 12px;
+  margin-top: 3px;
+}
+.collection-empty {
+  color: var(--dim);
+  font-size: 13px;
+  padding: 20px 14px;
+  text-align: center;
+}
+
 #template-overlay {
   display: none;
   position: fixed;
@@ -1390,14 +1528,21 @@ mark {
   }
 
   #game-detail-overlay,
-  #template-overlay {
+  #template-overlay,
+  #collection-overlay {
     padding: 10px;
   }
 
   #game-detail-panel,
-  #template-panel {
+  #template-panel,
+  #collection-panel {
     padding: 18px;
     max-height: 88vh;
+  }
+
+  .collection-controls {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   #bgg-attribution {
@@ -1451,6 +1596,7 @@ mark {
     <div id="search-row">
       <input type="text" id="search-input" placeholder="Search viewed games, or paste a BGG URL / ID..." />
       <button onclick="searchBGG()">Search</button>
+      <button class="ghost" onclick="openCollectionOverlay()"><span id="collection-trigger-label">Import BGG</span></button>
     </div>
     <div id="search-hint" style="font-size:12px;color:var(--dim);margin-bottom:12px;padding-left:2px">
       Search checks games you have already viewed first, then asks BGG if needed. You can search by name, or paste a BoardGameGeek URL or numeric BGG ID.
@@ -1589,6 +1735,13 @@ mark {
   </div>
 </div>
 
+<!-- BGG COLLECTION OVERLAY -->
+<div id="collection-overlay" onclick="closeOverlayIfBg(event, 'collection-overlay')">
+  <div id="collection-panel">
+    <div id="collection-content"></div>
+  </div>
+</div>
+
 <!-- NEW SESSION OVERLAY -->
 <div id="new-session-overlay" onclick="closeOverlayIfBg(event, 'new-session-overlay')">
   <div id="new-session-panel">
@@ -1645,6 +1798,11 @@ mark {
 // User-built BGG cache: local results come only from games this browser has
 // already viewed or saved. No seed catalog is loaded.
 const BGG_CACHE_KEY = 'king_bgg_cache';
+const BGG_USERNAME_KEY = 'bgg_username';
+const BGG_COLLECTION_KEY = 'bgg_collection';
+const BGG_PLAY_COUNTS_KEY = 'bgg_play_counts';
+const BGG_COLLECTION_PAGE = 'https://boardgamegeek.com/xmlapi2/collection?own=1&username=';
+const BGG_PLAYS_PAGE = 'https://boardgamegeek.com/xmlapi2/plays?username=';
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
   const controller = new AbortController();
@@ -1689,6 +1847,22 @@ let endingSessionId = null;
 let editingTemplateGameId = null;
 let recentSessions = [];
 let saveStatusTimer = null;
+let collectionState = {
+  username: '',
+  includePlays: true,
+  collection: [],
+  playCounts: {},
+  selectedIds: new Set(),
+  search: '',
+  sortBy: 'plays',
+  step: 'intro',
+  status: '',
+  error: '',
+  warning: '',
+  importMode: null,
+  pendingLargeCollection: null,
+  importProgress: { current: 0, total: 0 }
+};
 
 function setSaveStatus(state, detail = '') {
   const el = document.getElementById('save-status');
@@ -1783,6 +1957,14 @@ function migrateLibraryData(library) {
       game.lastPlayedAt = 0;
     }
 
+    if (typeof game.lastPlayed !== 'string') {
+      game.lastPlayed = '';
+    }
+
+    if (typeof game.playCount !== 'number') {
+      game.playCount = 0;
+    }
+
     if (!LIBRARY_SHELF_OPTIONS[game.shelfStatus]) {
       game.shelfStatus = 'ready';
     }
@@ -1801,7 +1983,7 @@ function migrateLibraryData(library) {
       }
     }
 
-	    return game;
+    return game;
   });
 }
 
@@ -2101,11 +2283,13 @@ function hydrateBGGCacheFromLibrary() {
 // ============================================================
 function init() {
   loadTheme();
+  loadCollectionStateFromStorage();
   library = migrateLibraryData(JSON.parse(localStorage.getItem('king_library') || '[]'));
   bggCache = loadBGGCache();
   hydrateBGGCacheFromLibrary();
   sessions = normalizeSessionData(JSON.parse(localStorage.getItem('king_sessions') || '[]'));
   recentSessions = loadRecentSessions();
+  syncCollectionTriggerLabel();
   renderLibrary();
   renderRulesSection();
   renderSessionTabs();
@@ -2139,7 +2323,7 @@ function init() {
       }
     }
     if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
-    if (document.querySelector('#new-session-overlay.open, #end-session-overlay.open, #template-overlay.open, #game-detail-overlay.open')) return;
+    if (document.querySelector('#new-session-overlay.open, #end-session-overlay.open, #template-overlay.open, #game-detail-overlay.open, #collection-overlay.open')) return;
     const key = e.key.toLowerCase();
     if (key === 'n') {
       e.preventDefault();
@@ -2198,6 +2382,569 @@ function closeDetailIfBg(e) {
   if (e.target === document.getElementById('game-detail-overlay')) {
     document.getElementById('game-detail-overlay').classList.remove('open');
   }
+}
+
+// ============================================================
+// BGG COLLECTION IMPORT
+// ============================================================
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function nextFrame() {
+  return new Promise(resolve => requestAnimationFrame(() => resolve()));
+}
+
+function readJSONStorage(key, fallback) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || 'null');
+    return parsed == null ? fallback : parsed;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function hasStoredCollectionData() {
+  const stored = readJSONStorage(BGG_COLLECTION_KEY, []);
+  return Array.isArray(stored) && stored.length > 0;
+}
+
+function syncCollectionTriggerLabel() {
+  const label = document.getElementById('collection-trigger-label');
+  if (!label) return;
+  label.textContent = hasStoredCollectionData() ? 'Manage BGG Collection' : 'Import BGG';
+}
+
+function normalizeImportedCollection(list) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter(item => item && typeof item === 'object' && item.id && item.name)
+    .map(item => ({
+      id: String(item.id),
+      name: String(item.name).trim(),
+      year: String(item.year || '').trim()
+    }));
+}
+
+function normalizeImportedPlayCounts(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([id, info]) => id && info && typeof info === 'object')
+      .map(([id, info]) => [
+        String(id),
+        {
+          count: Math.max(0, parseInt(info.count, 10) || 0),
+          lastPlayed: typeof info.lastPlayed === 'string' ? info.lastPlayed : ''
+        }
+      ])
+  );
+}
+
+function loadCollectionStateFromStorage() {
+  collectionState.username = localStorage.getItem(BGG_USERNAME_KEY) || '';
+  collectionState.collection = normalizeImportedCollection(readJSONStorage(BGG_COLLECTION_KEY, []));
+  collectionState.playCounts = normalizeImportedPlayCounts(readJSONStorage(BGG_PLAY_COUNTS_KEY, {}));
+  collectionState.selectedIds = autoSelectCollection(collectionState.collection, collectionState.playCounts);
+  collectionState.search = '';
+  collectionState.sortBy = 'plays';
+  collectionState.step = collectionState.collection.length ? 'select' : 'intro';
+  collectionState.status = '';
+  collectionState.error = '';
+  collectionState.warning = '';
+  collectionState.importMode = null;
+  collectionState.pendingLargeCollection = null;
+  collectionState.importProgress = { current: 0, total: 0 };
+}
+
+function openCollectionOverlay() {
+  loadCollectionStateFromStorage();
+  renderCollectionOverlay();
+  document.getElementById('collection-overlay').classList.add('open');
+}
+
+function closeCollectionOverlay() {
+  closeOverlay('collection-overlay');
+}
+
+function setCollectionStatus(message) {
+  collectionState.status = message;
+  collectionState.error = '';
+  renderCollectionOverlay();
+}
+
+function setCollectionError(message) {
+  collectionState.error = message;
+  collectionState.status = '';
+  renderCollectionOverlay();
+}
+
+function getPlayCountInfo(id) {
+  return collectionState.playCounts[String(id)] || { count: 0, lastPlayed: '' };
+}
+
+function getCollectionSortValue(game, sortBy) {
+  const play = getPlayCountInfo(game.id);
+  if (sortBy === 'name') return game.name.toLowerCase();
+  if (sortBy === 'year') return parseInt(game.year, 10) || 0;
+  return play.count;
+}
+
+function sortCollectionEntries(entries, sortBy = collectionState.sortBy) {
+  return [...entries].sort((a, b) => {
+    if (sortBy === 'plays') {
+      const diff = getCollectionSortValue(b, 'plays') - getCollectionSortValue(a, 'plays');
+      if (diff !== 0) return diff;
+      return a.name.localeCompare(b.name);
+    }
+    if (sortBy === 'name') return a.name.localeCompare(b.name);
+    if (sortBy === 'year') {
+      const diff = getCollectionSortValue(b, 'year') - getCollectionSortValue(a, 'year');
+      if (diff !== 0) return diff;
+      return a.name.localeCompare(b.name);
+    }
+    return 0;
+  });
+}
+
+function autoSelectCollection(collection, playCounts) {
+  const sorted = [...normalizeImportedCollection(collection)].sort((a, b) => {
+    const aCount = playCounts?.[String(a.id)]?.count || 0;
+    const bCount = playCounts?.[String(b.id)]?.count || 0;
+    if (bCount !== aCount) return bCount - aCount;
+    return a.name.localeCompare(b.name);
+  });
+  return new Set(sorted.slice(0, LIBRARY_LIMIT).map(game => String(game.id)));
+}
+
+function getFilteredCollectionEntries() {
+  const query = collectionState.search.trim().toLowerCase();
+  const entries = query
+    ? collectionState.collection.filter(game => {
+        const haystack = `${game.name} ${game.year}`.toLowerCase();
+        return haystack.includes(query);
+      })
+    : collectionState.collection;
+  return sortCollectionEntries(entries, collectionState.sortBy);
+}
+
+function getSelectableEntries(limit = LIBRARY_LIMIT) {
+  return getFilteredCollectionEntries().filter(game => !collectionState.selectedIds.has(String(game.id))).slice(0, limit);
+}
+
+function updateCollectionSelection(id, checked) {
+  const sid = String(id);
+  if (checked) {
+    if (collectionState.selectedIds.size >= LIBRARY_LIMIT) return;
+    collectionState.selectedIds.add(sid);
+  } else {
+    collectionState.selectedIds.delete(sid);
+  }
+  collectionState.error = '';
+  renderCollectionOverlay();
+}
+
+function selectTopPlayed() {
+  collectionState.selectedIds = autoSelectCollection(collectionState.collection, collectionState.playCounts);
+  collectionState.error = '';
+  renderCollectionOverlay();
+}
+
+function selectAllCollection() {
+  const next = new Set(collectionState.selectedIds);
+  getFilteredCollectionEntries().forEach(game => {
+    if (next.size < LIBRARY_LIMIT) {
+      next.add(String(game.id));
+    }
+  });
+  collectionState.selectedIds = next;
+  collectionState.error = '';
+  renderCollectionOverlay();
+}
+
+function clearAllCollectionSelections() {
+  collectionState.selectedIds = new Set();
+  collectionState.error = '';
+  renderCollectionOverlay();
+}
+
+async function fetchBGGXmlDocument(url, options = {}) {
+  const { retriesOn202 = 0, retryDelayMs = 2000 } = options;
+  let attempts = 0;
+  while (true) {
+    const res = await fetchWithTimeout('/api/bgg?url=' + encodeURIComponent(url));
+    const text = await res.text();
+    if (res.status === 202 && attempts < retriesOn202) {
+      attempts += 1;
+      await delay(retryDelayMs);
+      continue;
+    }
+    if (res.status === 202) {
+      throw new Error('No collection found.');
+    }
+    if (!res.ok) {
+      throw new Error(text || 'Failed to fetch collection.');
+    }
+    if (!text || !text.includes('<')) {
+      throw new Error('Failed to fetch collection.');
+    }
+    const xml = new DOMParser().parseFromString(text, 'text/xml');
+    if (xml.querySelector('parsererror')) {
+      throw new Error('Failed to parse BGG response.');
+    }
+    return xml;
+  }
+}
+
+async function fetchBGGCollection(username) {
+  const xml = await fetchBGGXmlDocument(BGG_COLLECTION_PAGE + encodeURIComponent(username), { retriesOn202: 3, retryDelayMs: 2000 });
+  const items = Array.from(xml.querySelectorAll('item')).map(item => {
+    const primaryName = item.querySelector('name')?.getAttribute('value') || item.querySelector('name')?.textContent.trim() || '';
+    const year = item.querySelector('yearpublished')?.textContent.trim() || item.querySelector('yearpublished')?.getAttribute('value') || '';
+    return {
+      id: String(item.getAttribute('objectid') || item.getAttribute('id') || '').trim(),
+      name: String(primaryName).trim(),
+      year: String(year).trim()
+    };
+  }).filter(item => item.id && item.name);
+  return items;
+}
+
+async function fetchBGGPlayHistory(username) {
+  const playCounts = {};
+  for (let page = 1; page <= 250; page += 1) {
+    collectionState.status = `Fetching play history page ${page}...`;
+    renderCollectionOverlay();
+    const xml = await fetchBGGXmlDocument(`${BGG_PLAYS_PAGE}${encodeURIComponent(username)}&page=${page}`, { retriesOn202: 3, retryDelayMs: 2000 });
+    const plays = Array.from(xml.querySelectorAll('play'));
+    if (plays.length === 0) break;
+    plays.forEach(play => {
+      const id = String(play.querySelector('item')?.getAttribute('objectid') || '').trim();
+      const date = String(play.getAttribute('date') || '').trim();
+      if (!id) return;
+      if (!playCounts[id]) {
+        playCounts[id] = { count: 0, lastPlayed: '' };
+      }
+      playCounts[id].count += 1;
+      if (date && (!playCounts[id].lastPlayed || date > playCounts[id].lastPlayed)) {
+        playCounts[id].lastPlayed = date;
+      }
+    });
+    await nextFrame();
+  }
+  return playCounts;
+}
+
+async function continueLargeCollectionImport() {
+  if (!collectionState.pendingLargeCollection) return;
+  const { username, includePlays, collection } = collectionState.pendingLargeCollection;
+  collectionState.pendingLargeCollection = null;
+  await finalizeCollectionFetch(username, includePlays, collection);
+}
+
+async function finalizeCollectionFetch(username, includePlays, collection) {
+  collectionState.username = username;
+  collectionState.includePlays = includePlays;
+  localStorage.setItem(BGG_USERNAME_KEY, username);
+  localStorage.setItem(BGG_COLLECTION_KEY, JSON.stringify(collection));
+  collectionState.collection = collection;
+  syncCollectionTriggerLabel();
+
+  let playCounts = collectionState.playCounts;
+  if (includePlays) {
+    setCollectionStatus('Fetching play history...');
+    playCounts = await fetchBGGPlayHistory(username);
+    localStorage.setItem(BGG_PLAY_COUNTS_KEY, JSON.stringify(playCounts));
+  } else {
+    playCounts = {};
+    localStorage.setItem(BGG_PLAY_COUNTS_KEY, JSON.stringify(playCounts));
+  }
+
+  collectionState.playCounts = playCounts;
+  collectionState.selectedIds = autoSelectCollection(collectionState.collection, collectionState.playCounts);
+  collectionState.search = '';
+  collectionState.sortBy = 'plays';
+  collectionState.warning = '';
+  collectionState.step = 'select';
+  collectionState.status = '';
+  collectionState.error = '';
+  renderCollectionOverlay();
+}
+
+async function handleCollectionFetch() {
+  const usernameInput = document.getElementById('bgg-username-input');
+  const playsInput = document.getElementById('bgg-import-plays');
+  const username = String(usernameInput?.value || '').trim();
+  const includePlays = !!playsInput?.checked;
+
+  if (!username) {
+    setCollectionError('No collection found.');
+    return;
+  }
+
+  try {
+    collectionState.step = 'loading';
+    collectionState.status = 'Fetching collection... This may take a few seconds.';
+    collectionState.error = '';
+    renderCollectionOverlay();
+
+    const collection = await fetchBGGCollection(username);
+    if (!collection.length) {
+      collectionState.step = 'intro';
+      setCollectionError('No collection found.');
+      return;
+    }
+
+    if (collection.length > 500) {
+      collectionState.pendingLargeCollection = { username, includePlays, collection };
+      collectionState.step = 'large';
+      collectionState.status = '';
+      collectionState.error = '';
+      renderCollectionOverlay();
+      return;
+    }
+
+    await finalizeCollectionFetch(username, includePlays, collection);
+  } catch (error) {
+    collectionState.step = 'intro';
+    const message = /No collection found\./.test(error?.message || '') ? 'No collection found.' : 'Failed to fetch collection.';
+    setCollectionError(message);
+  }
+}
+
+function requestImportSelected() {
+  if (collectionState.selectedIds.size === 0) {
+    collectionState.error = 'Select at least one game to import.';
+    renderCollectionOverlay();
+    return;
+  }
+  collectionState.error = '';
+  if (library.length > 0) {
+    collectionState.step = 'confirm-mode';
+    renderCollectionOverlay();
+    return;
+  }
+  startImportSelected('replace');
+}
+
+function buildImportedGame(details, fallback) {
+  const playInfo = collectionState.playCounts[String(fallback.id)] || { count: 0, lastPlayed: '' };
+  const lastPlayed = playInfo.lastPlayed || '';
+  const lastPlayedAt = lastPlayed ? new Date(`${lastPlayed}T12:00:00`).getTime() : 0;
+  return {
+    id: String(fallback.id),
+    name: details?._name || fallback.name,
+    year: details?._year || fallback.year || '',
+    minplayers: details?.minplayers || '',
+    maxplayers: details?.maxplayers || '',
+    playingtime: details?.playingtime || '',
+    thumbnail: details?.thumbnail || details?.image || null,
+    image: details?.image || '',
+    description: details?.description || '',
+    rating: details?.rating || '0',
+    playCount: playInfo.count || 0,
+    lastPlayed,
+    lastPlayedAt: Number.isFinite(lastPlayedAt) ? lastPlayedAt : 0,
+    details: details || null,
+    quickRef: '',
+    shelfStatus: 'ready',
+    addedAt: Date.now(),
+    favorite: false,
+    sessionTemplate: getDefaultSessionTemplate()
+  };
+}
+
+async function startImportSelected(mode) {
+  const selectedGames = collectionState.collection.filter(game => collectionState.selectedIds.has(String(game.id)));
+  if (!selectedGames.length) {
+    collectionState.error = 'Select at least one game to import.';
+    renderCollectionOverlay();
+    return;
+  }
+
+  let importGames = selectedGames;
+  if (mode === 'add') {
+    importGames = selectedGames.filter(game => !library.some(existing => String(existing.id) === String(game.id)));
+    if (importGames.length === 0) {
+      collectionState.step = 'select';
+      collectionState.error = 'Selected games are already in your library.';
+      renderCollectionOverlay();
+      return;
+    }
+    const slotsLeft = LIBRARY_LIMIT - library.length;
+    if (importGames.length > slotsLeft) {
+      collectionState.step = 'select';
+      collectionState.error = `Add to Library would exceed the ${LIBRARY_LIMIT}-game limit. Remove some selections or choose Replace Library.`;
+      renderCollectionOverlay();
+      return;
+    }
+  }
+
+  const baseLibrary = mode === 'replace' ? [] : [...library];
+  collectionState.step = 'importing';
+  collectionState.importMode = mode;
+  collectionState.importProgress = { current: 0, total: importGames.length };
+  collectionState.error = '';
+  renderCollectionOverlay();
+
+  try {
+    for (let index = 0; index < importGames.length; index += 1) {
+      const game = importGames[index];
+      collectionState.importProgress = { current: index + 1, total: importGames.length };
+      collectionState.status = `Importing ${index + 1} of ${importGames.length} games...`;
+      renderCollectionOverlay();
+      const details = await fetchBGGDetails(game.id);
+      baseLibrary.push(buildImportedGame(details, game));
+      await nextFrame();
+    }
+  } catch (error) {
+    collectionState.step = 'select';
+    collectionState.error = 'Failed to import selected games.';
+    collectionState.status = '';
+    renderCollectionOverlay();
+    return;
+  }
+
+  library = migrateLibraryData(baseLibrary.slice(0, LIBRARY_LIMIT));
+  saveLibrary();
+  renderLibrary();
+  renderRulesSection();
+  populateNewSessionGames();
+  renderHistorySection();
+  renderPickerResults();
+  syncCollectionTriggerLabel();
+  closeCollectionOverlay();
+}
+
+function renderCollectionOverlay() {
+  const el = document.getElementById('collection-content');
+  if (!el) return;
+
+  const selectedCount = collectionState.selectedIds.size;
+  const slotsRemaining = Math.max(0, LIBRARY_LIMIT - selectedCount);
+  const filteredEntries = getFilteredCollectionEntries();
+  const progress = collectionState.importProgress.total
+    ? Math.round((collectionState.importProgress.current / collectionState.importProgress.total) * 100)
+    : 0;
+
+  if (collectionState.step === 'loading') {
+    el.innerHTML = `
+      <h3>Import from BGG</h3>
+      <div class="collection-subtext">Fetching collection...<br>This may take a few seconds.</div>
+      <div class="loading-msg"><span class="spinner"></span> ${esc(collectionState.status || 'Fetching collection...')}</div>
+      <div class="dialog-actions">
+        <button class="ghost" onclick="closeCollectionOverlay()">Cancel</button>
+      </div>
+    `;
+    return;
+  }
+
+  if (collectionState.step === 'large') {
+    el.innerHTML = `
+      <h3>Import from BGG</h3>
+      <div class="collection-warning">Large collection detected.<br>This may take a while.</div>
+      <div class="dialog-actions">
+        <button onclick="continueLargeCollectionImport()">Continue</button>
+        <button class="ghost" onclick="closeCollectionOverlay()">Cancel</button>
+      </div>
+    `;
+    return;
+  }
+
+  if (collectionState.step === 'confirm-mode') {
+    el.innerHTML = `
+      <h3>Import Selected</h3>
+      <div class="collection-warning">Library already contains games.</div>
+      <div class="collection-subtext">Choose how to handle your existing library.</div>
+      <div class="dialog-actions">
+        <button onclick="startImportSelected('replace')">Replace Library</button>
+        <button onclick="startImportSelected('add')">Add to Library</button>
+        <button class="ghost" onclick="closeCollectionOverlay()">Cancel</button>
+      </div>
+    `;
+    return;
+  }
+
+  if (collectionState.step === 'importing') {
+    el.innerHTML = `
+      <h3>Import from BGG</h3>
+      <div class="collection-subtext">${esc(collectionState.status || 'Importing games...')}</div>
+      <div class="collection-progress"><div style="width:${progress}%"></div></div>
+      <div class="collection-row-meta">${collectionState.importProgress.current} / ${collectionState.importProgress.total}</div>
+    `;
+    return;
+  }
+
+  if (collectionState.step === 'select' && collectionState.collection.length > 0) {
+    const rows = filteredEntries.map(game => {
+      const sid = String(game.id);
+      const info = getPlayCountInfo(sid);
+      const checked = collectionState.selectedIds.has(sid);
+      const disabled = !checked && selectedCount >= LIBRARY_LIMIT;
+      const lastPlayed = info.lastPlayed ? ` &bull; Last played: ${esc(info.lastPlayed)}` : '';
+      return `
+        <div class="collection-row">
+          <label>
+            <input type="checkbox" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''} onchange="updateCollectionSelection('${escAttr(sid)}', this.checked)">
+            <div class="collection-row-body">
+              <div class="collection-row-name">${esc(game.name)}${game.year ? ` (${esc(game.year)})` : ''}</div>
+              <div class="collection-row-extra">Plays: ${info.count}${lastPlayed}</div>
+            </div>
+          </label>
+        </div>
+      `;
+    }).join('');
+
+    el.innerHTML = `
+      <h3>Import from BGG</h3>
+      <div class="collection-subtext">Owned games from <strong>${esc(collectionState.username)}</strong>. Most Played is selected automatically.</div>
+      ${collectionState.error ? `<div class="collection-error">${esc(collectionState.error)}</div>` : ''}
+      ${collectionState.warning ? `<div class="collection-warning">${esc(collectionState.warning)}</div>` : ''}
+      <div class="collection-stats">
+        <div class="collection-stat">Selected: ${selectedCount} / ${LIBRARY_LIMIT}</div>
+        <div class="collection-stat">Slots Remaining: ${slotsRemaining}</div>
+        <div class="collection-stat">Collection Size: ${collectionState.collection.length}</div>
+      </div>
+      <div class="collection-controls">
+        <input type="text" id="collection-search-input" placeholder="Search" value="${escAttr(collectionState.search)}" oninput="collectionState.search = this.value; renderCollectionOverlay()">
+        <select id="collection-sort-select" onchange="collectionState.sortBy = this.value; renderCollectionOverlay()">
+          <option value="plays"${collectionState.sortBy === 'plays' ? ' selected' : ''}>Most Played</option>
+          <option value="name"${collectionState.sortBy === 'name' ? ' selected' : ''}>Alphabetical</option>
+          <option value="year"${collectionState.sortBy === 'year' ? ' selected' : ''}>Year</option>
+        </select>
+        <button class="ghost small" onclick="collectionState.step = 'intro'; collectionState.error = ''; collectionState.warning = ''; renderCollectionOverlay()">Fetch Again</button>
+        <button class="ghost small" onclick="selectTopPlayed()">Select Top 50 Played</button>
+        <button class="ghost small" onclick="selectAllCollection()">Select All</button>
+        <button class="ghost small" onclick="clearAllCollectionSelections()">Clear All</button>
+      </div>
+      <div class="collection-list">
+        ${rows || '<div class="collection-empty">No games match that search.</div>'}
+      </div>
+      <div class="dialog-actions">
+        <button onclick="requestImportSelected()">Import Selected</button>
+        <button class="ghost" onclick="closeCollectionOverlay()">Cancel</button>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = `
+    <h3>Import from BGG</h3>
+    <div class="collection-subtext">Import owned games from your BoardGameGeek collection, optionally bring in play counts, and auto-select your top played shelf.</div>
+    ${collectionState.error ? `<div class="collection-error">${esc(collectionState.error)}</div>` : ''}
+    <div class="form-row">
+      <label>BGG Username</label>
+      <input type="text" id="bgg-username-input" value="${escAttr(collectionState.username)}" placeholder="Username">
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;color:var(--text);font-size:14px;margin-top:10px">
+      <input type="checkbox" id="bgg-import-plays" ${collectionState.includePlays ? 'checked' : ''}>
+      Import play counts
+    </label>
+    <div class="dialog-actions">
+      <button onclick="handleCollectionFetch()">${collectionState.error ? 'Retry' : 'Fetch Collection'}</button>
+      <button class="ghost" onclick="closeCollectionOverlay()">Cancel</button>
+    </div>
+  `;
 }
 
 // ============================================================
@@ -2525,9 +3272,6 @@ function addSearchThumbnail(row, thumbnail) {
   img.loading = 'lazy';
   img.alt = '';
   img.src = thumbnail;
-  img.onerror = () => {
-    img.style.display = 'none';
-  };
   img.addEventListener('error', () => {
     img.remove();
   }, { once: true });
@@ -2589,46 +3333,6 @@ function showSingleResult(resultsEl, id, name, year, details, note = '') {
   attachSearchThumbnail(row, sid, details || {});
 }
 
-async function addToLibrary(id, name, year, btnEl) {
-  if (library.some(g => g.id === id)) return;
-  if (library.length >= LIBRARY_LIMIT) {
-    if (btnEl) { btnEl.textContent = 'Full'; btnEl.disabled = false; }
-    alert(`Library is full (${LIBRARY_LIMIT} games max). Remove a game first.`);
-    return;
-  }
-  if (btnEl) { btnEl.textContent = '...'; btnEl.disabled = true; }
-
-  let details = null;
-  try {
-    details = await fetchBGGDetails(id);
-  } catch(e) { /* proceed without details */ }
-
-  library.push({
-    id,
-    name,
-    year,
-    details,
-    quickRef: '',
-    shelfStatus: 'ready',
-    addedAt: Date.now(),
-    lastPlayedAt: 0,
-    thumbnail:
-      details?.thumbnail ||
-      details?.image ||
-      null
-  });
-  saveLibrary();
-  renderLibrary();
-  renderRulesSection();
-  populateNewSessionGames();
-  renderPickerResults();
-
-  if (btnEl) {
-    btnEl.textContent = 'Saved';
-    btnEl.classList.add('saved');
-    btnEl.disabled = false;
-  }
-}
 
 async function fetchBGGDetails(id) {
   const text = await bggFetch(BGG_THING + id);
@@ -2714,11 +3418,13 @@ async function fetchBGGDetails(id) {
     description: desc,
     minplayers: get('minplayers', 'value'),
     maxplayers: get('maxplayers', 'value'),
+    playingtime: get('playingtime', 'value'),
     minplaytime: get('minplaytime', 'value'),
     maxplaytime: get('maxplaytime', 'value'),
     categories,
     mechanics,
     weight,
+    rating: get('statistics ratings average', 'value') || '0',
     bestPlayers: playerRecommendations.bestPlayers,
     recommendedPlayers: playerRecommendations.recommendedPlayers,
     thumbnail: thumbnail,
@@ -2755,9 +3461,14 @@ async function addToLibraryWithDetails(id, name, year, details, btnEl) {
     name,
     year,
     details,
+    playCount: 0,
+    lastPlayed: '',
     quickRef: '',
     shelfStatus: 'ready',
     addedAt: Date.now(),
+    lastPlayedAt: 0,
+    favorite: false,
+    sessionTemplate: getDefaultSessionTemplate(),
     thumbnail:
       details?.thumbnail ||
       details?.image ||
@@ -3845,15 +4556,15 @@ function renderSessionPanel(id) {
   // Header
   const hdr = document.createElement('div');
   hdr.className = 'session-header';
-	  hdr.innerHTML = `
-	    <div class="session-title">${esc(sess.gameName)}</div>
-	    <div class="session-actions">
-	      <button class="ghost small" onclick="undoSession('${id}')" ${!Array.isArray(sess.undoStack) || sess.undoStack.length === 0 ? 'disabled' : ''}>Undo</button>
-	      <button class="ghost small" onclick="exportSession('${id}')">Export</button>
-	      <button class="ghost small" onclick="importSessionClick()">Import</button>
-	      <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSession(event)">
-	      <button class="small danger" onclick="openEndSession('${id}')">End Session</button>
-	    </div>
+  hdr.innerHTML = `
+    <div class="session-title">${esc(sess.gameName)}</div>
+    <div class="session-actions">
+      <button class="ghost small" onclick="undoSession('${id}')" ${!Array.isArray(sess.undoStack) || sess.undoStack.length === 0 ? 'disabled' : ''}>Undo</button>
+      <button class="ghost small" onclick="exportSession('${id}')">Export</button>
+      <button class="ghost small" onclick="importSessionClick()">Import</button>
+      <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSession(event)">
+      <button class="small danger" onclick="openEndSession('${id}')">End Session</button>
+    </div>
   `;
   panel.appendChild(hdr);
 
@@ -3917,21 +4628,21 @@ function renderSessionPanel(id) {
   playersRow.innerHTML = '<span style="color:var(--dim);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-right:4px">Players:</span>';
   sess.players.forEach((pname, i) => {
     const color = (sess.playerColors && sess.playerColors[i]) || PLAYER_COLORS[i % PLAYER_COLORS.length];
-	    const chip = document.createElement('div');
-	    chip.className = 'player-chip' + (i === sess.activePlayerIndex ? ' active-turn' : '');
-	    chip.title = 'Click to rename or change colour';
-	    chip.style.borderColor = color;
-	    chip.style.color = color;
-	    chip.innerHTML = `<span>${esc(pname)}</span>`;
-	    chip.addEventListener('click', e => {
-        if (e.shiftKey) {
-          setActivePlayer(id, i);
-          return;
-        }
-        renamePlayer(id, i, chip);
-      });
-	    playersRow.appendChild(chip);
-	  });
+    const chip = document.createElement('div');
+    chip.className = 'player-chip' + (i === sess.activePlayerIndex ? ' active-turn' : '');
+    chip.title = 'Click to rename or change colour';
+    chip.style.borderColor = color;
+    chip.style.color = color;
+    chip.innerHTML = `<span>${esc(pname)}</span>`;
+    chip.addEventListener('click', e => {
+      if (e.shiftKey) {
+        setActivePlayer(id, i);
+        return;
+      }
+      renamePlayer(id, i, chip);
+    });
+    playersRow.appendChild(chip);
+  });
   panel.appendChild(playersRow);
 
   // Teams display
@@ -4453,6 +5164,7 @@ function confirmEndSession() {
   const game = getGame(sess.gameId);
   if (game) {
     game.lastPlayedAt = Date.now();
+    game.playCount = (game.playCount || 0) + 1;
     saveLibrary();
   }
   stashRecentSession(sess, 'ended');
@@ -4744,6 +5456,10 @@ function esc(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function escAttr(str) {
+  return esc(str).replace(/'/g, '&#39;');
 }
 
 // ============================================================
