@@ -2793,9 +2793,15 @@ async function startImportSelected(mode) {
       collectionState.importProgress = { current: index + 1, total: importGames.length };
       collectionState.status = `Importing ${index + 1} of ${importGames.length} games...`;
       renderCollectionOverlay();
-      const details = await fetchBGGDetails(game.id);
+      const cached = getCachedBGGGame(game.id);
+      let details;
+      if (cached?.details) {
+        details = cached.details;
+      } else {
+        details = await fetchBGGDetails(game.id);
+        await delay(500);
+      }
       baseLibrary.push(buildImportedGame(details, game));
-      await delay(500);
     }
   } catch (error) {
     collectionState.step = 'select';
