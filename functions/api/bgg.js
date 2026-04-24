@@ -24,8 +24,8 @@ const FETCH_TIMEOUT_MS = 30000;
 // an empty or near-empty body on overloaded nodes. Anything under this
 // is treated as a failed response and retried.
 const MIN_BODY_LENGTH = 50;
-const RATE_LIMIT_CAPACITY = 5;
-const RATE_LIMIT_REFILL_MS = 2000;
+const RATE_LIMIT_CAPACITY = 10;
+const RATE_LIMIT_REFILL_MS = 500;
 const RATE_LIMIT_TTL_MS = 10 * 60 * 1000;
 
 const CORS_HEADERS = {

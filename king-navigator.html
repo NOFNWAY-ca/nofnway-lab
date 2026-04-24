@@ -2795,7 +2795,7 @@ async function startImportSelected(mode) {
       renderCollectionOverlay();
       const details = await fetchBGGDetails(game.id);
       baseLibrary.push(buildImportedGame(details, game));
-      await nextFrame();
+      await delay(500);
     }
   } catch (error) {
     collectionState.step = 'select';
