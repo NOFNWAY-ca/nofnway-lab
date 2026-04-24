@@ -2459,6 +2459,17 @@ function loadCollectionStateFromStorage() {
 
 function openCollectionOverlay() {
   loadCollectionStateFromStorage();
+  // If the library already has games, seed selection from those rather than
+  // re-running auto-select, so reopening doesn't clobber what's already imported.
+  if (library.length > 0 && collectionState.collection.length > 0) {
+    const libraryIds = new Set(library.map(g => String(g.id)));
+    const inBoth = collectionState.collection
+      .filter(g => libraryIds.has(String(g.id)))
+      .map(g => String(g.id));
+    if (inBoth.length > 0) {
+      collectionState.selectedIds = new Set(inBoth);
+    }
+  }
   renderCollectionOverlay();
   document.getElementById('collection-overlay').classList.add('open');
 }
@@ -2580,7 +2591,7 @@ async function fetchBGGXmlDocument(url, options = {}) {
       continue;
     }
     if (res.status === 202) {
-      throw new Error('No collection found.');
+      throw new Error('BGG is still processing this request. Wait a few seconds and try again.');
     }
     if (!res.ok) {
       throw new Error(text || 'Failed to fetch collection.');
@@ -2707,7 +2718,7 @@ async function handleCollectionFetch() {
     await finalizeCollectionFetch(username, includePlays, collection);
   } catch (error) {
     collectionState.step = 'intro';
-    const message = /No collection found\./.test(error?.message || '') ? 'No collection found.' : 'Failed to fetch collection.';
+    const message = error?.message || 'Failed to fetch collection.';
     setCollectionError(message);
   }
 }
@@ -2793,15 +2804,9 @@ async function startImportSelected(mode) {
       collectionState.importProgress = { current: index + 1, total: importGames.length };
       collectionState.status = `Importing ${index + 1} of ${importGames.length} games...`;
       renderCollectionOverlay();
-      const cached = getCachedBGGGame(game.id);
-      let details;
-      if (cached?.details) {
-        details = cached.details;
-      } else {
-        details = await fetchBGGDetails(game.id);
-        await delay(500);
-      }
+      const details = await fetchBGGDetails(game.id);
       baseLibrary.push(buildImportedGame(details, game));
+      await delay(500);
     }
   } catch (error) {
     collectionState.step = 'select';
@@ -2920,7 +2925,7 @@ function renderCollectionOverlay() {
         </select>
         <button class="ghost small" onclick="collectionState.step = 'intro'; collectionState.error = ''; collectionState.warning = ''; renderCollectionOverlay()">Fetch Again</button>
         <button class="ghost small" onclick="selectTopPlayed()">Select Top 50 Played</button>
-        <button class="ghost small" onclick="selectAllCollection()">Select All</button>
+        <button class="ghost small" onclick="selectAllCollection()">Select Up To 50</button>
         <button class="ghost small" onclick="clearAllCollectionSelections()">Clear All</button>
       </div>
       <div class="collection-list">
