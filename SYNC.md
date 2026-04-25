@@ -9,6 +9,9 @@ Experimental site with live tool work and Cloudflare Functions.
 - `king-navigator.html` and `functions/api/bgg.js`
 
 ## Recent Changes
+- Fixed four BGG collection overlay issues from review: modal reopen now seeds selection from current library instead of re-running auto-select; import always does a fresh BGG fetch (cache no longer substitutes for import data); terminal 202 now surfaces a descriptive retry message instead of false "No collection found"; "Select All" renamed to "Select Up To 50".
+- Fixed K.I.N.G. collection import failing due to rate limit exhaustion: import loop now delays 500ms between requests, rate limiter tuned to 10 tokens / 500ms refill.
+- Bug sweep on king-navigator.html: removed dead addToLibrary function, added favorite and sessionTemplate to addToLibraryWithDetails, removed redundant img.onerror on search thumbnails, fixed mixed tab/space indentation, added playCount increment on session end.
 - Added K.I.N.G. BGG collection import with stored username support, owned-game fetch, optional play-history import, top-50 auto-selection, manual selection controls, sequential detail import, and later collection management from saved local data.
 - Refreshed the temporary `garage-terminal-preview.html` mobile test page with a bug-sweep pass that clears stuck inputs on blur, tab hide, game launch/exit, and touch-control pointer cancellation.
 - Refreshed the temporary `garage-terminal-preview.html` mobile test page with the refactored multi-file garage terminal build, including external JS modules, storage migration guards, and quieter Home Assistant offline alerting.
