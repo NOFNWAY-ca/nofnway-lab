@@ -9,6 +9,8 @@ Experimental site with live tool work and Cloudflare Functions.
 - `king-navigator.html` and `functions/api/bgg.js`
 
 ## Recent Changes
+- Upgraded `mcmahon-ranch.html` in place from record keeping toward daily ranch operations: added default Today alerts, cattle group selection and bulk notes/move prefill, animal history timelines, pasture density, data export/import/reset, activity log, versioned meta, guarded saves, rolling local backups, manual file/clipboard sync, import preview with Replace/Merge conflict handling, and large-dataset warnings.
+- Extended `mcmahon-ranch.html` shared-use support with local user identity, Personal/Shared mode, per-record `updatedAt`/`updatedBy` stamping on write paths, user-aware recent activity, import summaries showing last editor/change counts, merge conflict logging by `updatedAt`, soft edit warnings, and optional shared JSON endpoint pull/push controls.
 - Removed the temporary Garage Terminal preview from NOFNWAY Lab, including its landing-page card and copied TerminalF JS files.
 - Fixed four BGG collection overlay issues from review: modal reopen now seeds selection from current library instead of re-running auto-select; import always does a fresh BGG fetch (cache no longer substitutes for import data); terminal 202 now surfaces a descriptive retry message instead of false "No collection found"; "Select All" renamed to "Select Up To 50".
 - Fixed K.I.N.G. collection import failing due to rate limit exhaustion: import loop now delays 500ms between requests, rate limiter tuned to 10 tokens / 500ms refill.

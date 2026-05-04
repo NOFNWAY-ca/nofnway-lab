@@ -70,6 +70,9 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .td-muted{color:var(--muted)}
 .td-act{text-align:right;white-space:nowrap}
 .td-act .btn{margin-left:4px}
+.td-check{width:34px;text-align:center}
+.tag-strong{font-size:14px;font-weight:800}
+.status-stack{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
 
 /* Badges */
 .badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.4px}
@@ -87,11 +90,21 @@ tbody td{padding:9px 12px;vertical-align:middle}
 .b-out-of-service{background:var(--danger);color:#fff}
 .b-overdue{background:var(--danger-bg);color:var(--danger)}
 .b-wd{background:var(--danger-bg);color:var(--danger);font-size:9px}
+.b-flagged{background:#ece6df;color:var(--muted)}
 
 /* Alerts */
 .alert{padding:10px 14px;border-radius:5px;margin-bottom:8px;font-size:13px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
 .alert-warn{background:var(--warning-bg);border-left:3px solid var(--warning);color:#5a3d00}
 .alert-danger{background:var(--danger-bg);border-left:3px solid var(--danger);color:#6e1010}
+.today-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.alert-section{background:#fff;border:1px solid var(--border);border-radius:6px;padding:12px}
+.alert-section summary{font-family:'Playfair Display',serif;font-weight:700;font-size:16px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px}
+.alert-section summary::-webkit-details-marker{display:none}
+.alert-list{margin-top:10px}
+.timeline{border-left:2px solid var(--border);margin-top:10px;padding-left:14px}
+.timeline-item{position:relative;margin-bottom:12px;font-size:13px;line-height:1.45}
+.timeline-item::before{content:'';position:absolute;left:-20px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.timeline-date{font-weight:700;color:var(--muted);font-size:12px}
 
 /* Feed inventory */
 .feed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-bottom:4px}
@@ -163,12 +176,14 @@ tbody td{padding:9px 12px;vertical-align:middle}
   <div class="hdr-left">
     <h1 id="hdr-name">McMAHON RANCH</h1>
     <span class="hdr-sub">Ranch Management</span>
+    <span class="hdr-sub" id="hdr-save">Last saved: not yet</span>
   </div>
   <button class="settings-btn" onclick="openSettings()" title="Settings">⚙</button>
 </header>
 
 <nav class="tab-nav">
-  <button class="tab-btn active" data-tab="cattle" onclick="switchTab('cattle')">Cattle</button>
+  <button class="tab-btn active" data-tab="today" onclick="switchTab('today')">Today</button>
+  <button class="tab-btn" data-tab="cattle" onclick="switchTab('cattle')">Cattle</button>
   <button class="tab-btn" data-tab="feed" onclick="switchTab('feed')">Feed</button>
   <button class="tab-btn" data-tab="health" onclick="switchTab('health')">Health</button>
   <button class="tab-btn" data-tab="equipment" onclick="switchTab('equipment')">Equipment</button>
@@ -190,12 +205,17 @@ tbody td{padding:9px 12px;vertical-align:middle}
 <script>
 // ── STATE ─────────────────────────────────────────────
 let D = {};
-let currentTab = 'cattle';
+let currentTab = 'today';
 let sortStates = {};
 let ui = {
   cattleQ:'', cattleType:'', cattleBreed:'', cattleLoc:'',
   healthHistory: false
 };
+let selectedCattle = {};
+let pendingImport = null;
+let currentUser = null;
+let editLocks = {};
+let mergeConflicts = [];
 
 // ── KEYS ──────────────────────────────────────────────
 const K = {
@@ -204,8 +224,13 @@ const K = {
   health:'ranch_health', vacc:'ranch_vaccinations',
   equip:'ranch_equipment', service:'ranch_service',
   repairs:'ranch_repairs', locs:'ranch_locations',
-  moves:'ranch_moves', settings:'ranch_settings'
+  moves:'ranch_moves', settings:'ranch_settings',
+  activityLog:'ranch_activity_log',
+  meta:'ranch_meta', deviceId:'ranch_device_id', backups:'ranch_backups',
+  user:'ranch_user'
 };
+const DATA_KEYS=['cattle','feedInv','feedLog','deliveries','health','vacc','equip','service','repairs','locs','moves','settings','activityLog','meta'];
+const ARRAY_KEYS=['cattle','feedInv','feedLog','deliveries','health','vacc','equip','service','repairs','locs','moves','activityLog'];
 
 // ── SAMPLE DATA ────────────────────────────────────────
 function seed() {
@@ -291,22 +316,135 @@ function seed() {
       {id:'mv3',date:'2026-03-28',animals:'M-047',from:'North Pasture',to:'Home Pasture',reason:'Treatment isolation — pinkeye'},
       {id:'mv4',date:'2026-03-20',animals:'M-002',from:'Bull Pen A',to:'Bull Pen B',reason:'Separated from breeding group'}
     ],
-    settings:{ranchName:'McMahon Ranch',vets:['In-house','Dr. Thiessen','Dr. Martens']}
+    settings:{ranchName:'McMahon Ranch',vets:['In-house','Dr. Thiessen','Dr. Martens'],mode:'Personal',sharedUrl:''},
+    activityLog:[],
+    meta:{version:1,lastModified:Date.now(),deviceId:getDeviceId()}
   };
 }
 
 // ── STORAGE ────────────────────────────────────────────
+// NEW - Sync System
+let lastBackupAt=0;
+let saveQuiet=false;
+
+function getDeviceId(){
+  let id=localStorage.getItem(K.deviceId);
+  if(!id){
+    id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+    try{localStorage.setItem(K.deviceId,id);}catch(e){}
+  }
+  return id;
+}
+
+// NEW - User Identity
+function loadUser(){
+  try{currentUser=JSON.parse(localStorage.getItem(K.user)||'null');}
+  catch(e){currentUser=null;}
+  if(!currentUser||typeof currentUser!=='object'){
+    currentUser={userId:'user_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),userName:'Ranch User'};
+    saveUser();
+  }
+  currentUser.userName=currentUser.userName||'Ranch User';
+  return currentUser;
+}
+
+function saveUser(){
+  try{localStorage.setItem(K.user,JSON.stringify(currentUser));}
+  catch(e){alert('Storage limit reached - export and clear old data.');}
+}
+
+function userName(){ return currentUser?.userName||'Ranch User'; }
+
+function ensureMeta(touch){
+  if(!D.meta||typeof D.meta!=='object') D.meta={};
+  D.meta.version=1;
+  D.meta.deviceId=D.meta.deviceId||getDeviceId();
+  D.meta.lastModifiedBy=D.meta.lastModifiedBy||userName();
+  D.meta.lastModified=touch?Date.now():(D.meta.lastModified||Date.now());
+  if(touch) D.meta.lastModifiedBy=userName();
+}
+
+function updateLastSaved(){
+  const el=document.getElementById('hdr-save');
+  if(el) el.textContent=`Last saved: ${D.meta?.lastModified?new Date(D.meta.lastModified).toLocaleString():'not yet'} | Device ${shortDeviceId()}`;
+}
+
+function shortDeviceId(){ return String(D.meta?.deviceId||getDeviceId()).slice(-6); }
+
+function safeSet(key,value){
+  try{localStorage.setItem(key,value);return true;}
+  catch(e){
+    alert('Storage limit reached - export and clear old data.');
+    return false;
+  }
+}
+
+function validDataShape(obj){
+  return obj&&typeof obj==='object'&&ARRAY_KEYS.every(k=>Array.isArray(obj[k]))&&obj.settings&&typeof obj.settings==='object';
+}
+
+function repairDataShape(){
+  const s=seed();
+  ARRAY_KEYS.forEach(k=>{if(!Array.isArray(D[k]))D[k]=[];});
+  if(!D.settings||typeof D.settings!=='object') D.settings=s.settings;
+  D.settings.mode=D.settings.mode||'Personal';
+  ensureMeta(false);
+}
+
 function loadData() {
+  let dataIssue=false;
   if (!localStorage.getItem(K.cattle)) {
     D = seed(); saveAll(); return;
   }
-  for (const k in K) {
+  const s=seed();
+  for (const k of DATA_KEYS) {
     const raw = localStorage.getItem(K[k]);
-    D[k] = raw ? JSON.parse(raw) : (seed()[k] || (k==='settings'?{}:[]));
+    try{D[k] = raw ? JSON.parse(raw) : (s[k] || (k==='settings'?{}:[]));}
+    catch(e){D[k]=s[k] || (k==='settings'?{}:[]);dataIssue=true;}
   }
+  if(!D.settings.mode)D.settings.mode='Personal';
+  ensureMeta(false);
+  if(!validDataShape(D)){dataIssue=true;repairDataShape();}
+  if(dataIssue) setTimeout(()=>handleDataIssue(),100);
 }
-function save(k){ localStorage.setItem(K[k], JSON.stringify(D[k])); }
-function saveAll(){ for(const k in K) save(k); }
+
+function save(k,opts){
+  opts=opts||{};
+  if(opts.touch!==false) ensureMeta(true);
+  if(!safeSet(K[k],JSON.stringify(D[k])))return;
+  safeSet(K.meta,JSON.stringify(D.meta));
+  updateLastSaved();
+  if(opts.backup!==false) pushBackup(false);
+}
+
+function saveAll(){
+  ensureMeta(true);
+  DATA_KEYS.forEach(k=>safeSet(K[k],JSON.stringify(D[k])));
+  updateLastSaved();
+  pushBackup(true);
+}
+
+// NEW - Backup System
+function getBackups(){
+  try{return JSON.parse(localStorage.getItem(K.backups)||'[]');}
+  catch(e){return [];}
+}
+
+function pushBackup(force){
+  if(saveQuiet)return;
+  const now=Date.now();
+  if(!force&&now-lastBackupAt<30000)return;
+  lastBackupAt=now;
+  const backups=getBackups();
+  backups.unshift({timestamp:now,data:JSON.stringify(D)});
+  safeSet(K.backups,JSON.stringify(backups.slice(0,5)));
+}
+
+function handleDataIssue(){
+  const backups=getBackups();
+  if(backups.length&&confirm('Data issue detected - restore from backup?')) restoreBackup(0);
+  else alert('Data issue detected. Missing or damaged sections were reset so the app can keep running.');
+}
 
 // ── UTILITIES ──────────────────────────────────────────
 function genId(){ return '_'+Math.random().toString(36).substr(2,9); }
@@ -317,6 +455,7 @@ function fmtDate(iso){
   const [y,m,d]=iso.split('-').map(Number);
   return `${mn[m-1]} ${d}, ${y}`;
 }
+function fmtStamp(ts){ return ts?new Date(ts).toLocaleString():'Unknown'; }
 function daysBetween(a,b){
   return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
 }
@@ -358,6 +497,53 @@ function thCls(tid,col){
   const s=getSort(tid);
   return s.col===col?(s.dir==='asc'?'sort-asc':'sort-desc'):'';
 }
+function hasFlagNote(notes){ return /\b(monitor|watch|issue)\b/i.test(notes||''); }
+function ensureActivityLog(){ if(!Array.isArray(D.activityLog)) D.activityLog=[]; }
+
+// NEW - Change Stamping
+function stampRecord(obj){
+  obj.updatedAt=Date.now();
+  obj.updatedBy=userName();
+  return obj;
+}
+
+function ensureRecordStamp(obj){
+  if(obj&&!obj.updatedAt) obj.updatedAt=D.meta?.lastModified||Date.now();
+  if(obj&&!obj.updatedBy) obj.updatedBy=D.meta?.lastModifiedBy||'Unknown';
+  return obj;
+}
+
+function isRecentChange(obj){
+  return obj?.updatedAt&&Date.now()-obj.updatedAt<86400000*7;
+}
+
+// NEW - Activity Log
+function logActivity(type,message,entityId){
+  ensureActivityLog();
+  const ts=Date.now();
+  D.activityLog.unshift({id:genId(),date:today(),timestamp:ts,user:userName(),type,entityId:entityId||'',message});
+  D.activityLog=D.activityLog.slice(0,100);
+  save('activityLog');
+}
+function recordCount(){
+  return ARRAY_KEYS.reduce((n,k)=>n+(Array.isArray(D[k])?D[k].length:0),0);
+}
+
+// NEW - Soft Locks
+function setEditLock(entityId){
+  editLocks[entityId]={entityId,userId:currentUser?.userId||'',timestamp:Date.now()};
+}
+
+function lockWarning(record){
+  const lock=editLocks[record?.id];
+  if(lock&&record?.updatedAt&&record.updatedAt>lock.timestamp){
+    return `<div class="alert alert-warn">&#9888; <span>This item may have been edited elsewhere since you opened it.</span></div>`;
+  }
+  if(record?.updatedBy&&record.updatedBy!==userName()&&isRecentChange(record)){
+    return `<div class="alert alert-warn">&#9888; <span>This item was recently changed by ${esc(record.updatedBy)}.</span></div>`;
+  }
+  return '';
+}
 
 // ── NAVIGATION ─────────────────────────────────────────
 function switchTab(tab){
@@ -368,11 +554,74 @@ function switchTab(tab){
 
 function render(){
   const el=document.getElementById('content');
-  if(currentTab==='cattle') el.innerHTML=renderCattle();
+  if(currentTab==='today') el.innerHTML=renderToday();
+  else if(currentTab==='cattle') el.innerHTML=renderCattle();
   else if(currentTab==='feed') el.innerHTML=renderFeed();
   else if(currentTab==='health') el.innerHTML=renderHealth();
   else if(currentTab==='equipment') el.innerHTML=renderEquipment();
   else if(currentTab==='pastures') el.innerHTML=renderPastures();
+}
+
+// NEW - Today Dashboard
+function renderAlertGroup(title,items,emptyText){
+  const rows=items.map(it=>`<div class="alert ${it.danger?'alert-danger':'alert-warn'}">
+    <span>${it.icon||'&#9888;'}</span><span>${it.html}</span>
+  </div>`).join('');
+  return `<details class="alert-section"${items.length?' open':''}>
+    <summary><span>${esc(title)}</span><span class="badge ${items.length?'b-due-soon':'b-good'}">${items.length}</span></summary>
+    <div class="alert-list">${rows||`<div class="empty" style="padding:22px 10px">${esc(emptyText)}</div>`}</div>
+  </details>`;
+}
+
+function renderToday(){
+  const td=today();
+  const soon=new Date(td+'T00:00:00');soon.setDate(soon.getDate()+14);
+  const soonIso=soon.toISOString().split('T')[0];
+  const large=Array.isArray(D.cattle)&&D.cattle.length>300||recordCount()>1200;
+
+  const health=[];
+  D.health.filter(h=>h.withdrawal&&h.withdrawal>=td).forEach(h=>{
+    health.push({danger:true,html:`<strong>Withdrawal active:</strong> ${esc(h.tag)} - ${esc(h.condition)} - expires ${fmtDate(h.withdrawal)}`});
+  });
+  D.health.filter(h=>h.status==='Ongoing'||h.status==='Monitoring').forEach(h=>{
+    health.push({danger:h.status==='Ongoing',html:`<strong>${esc(h.status)}:</strong> ${esc(h.tag)} - ${esc(h.condition)}${h.notes?`<br><span class="td-muted">${esc(h.notes)}</span>`:''}`});
+  });
+  D.vacc.filter(v=>!v.completed&&v.scheduled&&v.scheduled<=soonIso).forEach(v=>{
+    const days=daysBetween(td,v.scheduled);
+    const lbl=days<0?`${Math.abs(days)} day${Math.abs(days)===1?'':'s'} overdue`:days===0?'due today':`due in ${days} day${days===1?'':'s'}`;
+    health.push({danger:days<0,icon:'&#128197;',html:`<strong>Vaccination ${lbl}:</strong> ${esc(v.vaccine)} - ${esc(v.group)} (${fmtDate(v.scheduled)})`});
+  });
+  D.cattle.filter(c=>hasFlagNote(c.notes)).forEach(c=>{
+    health.push({html:`<strong>Flagged note:</strong> ${esc(c.tag)}${c.name?` (${esc(c.name)})`:''} - ${esc(c.notes)}`});
+  });
+
+  const feed=D.feedInv.filter(f=>Number(f.onHand)<=Number(f.threshold)).map(f=>({
+    html:`<strong>Low feed:</strong> ${esc(f.name)} - ${f.onHand} ${esc(f.unit)} on hand, threshold ${f.threshold}`
+  }));
+
+  const equipment=[];
+  D.equip.filter(e=>e.status==='Repair Needed'||e.status==='Out of Service').forEach(e=>{
+    equipment.push({danger:true,html:`<strong>${esc(e.status)}:</strong> ${esc(e.name)}`});
+  });
+  D.service.filter(s=>s.nextDate&&s.nextDate<=soonIso).forEach(s=>{
+    const days=daysBetween(td,s.nextDate);
+    const lbl=days<0?`${Math.abs(days)} day${Math.abs(days)===1?'':'s'} overdue`:days===0?'due today':`due in ${days} day${days===1?'':'s'}`;
+    equipment.push({danger:days<0,html:`<strong>Service ${lbl}:</strong> ${esc(equipName(s.equipId))} - ${esc(s.serviceType)} (${fmtDate(s.nextDate)})`});
+  });
+
+  const total=health.length+feed.length+equipment.length;
+  return `<div class="section">
+    <div class="sec-hdr">
+      <span class="sec-title">Today</span>
+      <span class="count-note">${total} item${total===1?'':'s'} needing attention</span>
+    </div>
+    ${large?`<div class="alert alert-warn">&#9888; <span><strong>Large dataset:</strong> performance may degrade on mobile. Export a backup before making heavy changes.</span></div>`:''}
+    <div class="today-grid">
+      ${renderAlertGroup('Health',health,'No health alerts, due vaccinations, or flagged notes.')}
+      ${renderAlertGroup('Feed',feed,'No feed inventory is at or below threshold.')}
+      ${renderAlertGroup('Equipment',equipment,'No equipment or service alerts due in the next 14 days.')}
+    </div>
+  </div>`;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -399,20 +648,26 @@ function renderCattle(){
     }[c.status]||'b-active';
     const purebred=c.breed==='Purebred'?`<span class="badge b-purebred" style="margin-left:5px">Purebred</span>`:'';
     const forSale=c.status==='For Sale'?`<span class="badge b-for-sale" style="margin-left:5px">For Sale</span>`:'';
+    const flagged=hasFlagNote(c.notes)?`<span class="badge b-flagged">Flagged</span>`:'';
+    const changed=isRecentChange(c)?`<span class="badge b-due-soon" title="Recently changed">Changed</span>`:'';
     return `<tr>
-      <td><strong>${esc(c.tag)}</strong>${purebred}${forSale}</td>
+      <td class="td-check"><input type="checkbox" ${selectedCattle[c.id]?'checked':''} onchange="toggleCattleSel('${c.id}',this.checked)"></td>
+      <td><strong class="tag-strong">${esc(c.tag)}</strong>${purebred}${forSale}</td>
       <td>${c.name?esc(c.name):'<span class="td-muted">—</span>'}</td>
       <td>${esc(c.type)}</td>
       <td class="td-muted">${esc(c.breed)}</td>
       <td>${c.dob?fmtDate(c.dob):'<span class="td-muted">—</span>'}</td>
       <td>${esc(c.location)||'<span class="td-muted">—</span>'}</td>
-      <td><span class="badge ${statusCls}">${esc(c.status)}</span></td>
+      <td><span class="status-stack"><span class="badge ${statusCls}">${esc(c.status)}</span>${flagged}${changed}</span></td>
       <td class="td-act">
         <button class="btn btn-outline btn-xs" onclick="editCattle('${c.id}')">Edit</button>
         <button class="btn btn-danger btn-xs" onclick="delCattle('${c.id}')">Delete</button>
       </td>
     </tr>`;
   }).join('');
+  const shownIds=list.map(c=>c.id);
+  const selectedShown=shownIds.filter(id=>selectedCattle[id]).length;
+  const allShown=shownIds.length&&selectedShown===shownIds.length;
 
   return `<div class="section">
     <div class="sec-hdr">
@@ -433,10 +688,13 @@ function renderCattle(){
       <select class="filter-sel" onchange="ui.cattleLoc=this.value;render()">
         <option value="">All Locations</option>${locOpts}
       </select>
+      <button class="btn btn-outline btn-sm" onclick="moveSelected()" ${selectedShown?'':'disabled'}>Move Selected</button>
+      <button class="btn btn-outline btn-sm" onclick="noteSelected()" ${selectedShown?'':'disabled'}>Apply Note to Selected</button>
       <span class="count-note">${D.cattle.length} total &bull; ${list.length} shown</span>
     </div>
     <div class="tbl-wrap"><table>
       <thead><tr>
+        <th class="no-sort td-check"><input type="checkbox" ${allShown?'checked':''} onchange="toggleAllCattleSel(this.checked,'${shownIds.join(',')}')"></th>
         <th onclick="toggleSort('cattle','tag')" class="${thCls('cattle','tag')}">Tag / ID</th>
         <th onclick="toggleSort('cattle','name')" class="${thCls('cattle','name')}">Name</th>
         <th onclick="toggleSort('cattle','type')" class="${thCls('cattle','type')}">Type</th>
@@ -446,7 +704,7 @@ function renderCattle(){
         <th onclick="toggleSort('cattle','status')" class="${thCls('cattle','status')}">Status</th>
         <th class="no-sort"></th>
       </tr></thead>
-      <tbody>${rows||'<tr><td colspan="8" class="empty">No animals match the current filters.</td></tr>'}</tbody>
+      <tbody>${rows||'<tr><td colspan="9" class="empty">No animals match the current filters. Clear filters or add a new animal.</td></tr>'}</tbody>
     </table></div>
   </div>`;
 }
@@ -454,10 +712,92 @@ function renderCattle(){
 function addCattle(){ openCattleModal(null); }
 function editCattle(id){ openCattleModal(D.cattle.find(x=>x.id===id)); }
 
+// NEW - Group Operations
+function toggleCattleSel(id,on){
+  if(on) selectedCattle[id]=true;
+  else delete selectedCattle[id];
+}
+function toggleAllCattleSel(on,ids){
+  ids.split(',').filter(Boolean).forEach(id=>{
+    if(on) selectedCattle[id]=true;
+    else delete selectedCattle[id];
+  });
+  render();
+}
+function selectedTags(){
+  return D.cattle.filter(c=>selectedCattle[c.id]).map(c=>c.tag);
+}
+function moveSelected(){
+  const tags=selectedTags();
+  if(!tags.length)return;
+  logMove(tags.join(', '));
+}
+function noteSelected(){
+  const tags=selectedTags();
+  if(!tags.length)return;
+  setModal(`Apply Note - ${tags.length} Selected`,`
+    <div class="fg c1">
+      <div class="frow"><label class="flabel">Note to append</label>
+        <textarea class="ftextarea" id="f-bulk-note" placeholder="Observation, issue, or handling note"></textarea></div>
+      <p class="fhint">This appends to existing notes. It does not replace them.</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBulkNote()">Apply Note</button>
+    </div>`);
+}
+function saveBulkNote(){
+  const note=document.getElementById('f-bulk-note').value.trim();
+  if(!note){alert('Enter a note to apply.');return;}
+  const stamp=fmtDate(today());
+  let count=0;
+  D.cattle.forEach(c=>{
+    if(selectedCattle[c.id]){
+      c.notes=[c.notes,`${stamp}: ${note}`].filter(Boolean).join('\n');
+      stampRecord(c);
+      count++;
+    }
+  });
+  logActivity('cattle',`Applied note to ${count} selected animal${count===1?'':'s'}`,'bulk');
+  save('cattle');closeModal();render();
+  setTimeout(()=>alert(`Note applied to ${count} animal${count===1?'':'s'}.`),50);
+}
+
+// NEW - Timeline
+function tagInList(list,tag){
+  return String(list||'').split(',').map(x=>x.trim().toLowerCase()).includes(String(tag||'').toLowerCase());
+}
+function animalTimeline(tag){
+  const events=[];
+  D.health.filter(h=>String(h.tag).toLowerCase()===String(tag).toLowerCase()).forEach(h=>{
+    events.push({date:h.startDate||h.endDate||'',text:`${h.condition}${h.status?` - ${h.status}`:''}${h.treatment?` - ${h.treatment}`:''}`});
+  });
+  D.moves.filter(m=>tagInList(m.animals,tag)).forEach(m=>{
+    events.push({date:m.date||'',text:`Moved from ${m.from||'unassigned'} to ${m.to||'unassigned'}${m.reason?` - ${m.reason}`:''}`});
+  });
+  D.vacc.filter(v=>tagInList(v.group,tag)).forEach(v=>{
+    events.push({date:v.completedDate||v.scheduled||'',text:`Vaccination: ${v.vaccine}${v.completed?' completed':' scheduled'}`});
+  });
+  return events.filter(e=>e.date).sort((a,b)=>b.date.localeCompare(a.date));
+}
+function renderAnimalTimeline(tag){
+  const events=animalTimeline(tag);
+  const rows=events.map(e=>`<div class="timeline-item">
+    <div class="timeline-date">${fmtDate(e.date)}</div>
+    <div>${esc(e.text)}</div>
+  </div>`).join('');
+  return `<div style="margin-top:20px">
+    <div class="sub-divider">Animal History</div>
+    <div class="timeline">${rows||'<div class="empty" style="padding:14px 8px">No health records or moves found for this tag yet.</div>'}</div>
+  </div>`;
+}
+
 function openCattleModal(c){
   const isEdit=!!c;
+  if(isEdit){ensureRecordStamp(c);setEditLock(c.id);}
   const locOpts=D.locs.map(l=>`<option value="${esc(l.name)}"${c&&c.location===l.name?' selected':''}>${esc(l.name)}</option>`).join('');
   setModal(isEdit?`Edit — ${c.tag}`:'Add Animal',`
+    ${isEdit?lockWarning(c):''}
     <div class="fg">
       <div class="frow"><label class="flabel">Tag Number *</label>
         <input class="finput" id="f-tag" type="text" value="${esc(c?.tag||'')}" placeholder="M-001"></div>
@@ -479,6 +819,7 @@ function openCattleModal(c){
       <div class="frow s2"><label class="flabel">Notes</label>
         <textarea class="ftextarea" id="f-notes">${esc(c?.notes||'')}</textarea></div>
     </div>
+    ${isEdit?renderAnimalTimeline(c.tag):''}
     <div class="modal-foot">
       <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveCattle('${isEdit?c.id:''}')">Save</button>
@@ -493,8 +834,18 @@ function saveCattle(id){
     breed:document.getElementById('f-breed').value,dob:document.getElementById('f-dob').value,
     location:document.getElementById('f-loc').value,status:document.getElementById('f-status').value,
     notes:document.getElementById('f-notes').value.trim()};
-  if(id){const i=D.cattle.findIndex(x=>x.id===id);D.cattle[i]={...D.cattle[i],...data};}
-  else D.cattle.push({id:genId(),...data});
+  stampRecord(data);
+  if(id){
+    const i=D.cattle.findIndex(x=>x.id===id);
+    const old=D.cattle[i];
+    D.cattle[i]={...D.cattle[i],...data};
+    const changes=[];
+    if(old.location!==data.location) changes.push(`location ${old.location||'unassigned'} to ${data.location||'unassigned'}`);
+    if(old.status!==data.status) changes.push(`status ${old.status||'blank'} to ${data.status||'blank'}`);
+    if(changes.length) logActivity('cattle',`${data.tag}: changed ${changes.join(', ')}`,id);
+    else logActivity('cattle',`${data.tag}: updated cattle record`,id);
+  }
+  else {const nid=genId();D.cattle.push({id:nid,...data});logActivity('cattle',`${data.tag}: added cattle record`,nid);}
   save('cattle');closeModal();render();
 }
 
@@ -634,8 +985,11 @@ function saveFeedInv(id){
   const data={name,unit:document.getElementById('f-unit').value,
     onHand:parseFloat(document.getElementById('f-onhand').value)||0,
     threshold:parseFloat(document.getElementById('f-thresh').value)||0};
+  stampRecord(data);
+  const wasEdit=!!id;
   if(id){const i=D.feedInv.findIndex(x=>x.id===id);D.feedInv[i]={...D.feedInv[i],...data};}
-  else D.feedInv.push({id:genId(),...data});
+  else {id=genId();D.feedInv.push({id,...data});}
+  logActivity('feed',`${name}: feed inventory ${wasEdit?'updated':'added'}`,id);
   save('feedInv');closeModal();render();
 }
 
@@ -676,22 +1030,24 @@ function saveFeedLog(id){
   const data={date:document.getElementById('f-date').value,feedId,qty,
     location:document.getElementById('f-loc').value,
     notes:document.getElementById('f-notes').value.trim()};
+  stampRecord(data);
   if(id){
     const old=D.feedLog.find(x=>x.id===id);
-    if(old){const fi=D.feedInv.find(x=>x.id===old.feedId);if(fi)fi.onHand+=old.qty;}
-    const ni=D.feedInv.find(x=>x.id===feedId);if(ni)ni.onHand=Math.max(0,ni.onHand-qty);
+    if(old){const fi=D.feedInv.find(x=>x.id===old.feedId);if(fi){fi.onHand+=old.qty;stampRecord(fi);}}
+    const ni=D.feedInv.find(x=>x.id===feedId);if(ni){ni.onHand=Math.max(0,ni.onHand-qty);stampRecord(ni);}
     const i=D.feedLog.findIndex(x=>x.id===id);D.feedLog[i]={id,...data};
   }else{
-    const fi=D.feedInv.find(x=>x.id===feedId);if(fi)fi.onHand=Math.max(0,fi.onHand-qty);
-    D.feedLog.push({id:genId(),...data});
+    const fi=D.feedInv.find(x=>x.id===feedId);if(fi){fi.onHand=Math.max(0,fi.onHand-qty);stampRecord(fi);}
+    const nid=genId();D.feedLog.push({id:nid,...data});id=nid;
   }
+  logActivity('feed',`${feedName(feedId)}: feed log ${id?'saved':'added'} (${qty} ${feedUnit(feedId)})`,id);
   save('feedLog');save('feedInv');closeModal();render();
 }
 
 function delFeedLog(id){
   const e=D.feedLog.find(x=>x.id===id);
   if(!confirm('Delete this feed log entry?'))return;
-  const fi=D.feedInv.find(x=>x.id===e.feedId);if(fi)fi.onHand+=e.qty;
+  const fi=D.feedInv.find(x=>x.id===e.feedId);if(fi){fi.onHand+=e.qty;stampRecord(fi);}
   D.feedLog=D.feedLog.filter(x=>x.id!==id);save('feedLog');save('feedInv');render();
 }
 
@@ -725,22 +1081,24 @@ function saveDelivery(id){
   const data={date:document.getElementById('f-date').value,feedId,qty,
     supplier:document.getElementById('f-supplier').value.trim(),
     notes:document.getElementById('f-notes').value.trim()};
+  stampRecord(data);
   if(id){
     const old=D.deliveries.find(x=>x.id===id);
-    if(old){const fi=D.feedInv.find(x=>x.id===old.feedId);if(fi)fi.onHand=Math.max(0,fi.onHand-old.qty);}
-    const ni=D.feedInv.find(x=>x.id===feedId);if(ni)ni.onHand+=qty;
+    if(old){const fi=D.feedInv.find(x=>x.id===old.feedId);if(fi){fi.onHand=Math.max(0,fi.onHand-old.qty);stampRecord(fi);}}
+    const ni=D.feedInv.find(x=>x.id===feedId);if(ni){ni.onHand+=qty;stampRecord(ni);}
     const i=D.deliveries.findIndex(x=>x.id===id);D.deliveries[i]={id,...data};
   }else{
-    const fi=D.feedInv.find(x=>x.id===feedId);if(fi)fi.onHand+=qty;
-    D.deliveries.push({id:genId(),...data});
+    const fi=D.feedInv.find(x=>x.id===feedId);if(fi){fi.onHand+=qty;stampRecord(fi);}
+    const nid=genId();D.deliveries.push({id:nid,...data});id=nid;
   }
+  logActivity('feed',`${feedName(feedId)}: delivery saved (${qty} ${feedUnit(feedId)})`,id);
   save('deliveries');save('feedInv');closeModal();render();
 }
 
 function delDelivery(id){
   const e=D.deliveries.find(x=>x.id===id);
   if(!confirm('Delete this delivery entry?'))return;
-  const fi=D.feedInv.find(x=>x.id===e.feedId);if(fi)fi.onHand=Math.max(0,fi.onHand-e.qty);
+  const fi=D.feedInv.find(x=>x.id===e.feedId);if(fi){fi.onHand=Math.max(0,fi.onHand-e.qty);stampRecord(fi);}
   D.deliveries=D.deliveries.filter(x=>x.id!==id);save('deliveries');save('feedInv');render();
 }
 
@@ -849,8 +1207,10 @@ function editHealth(id){ openHealthModal(D.health.find(x=>x.id===id)); }
 
 function openHealthModal(h){
   const isEdit=!!h;
+  if(isEdit){ensureRecordStamp(h);setEditLock(h.id);}
   const vetOpts=(D.settings.vets||[]).map(v=>`<option${h?.vet===v?' selected':''}>${esc(v)}</option>`).join('');
   setModal(isEdit?`Edit — ${h.tag}`:'Add Health Record',`<div class="fg">
+    ${isEdit?`<div class="frow s2">${lockWarning(h)}</div>`:''}
     <div class="frow"><label class="flabel">Tag Number *</label>
       <input class="finput" id="f-tag" type="text" value="${esc(h?.tag||'')}" placeholder="M-001"></div>
     <div class="frow"><label class="flabel">Status</label>
@@ -885,8 +1245,9 @@ function saveHealth(id){
     vet:document.getElementById('f-vet').value,status:document.getElementById('f-status').value,
     notes:document.getElementById('f-notes').value.trim(),
     withdrawal:document.getElementById('f-wd').value};
-  if(id){const i=D.health.findIndex(x=>x.id===id);D.health[i]={...D.health[i],...data};}
-  else D.health.push({id:genId(),...data});
+  stampRecord(data);
+  if(id){const i=D.health.findIndex(x=>x.id===id);D.health[i]={...D.health[i],...data};logActivity('health',`${tag}: updated health record - ${cond}`,id);}
+  else {const nid=genId();D.health.push({id:nid,...data});logActivity('health',`${tag}: added health record - ${cond}`,nid);}
   save('health');closeModal();render();
 }
 
@@ -924,8 +1285,10 @@ function saveVacc(id){
   const data={vaccine,group:document.getElementById('f-grp').value.trim(),
     scheduled:document.getElementById('f-sched').value,
     completed:!!completedDate,completedDate};
+  stampRecord(data);
   if(id){const i=D.vacc.findIndex(x=>x.id===id);D.vacc[i]={...D.vacc[i],...data};}
-  else D.vacc.push({id:genId(),...data});
+  else {const nid=genId();D.vacc.push({id:nid,...data});id=nid;}
+  logActivity('health',`${vaccine}: vaccination ${completedDate?'completed':'scheduled'}`,id);
   save('vacc');closeModal();render();
 }
 
@@ -936,7 +1299,7 @@ function delVacc(id){
 
 function markVaccDone(id){
   const v=D.vacc.find(x=>x.id===id);if(!v)return;
-  v.completed=true;v.completedDate=today();save('vacc');render();
+  v.completed=true;v.completedDate=today();stampRecord(v);logActivity('health',`${v.vaccine}: marked done`,id);save('vacc');render();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1040,7 +1403,9 @@ function editEquip(id){ openEquipModal(D.equip.find(x=>x.id===id)); }
 
 function openEquipModal(e){
   const isEdit=!!e;
+  if(isEdit){ensureRecordStamp(e);setEditLock(e.id);}
   setModal(isEdit?`Edit — ${e.name}`:'Add Equipment',`<div class="fg">
+    ${isEdit?`<div class="frow s2">${lockWarning(e)}</div>`:''}
     <div class="frow s2"><label class="flabel">Equipment Name *</label>
       <input class="finput" id="f-name" type="text" value="${esc(e?.name||'')}" placeholder="e.g. John Deere 6105M Tractor"></div>
     <div class="frow"><label class="flabel">Year (optional)</label>
@@ -1062,8 +1427,10 @@ function saveEquip(id){
   const yr=document.getElementById('f-year').value;
   const data={name,year:yr?parseInt(yr):null,status:document.getElementById('f-status').value,
     notes:document.getElementById('f-notes').value.trim()};
+  stampRecord(data);
   if(id){const i=D.equip.findIndex(x=>x.id===id);D.equip[i]={...D.equip[i],...data};}
-  else D.equip.push({id:genId(),...data});
+  else {const nid=genId();D.equip.push({id:nid,...data});id=nid;}
+  logActivity('equipment',`${name}: equipment ${id?'saved':'added'}`,id);
   save('equip');closeModal();render();
 }
 
@@ -1110,8 +1477,10 @@ function saveService(id){
     lastDate:document.getElementById('f-last').value,
     interval:document.getElementById('f-int').value,
     nextDate:document.getElementById('f-next').value};
+  stampRecord(data);
   if(id){const i=D.service.findIndex(x=>x.id===id);D.service[i]={...D.service[i],...data};}
-  else D.service.push({id:genId(),...data});
+  else {const nid=genId();D.service.push({id:nid,...data});id=nid;}
+  logActivity('equipment',`${equipName(data.equipId)}: service item saved`,id);
   save('service');closeModal();render();
 }
 
@@ -1151,8 +1520,10 @@ function saveRepair(id){
     work:document.getElementById('f-work').value.trim(),
     cost:cv!==''?parseFloat(cv):null,
     by:document.getElementById('f-by').value.trim()};
+  stampRecord(data);
   if(id){const i=D.repairs.findIndex(x=>x.id===id);D.repairs[i]={...D.repairs[i],...data};}
-  else D.repairs.push({id:genId(),...data});
+  else {const nid=genId();D.repairs.push({id:nid,...data});id=nid;}
+  logActivity('equipment',`${equipName(data.equipId)}: repair log saved`,id);
   save('repairs');closeModal();render();
 }
 
@@ -1167,9 +1538,12 @@ function delRepair(id){
 function renderPastures(){
   const cards=D.locs.map(l=>{
     const count=headCount(l.name);
+    const acres=parseFloat(String(l.size||'').replace(/,/g,'').match(/[\d.]+/)?.[0]||'');
+    const density=acres?`${acres} acres &bull; ${count} head &bull; ${(count/acres).toFixed(2)} hd/acre`:'';
     return `<div class="loc-card">
       <div class="loc-name">${esc(l.name)}</div>
       <div class="loc-meta">${esc(l.type)}${l.size?' · '+esc(l.size):''}</div>
+      ${density?`<div class="loc-meta">${density}</div>`:''}
       ${l.notes?`<div class="loc-meta" style="font-style:italic">${esc(l.notes)}</div>`:''}
       <div style="margin-top:8px">
         <span class="loc-count"><a class="loc-count-link" data-loc="${esc(l.name)}" onclick="goToCattleByLoc(this.dataset.loc)" title="View cattle at this location">${count}</a></span>
@@ -1251,15 +1625,17 @@ function saveLoc(id){
   const data={name,type:document.getElementById('f-type').value,
     size:document.getElementById('f-size').value.trim(),
     notes:document.getElementById('f-notes').value.trim()};
+  stampRecord(data);
   if(id){
     const i=D.locs.findIndex(x=>x.id===id);
     const oldName=D.locs[i].name;
     D.locs[i]={...D.locs[i],...data};
     if(oldName!==name){
-      D.cattle.forEach(c=>{if(c.location===oldName)c.location=name;});
+      D.cattle.forEach(c=>{if(c.location===oldName){c.location=name;stampRecord(c);}});
       save('cattle');
     }
-  }else D.locs.push({id:genId(),...data});
+  }else {const nid=genId();D.locs.push({id:nid,...data});id=nid;}
+  logActivity('locations',`${name}: location saved`,id);
   save('locs');closeModal();render();
 }
 
@@ -1269,13 +1645,13 @@ function delLoc(id){
   D.locs=D.locs.filter(x=>x.id!==id);save('locs');render();
 }
 
-function logMove(){
+function logMove(prefill){
   const locOpts=D.locs.map(l=>`<option value="${esc(l.name)}">${esc(l.name)}</option>`).join('');
   setModal('Log a Move',`<div class="fg c1">
     <div class="frow"><label class="flabel">Date</label>
       <input class="finput" id="f-date" type="date" value="${today()}"></div>
     <div class="frow"><label class="flabel">Animal Tag(s) *</label>
-      <input class="finput" id="f-animals" type="text" placeholder="e.g. M-001 or M-001, M-002, M-003">
+      <input class="finput" id="f-animals" type="text" value="${esc(prefill||'')}" placeholder="e.g. M-001 or M-001, M-002, M-003">
       <span class="fhint">Comma-separated for multiple animals. Location in the Cattle roster will be updated automatically.</span></div>
     <div class="frow"><label class="flabel">From Location</label>
       <select class="fselect" id="f-from"><option value="">— Select —</option>${locOpts}</select></div>
@@ -1299,12 +1675,16 @@ function saveMove(){
   let found=0;
   tags.forEach(tag=>{
     const c=D.cattle.find(x=>x.tag.toLowerCase()===tag.toLowerCase());
-    if(c){c.location=to;found++;}
+    if(c){c.location=to;stampRecord(c);found++;}
   });
   if(found>0) save('cattle');
-  D.moves.push({id:genId(),date:document.getElementById('f-date').value,animals,
+  const move={id:genId(),date:document.getElementById('f-date').value,animals,
     from:document.getElementById('f-from').value,to,
-    reason:document.getElementById('f-reason').value.trim()});
+    reason:document.getElementById('f-reason').value.trim()};
+  stampRecord(move);
+  D.moves.push(move);
+  logActivity('move',`${animals}: moved to ${to}${document.getElementById('f-from').value?` from ${document.getElementById('f-from').value}`:''}`,move.id);
+  selectedCattle={};
   save('moves');closeModal();render();
   if(found<tags.length){
     setTimeout(()=>alert(`Move logged. Note: ${tags.length-found} tag(s) not found in the cattle roster and were not updated automatically.`),100);
@@ -1326,12 +1706,38 @@ function openSettings(){
 
 function renderSettingsBody(){
   const vets=D.settings.vets||[];
+  const shared=D.settings.mode==='Shared';
   const vitems=vets.map((v,i)=>`<div class="slist-item">
     <span>${esc(v)}</span>
     <button class="btn btn-danger btn-xs" onclick="rmVet(${i})">Remove</button>
   </div>`).join('');
+  ensureActivityLog();
+  const logItems=D.activityLog.slice(0,shared?50:20).map(a=>`<div class="slist-item" style="align-items:flex-start;gap:12px">
+    <span><strong>${fmtStamp(a.timestamp||new Date(a.date+'T00:00:00').getTime())}</strong> <span class="badge b-flagged">${esc(a.type)}</span><br>${shared?`<span class="td-muted">${esc(a.user||'Unknown')}</span> - `:''}${esc(a.message)}</span>
+  </div>`).join('');
+  const backups=getBackups();
+  const backupItems=backups.map((b,i)=>`<div class="slist-item">
+    <span>${fmtStamp(b.timestamp)}</span>
+    <button class="btn btn-outline btn-xs" onclick="restoreBackup(${i})">Restore</button>
+  </div>`).join('');
 
   document.getElementById('modal-body').innerHTML=`
+    <div style="margin-bottom:22px">
+      <div class="sub-divider">Save Status</div>
+      <p class="fhint">Last saved: ${fmtStamp(D.meta?.lastModified)}. Device: ${esc(shortDeviceId())}. Data version: ${esc(D.meta?.version||1)}.</p>
+    </div>
+    <div style="margin-bottom:22px">
+      <div class="sub-divider">User</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input class="finput" id="f-user-name" type="text" value="${esc(userName())}" placeholder="Your name" style="max-width:220px">
+        <select class="fselect" id="f-mode" style="max-width:150px">
+          <option${!shared?' selected':''}>Personal</option>
+          <option${shared?' selected':''}>Shared</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="saveUserSettings()">Save</button>
+      </div>
+      <p class="fhint" style="margin-top:6px">Shared mode shows user names, activity, and manual sync tools. Personal mode keeps the app quieter.</p>
+    </div>
     <div style="margin-bottom:22px">
       <div class="sub-divider">Ranch Name</div>
       <div style="display:flex;gap:10px;align-items:center">
@@ -1347,10 +1753,55 @@ function renderSettingsBody(){
         <button class="btn btn-primary btn-sm" onclick="addVet()">Add</button>
       </div>
     </div>
-    <div>
+    <div style="margin-bottom:22px">
       <div class="sub-divider">Feed Types</div>
       <p class="fhint" style="margin-bottom:10px">Feed types are managed in the Feed tab under the inventory section.</p>
       <button class="btn btn-outline btn-sm" onclick="closeModal();switchTab('feed')">Go to Feed Tab →</button>
+    </div>
+    <div style="margin-bottom:22px">
+      <div class="sub-divider">Data Backup</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn btn-primary btn-sm" onclick="exportData()">Export Data</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('f-import').click()">Import Data</button>
+        <button class="btn btn-danger btn-sm" onclick="resetSampleData()">Reset to Sample Data</button>
+        <input id="f-import" type="file" accept="application/json" style="display:none" onchange="importData(this.files[0])">
+      </div>
+      <p class="fhint">Export saves the full ranch data object. Import replaces current browser data after confirmation.</p>
+    </div>
+    <div style="margin-bottom:22px">
+      <div class="sub-divider">Restore Backup</div>
+      <div class="slist">${backupItems||'<div class="slist-item td-muted">No automatic backups yet.</div>'}</div>
+    </div>
+    <div style="margin-bottom:22px">
+      <div class="sub-divider">Sync Between Devices</div>
+      <p class="fhint" style="margin-bottom:10px">${shared?'Use Export/Import to move data between devices. Always export before importing from another device.':'Switch to Shared mode to show the full manual sync workflow.'}</p>
+      <div style="display:${shared?'flex':'none'};gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn btn-primary btn-sm" onclick="quickExport()">Quick Export</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('f-quick-import').click()">Quick Import</button>
+        <button class="btn btn-outline btn-sm" onclick="copyData()">Copy to Clipboard</button>
+        <input id="f-quick-import" type="file" accept="application/json" style="display:none" onchange="importData(this.files[0])">
+      </div>
+      <div class="frow" style="display:${shared?'flex':'none'}">
+        <label class="flabel">Paste Data</label>
+        <textarea class="ftextarea" id="f-paste-data" placeholder="Paste ranch JSON here"></textarea>
+      </div>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;display:${shared?'inline-block':'none'}" onclick="importPastedData()">Preview Pasted Data</button>
+    </div>
+    <div style="margin-bottom:22px;display:${shared?'block':'none'}">
+      <div class="sub-divider">Shared Data URL</div>
+      <div class="frow" style="margin-bottom:8px">
+        <input class="finput" id="f-shared-url" type="url" value="${esc(D.settings.sharedUrl||'')}" placeholder="Optional JSON endpoint URL">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="saveSharedUrl()">Save URL</button>
+        <button class="btn btn-outline btn-sm" onclick="syncFromSharedSource()">Sync from Shared Source</button>
+        <button class="btn btn-outline btn-sm" onclick="pushToSharedSource()">Push to Shared Source</button>
+      </div>
+      <p class="fhint" style="margin-top:6px">Optional. If no URL is set, the app stays file-based and offline.</p>
+    </div>
+    <div>
+      <div class="sub-divider">Recent Activity</div>
+      <div class="slist">${logItems||'<div class="slist-item td-muted">No tracked changes yet. Edits, moves, and health records will appear here.</div>'}</div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-outline" onclick="closeModal()">Close</button>
@@ -1364,6 +1815,23 @@ function saveRanchName(){
   document.getElementById('hdr-name').textContent=n.toUpperCase();
 }
 
+function saveUserSettings(){
+  const name=document.getElementById('f-user-name').value.trim()||'Ranch User';
+  currentUser.userName=name;
+  saveUser();
+  D.settings.mode=document.getElementById('f-mode').value;
+  logActivity('settings',`User settings saved for ${name}`,'settings');
+  save('settings');
+  renderSettingsBody();
+}
+
+function saveSharedUrl(){
+  D.settings.sharedUrl=document.getElementById('f-shared-url').value.trim();
+  logActivity('settings',D.settings.sharedUrl?'Shared data URL saved':'Shared data URL cleared','settings');
+  save('settings');
+  renderSettingsBody();
+}
+
 function addVet(){
   const v=document.getElementById('f-newvet').value.trim();
   if(!v)return;
@@ -1373,6 +1841,204 @@ function addVet(){
 
 function rmVet(i){
   D.settings.vets.splice(i,1);save('settings');renderSettingsBody();
+}
+
+// NEW - Data Backup
+function exportData(filename){
+  ensureMeta(false);
+  ensureActivityLog();
+  D.meta.exportedBy=userName();
+  D.meta.user={userId:currentUser?.userId||'',userName:userName()};
+  save('meta',{touch:false,backup:false});
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename||`mcmahon-ranch-backup-${today()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  URL.revokeObjectURL(a.href);
+  a.remove();
+}
+function quickExport(){ exportData(`ranch-data-${today()}.json`); }
+function validImport(obj){
+  if(!obj||typeof obj!=='object'||Array.isArray(obj)) return false;
+  return validDataShape({...obj,activityLog:Array.isArray(obj.activityLog)?obj.activityLog:[]});
+}
+function importData(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=function(){
+    previewImportText(r.result);
+  };
+  r.readAsText(file);
+}
+function importPastedData(){
+  const raw=document.getElementById('f-paste-data')?.value.trim();
+  if(!raw){alert('Paste ranch JSON first.');return;}
+  previewImportText(raw);
+}
+function previewImportText(raw){
+  try{
+    const obj=JSON.parse(raw);
+    if(!validImport(obj)){alert('Import failed. JSON is valid, but it is not a McMahon Ranch backup.');return;}
+    obj.activityLog=Array.isArray(obj.activityLog)?obj.activityLog:[];
+    obj.meta=obj.meta&&typeof obj.meta==='object'?obj.meta:{version:1,lastModified:0,deviceId:'unknown'};
+    pendingImport=obj;
+    showImportPreview(obj);
+  }catch(e){alert('Import failed. The selected data is not valid JSON.');}
+}
+
+// NEW - Conflict Detection
+function showImportPreview(obj){
+  const incoming=obj.meta?.lastModified||0;
+  const current=D.meta?.lastModified||0;
+  const diff=incoming-current;
+  const lastImport=D.meta?.lastImportedAt||0;
+  const changesSince=(obj.activityLog||[]).filter(a=>(a.timestamp||0)>lastImport).length;
+  const lastBy=obj.meta?.lastModifiedBy||obj.meta?.exportedBy||obj.meta?.user?.userName||'Unknown';
+  const warn=diff<0
+    ?'<div class="alert alert-warn">&#9888; <span><strong>Imported data is older than current data.</strong> Continue only if that is intentional.</span></div>'
+    :Math.abs(diff)<300000
+      ?'<div class="alert alert-warn">&#9888; <span><strong>Timestamps are close.</strong> Merge can reduce accidental loss when both devices were edited recently.</span></div>'
+      :'<div class="alert alert-warn">&#128190; <span>Imported data is newer than current data or has no conflict warning.</span></div>';
+  setModal('Import Preview',`
+    ${warn}
+    <div class="alert alert-warn">&#9888; <span>Always export before importing from another device.</span></div>
+    <p class="fhint" style="margin-bottom:10px">This file was last edited by ${esc(lastBy)} on ${fmtStamp(incoming)}.</p>
+    <div class="slist">
+      <div class="slist-item"><span>Cattle</span><strong>${obj.cattle.length}</strong></div>
+      <div class="slist-item"><span>Total records</span><strong>${ARRAY_KEYS.reduce((n,k)=>n+(Array.isArray(obj[k])?obj[k].length:0),0)}</strong></div>
+      <div class="slist-item"><span>Changes since last import</span><strong>${changesSince}</strong></div>
+      <div class="slist-item"><span>Incoming last modified</span><strong>${fmtStamp(incoming)}</strong></div>
+      <div class="slist-item"><span>Current last modified</span><strong>${fmtStamp(current)}</strong></div>
+      <div class="slist-item"><span>Time difference</span><strong>${Math.round(Math.abs(diff)/60000)} min</strong></div>
+      <div class="slist-item"><span>Incoming device</span><strong>${esc(String(obj.meta?.deviceId||'unknown').slice(-6))}</strong></div>
+    </div>
+    <p class="fhint" style="margin-top:10px">Replace overwrites this browser. Merge adds missing records and prefers imported records when the same id exists.</p>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="pendingImport=null;openSettings()">Cancel</button>
+      <button class="btn btn-outline" onclick="applyImport('merge')">Merge</button>
+      <button class="btn btn-primary" onclick="applyImport('replace')">Replace</button>
+    </div>`);
+}
+
+function applyImport(mode){
+  if(!pendingImport)return;
+  const incoming=pendingImport;
+  const current=D.meta?.lastModified||0;
+  if(mode==='replace'&&incoming.meta?.lastModified&&incoming.meta.lastModified<current&&!confirm('Imported data is older than current data. Continue?'))return;
+  if(!confirm(mode==='merge'?'Merge imported data into current data?':'Replace current data with imported data?'))return;
+  pushBackup(true);
+  if(mode==='merge') D=mergeData(D,incoming);
+  else D={...incoming,activityLog:Array.isArray(incoming.activityLog)?incoming.activityLog:[]};
+  ensureMeta(true);
+  D.meta.deviceId=getDeviceId();
+  D.meta.lastImportedAt=Date.now();
+  D.meta.lastImportedBy=incoming.meta?.lastModifiedBy||incoming.meta?.exportedBy||'Unknown';
+  pendingImport=null;
+  logActivity('settings',mode==='merge'?'Merged imported ranch data':'Imported ranch data backup');
+  saveAll();
+  closeModal();
+  document.getElementById('hdr-name').textContent=(D.settings?.ranchName||'McMahon Ranch').toUpperCase();
+  render();
+}
+
+// NEW - Safe Merge
+function mergeById(currentArr,incomingArr,preferImported){
+  const out=[...(Array.isArray(currentArr)?currentArr:[])];
+  const index={};
+  out.forEach((x,i)=>{if(x&&x.id)index[x.id]=i;});
+  (Array.isArray(incomingArr)?incomingArr:[]).forEach(item=>{
+    if(!item||!item.id){out.push(item);return;}
+    if(index[item.id]==null){index[item.id]=out.length;out.push(item);return;}
+    const cur=out[index[item.id]];
+    const curTs=cur.updatedAt||0;
+    const incTs=item.updatedAt||0;
+    if(curTs&&incTs&&curTs!==incTs){
+      const keepIncoming=incTs>=curTs;
+      mergeConflicts.push({id:item.id,kept:keepIncoming?item:cur,dropped:keepIncoming?cur:item});
+      if(keepIncoming) out[index[item.id]]=item;
+    }else if(preferImported||incTs>curTs) out[index[item.id]]=item;
+  });
+  return out;
+}
+function mergeData(current,incoming){
+  const merged={...current};
+  mergeConflicts=[];
+  ARRAY_KEYS.forEach(k=>{merged[k]=mergeById(current[k],incoming[k],true);});
+  merged.settings={...incoming.settings,...current.settings};
+  merged.meta={version:1,lastModified:Date.now(),deviceId:getDeviceId()};
+  merged.activityLog=Array.isArray(merged.activityLog)?merged.activityLog:[];
+  mergeConflicts.slice(0,20).forEach(c=>{
+    merged.activityLog.unshift({id:genId(),date:today(),timestamp:Date.now(),user:userName(),type:'conflict',entityId:c.id,message:`Conflict: ${c.id} updated by two sources - latest kept`});
+  });
+  return merged;
+}
+
+function copyData(){
+  ensureMeta(false);
+  const text=JSON.stringify(D,null,2);
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>alert('Ranch data copied to clipboard.')).catch(()=>copyFallback(text));
+  }else copyFallback(text);
+}
+function copyFallback(text){
+  const t=document.createElement('textarea');
+  t.value=text;document.body.appendChild(t);t.select();
+  try{document.execCommand('copy');alert('Ranch data copied to clipboard.');}
+  catch(e){alert('Clipboard copy failed. Use Export Data instead.');}
+  t.remove();
+}
+
+// NEW - Shared Sync
+function sharedUrl(){
+  return (D.settings.sharedUrl||'').trim();
+}
+
+function syncFromSharedSource(){
+  const url=sharedUrl();
+  if(!url){alert('Add a Shared Data URL first.');return;}
+  fetch(url,{cache:'no-store'})
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
+    .then(txt=>previewImportText(txt))
+    .catch(()=>alert('Sync failed. Check the Shared Data URL or use file import instead.'));
+}
+
+function pushToSharedSource(){
+  const url=sharedUrl();
+  if(!url){alert('Add a Shared Data URL first.');return;}
+  if(!confirm('Push current ranch data to the shared source? Export a backup first if you are unsure.'))return;
+  D.meta.exportedBy=userName();
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(D)})
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);alert('Shared source updated.');})
+    .catch(()=>alert('Push failed. This endpoint may not accept POST, or the browser may be offline.'));
+}
+
+function restoreBackup(i){
+  const b=getBackups()[i];
+  if(!b){alert('Backup not found.');return;}
+  if(!confirm('Restore this backup? Current ranch data in this browser will be replaced.'))return;
+  try{
+    const obj=JSON.parse(b.data);
+    if(!validImport(obj)){alert('Restore failed. Backup data is not valid.');return;}
+    D={...obj,activityLog:Array.isArray(obj.activityLog)?obj.activityLog:[]};
+    ensureMeta(true);
+    D.meta.deviceId=getDeviceId();
+    logActivity('settings',`Restored backup from ${fmtStamp(b.timestamp)}`);
+    saveAll();
+    closeModal();
+    document.getElementById('hdr-name').textContent=(D.settings?.ranchName||'McMahon Ranch').toUpperCase();
+    render();
+  }catch(e){alert('Restore failed. Backup data could not be read.');}
+}
+function resetSampleData(){
+  if(!confirm('Reset to sample data? Current ranch data in this browser will be replaced.'))return;
+  D=seed();
+  logActivity('settings','Reset to sample data');
+  saveAll();
+  closeModal();
+  document.getElementById('hdr-name').textContent=(D.settings?.ranchName||'McMahon Ranch').toUpperCase();
+  render();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1404,8 +2070,10 @@ document.addEventListener('keydown',function(e){
 // INIT
 // ═══════════════════════════════════════════════════════
 function init(){
+  loadUser();
   loadData();
   document.getElementById('hdr-name').textContent=(D.settings?.ranchName||'McMahon Ranch').toUpperCase();
+  updateLastSaved();
   render();
 }
 
