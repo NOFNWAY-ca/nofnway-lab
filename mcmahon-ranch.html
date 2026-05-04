@@ -236,16 +236,16 @@ const ARRAY_KEYS=['cattle','feedInv','feedLog','deliveries','health','vacc','equ
 function seed() {
   return {
     cattle:[
-      {id:'c1',tag:'M-001',name:'Ironclad',type:'Bull',breed:'Purebred',dob:'2020-03-15',location:'Bull Pen A',status:'Active',notes:'Herd sire. Excellent temperament and conformation.'},
-      {id:'c2',tag:'M-002',name:'Thunder',type:'Bull',breed:'Purebred',dob:'2019-04-22',location:'Bull Pen B',status:'For Sale',notes:'Available for sale. Full EPDs on file. Calving ease sire.'},
-      {id:'c3',tag:'M-047',name:'',type:'Cow',breed:'Commercial',dob:'2017-05-10',location:'Home Pasture',status:'Active',notes:'Currently isolated for treatment. See Health tab.'},
-      {id:'c4',tag:'M-103',name:'',type:'Cow',breed:'Commercial',dob:'2018-06-01',location:'North Pasture',status:'Active',notes:''},
-      {id:'c5',tag:'M-155',name:'',type:'Cow',breed:'Commercial',dob:'2018-02-14',location:'West Pasture',status:'Active',notes:'Under nutrition monitoring. See Health tab.'},
-      {id:'c6',tag:'M-204',name:'',type:'Cow',breed:'Commercial',dob:'2019-03-30',location:'East Pen',status:'Active',notes:''},
-      {id:'c7',tag:'M-312',name:'',type:'Heifer',breed:'Commercial',dob:'2024-04-08',location:'West Pasture',status:'Active',notes:'First-calf heifer. Due to calve in spring.'},
-      {id:'c8',tag:'M-415',name:'',type:'Steer',breed:'Commercial',dob:'2024-03-20',location:'Drylot',status:'Active',notes:'Flagged for observation — possible mild respiratory issue noted Apr 2. Monitor daily. Weight and appetite appear stable.'},
-      {id:'c9',tag:'M-518',name:'',type:'Calf',breed:'Commercial',dob:'2026-02-28',location:'Calving Barn',status:'Active',notes:'Healthy birth weight.'},
-      {id:'c10',tag:'M-620',name:'Duke',type:'Bull',breed:'Purebred',dob:'2021-05-01',location:'Bull Pen A',status:'Active',notes:'Second breeding bull. Coming into service this spring.'}
+      {id:'c1',tag:'M-001',ccia:'',name:'Ironclad',type:'Bull',breed:'Purebred',dob:'2020-03-15',location:'Bull Pen A',status:'Active',notes:'Herd sire. Excellent temperament and conformation.'},
+      {id:'c2',tag:'M-002',ccia:'',name:'Thunder',type:'Bull',breed:'Purebred',dob:'2019-04-22',location:'Bull Pen B',status:'For Sale',notes:'Available for sale. Full EPDs on file. Calving ease sire.'},
+      {id:'c3',tag:'M-047',ccia:'',name:'',type:'Cow',breed:'Commercial',dob:'2017-05-10',location:'Home Pasture',status:'Active',notes:'Currently isolated for treatment. See Health tab.'},
+      {id:'c4',tag:'M-103',ccia:'',name:'',type:'Cow',breed:'Commercial',dob:'2018-06-01',location:'North Pasture',status:'Active',notes:''},
+      {id:'c5',tag:'M-155',ccia:'',name:'',type:'Cow',breed:'Commercial',dob:'2018-02-14',location:'West Pasture',status:'Active',notes:'Under nutrition monitoring. See Health tab.'},
+      {id:'c6',tag:'M-204',ccia:'',name:'',type:'Cow',breed:'Commercial',dob:'2019-03-30',location:'East Pen',status:'Active',notes:''},
+      {id:'c7',tag:'M-312',ccia:'',name:'',type:'Heifer',breed:'Commercial',dob:'2024-04-08',location:'West Pasture',status:'Active',notes:'First-calf heifer. Due to calve in spring.'},
+      {id:'c8',tag:'M-415',ccia:'',name:'',type:'Steer',breed:'Commercial',dob:'2024-03-20',location:'Drylot',status:'Active',notes:'Flagged for observation — possible mild respiratory issue noted Apr 2. Monitor daily. Weight and appetite appear stable.'},
+      {id:'c9',tag:'M-518',ccia:'',name:'',type:'Calf',breed:'Commercial',dob:'2026-02-28',location:'Calving Barn',status:'Active',notes:'Healthy birth weight.'},
+      {id:'c10',tag:'M-620',ccia:'',name:'Duke',type:'Bull',breed:'Purebred',dob:'2021-05-01',location:'Bull Pen A',status:'Active',notes:'Second breeding bull. Coming into service this spring.'}
     ],
     feedInv:[
       {id:'fi1',name:'Hay',unit:'bales',onHand:87,threshold:30},
@@ -383,11 +383,16 @@ function validDataShape(obj){
   return obj&&typeof obj==='object'&&ARRAY_KEYS.every(k=>Array.isArray(obj[k]))&&obj.settings&&typeof obj.settings==='object';
 }
 
+function normalizeCattleData(){
+  if(Array.isArray(D.cattle)) D.cattle.forEach(c=>{if(c.ccia==null)c.ccia='';});
+}
+
 function repairDataShape(){
   const s=seed();
   ARRAY_KEYS.forEach(k=>{if(!Array.isArray(D[k]))D[k]=[];});
   if(!D.settings||typeof D.settings!=='object') D.settings=s.settings;
   D.settings.mode=D.settings.mode||'Personal';
+  normalizeCattleData();
   ensureMeta(false);
 }
 
@@ -403,6 +408,7 @@ function loadData() {
     catch(e){D[k]=s[k] || (k==='settings'?{}:[]);dataIssue=true;}
   }
   if(!D.settings.mode)D.settings.mode='Personal';
+  normalizeCattleData();
   ensureMeta(false);
   if(!validDataShape(D)){dataIssue=true;repairDataShape();}
   if(dataIssue) setTimeout(()=>handleDataIssue(),100);
@@ -630,7 +636,7 @@ function renderToday(){
 function renderCattle(){
   let list=D.cattle.filter(c=>{
     const q=ui.cattleQ.toLowerCase();
-    if(q&&![c.tag,c.name,c.type,c.location,c.status].some(v=>(v||'').toLowerCase().includes(q))) return false;
+    if(q&&![c.tag,c.ccia,c.name,c.type,c.location,c.status].some(v=>(v||'').toLowerCase().includes(q))) return false;
     if(ui.cattleType&&c.type!==ui.cattleType) return false;
     if(ui.cattleBreed&&c.breed!==ui.cattleBreed) return false;
     if(ui.cattleLoc&&c.location!==ui.cattleLoc) return false;
@@ -653,6 +659,7 @@ function renderCattle(){
     return `<tr>
       <td class="td-check"><input type="checkbox" ${selectedCattle[c.id]?'checked':''} onchange="toggleCattleSel('${c.id}',this.checked)"></td>
       <td><strong class="tag-strong">${esc(c.tag)}</strong>${purebred}${forSale}</td>
+      <td class="td-muted">${c.ccia?esc(c.ccia):'<span class="td-muted">—</span>'}</td>
       <td>${c.name?esc(c.name):'<span class="td-muted">—</span>'}</td>
       <td>${esc(c.type)}</td>
       <td class="td-muted">${esc(c.breed)}</td>
@@ -695,7 +702,8 @@ function renderCattle(){
     <div class="tbl-wrap"><table>
       <thead><tr>
         <th class="no-sort td-check"><input type="checkbox" ${allShown?'checked':''} onchange="toggleAllCattleSel(this.checked,'${shownIds.join(',')}')"></th>
-        <th onclick="toggleSort('cattle','tag')" class="${thCls('cattle','tag')}">Tag / ID</th>
+        <th onclick="toggleSort('cattle','tag')" class="${thCls('cattle','tag')}">Tag</th>
+        <th onclick="toggleSort('cattle','ccia')" class="${thCls('cattle','ccia')}">CCIA</th>
         <th onclick="toggleSort('cattle','name')" class="${thCls('cattle','name')}">Name</th>
         <th onclick="toggleSort('cattle','type')" class="${thCls('cattle','type')}">Type</th>
         <th onclick="toggleSort('cattle','breed')" class="${thCls('cattle','breed')}">Breed</th>
@@ -704,7 +712,7 @@ function renderCattle(){
         <th onclick="toggleSort('cattle','status')" class="${thCls('cattle','status')}">Status</th>
         <th class="no-sort"></th>
       </tr></thead>
-      <tbody>${rows||'<tr><td colspan="9" class="empty">No animals match the current filters. Clear filters or add a new animal.</td></tr>'}</tbody>
+      <tbody>${rows||'<tr><td colspan="10" class="empty">No animals match the current filters. Clear filters or add a new animal.</td></tr>'}</tbody>
     </table></div>
   </div>`;
 }
@@ -801,6 +809,8 @@ function openCattleModal(c){
     <div class="fg">
       <div class="frow"><label class="flabel">Tag Number *</label>
         <input class="finput" id="f-tag" type="text" value="${esc(c?.tag||'')}" placeholder="M-001"></div>
+      <div class="frow"><label class="flabel">CCIA Tag</label>
+        <input class="finput" id="f-ccia" type="text" inputmode="numeric" value="${esc(c?.ccia||'')}" placeholder="15-digit RFID"></div>
       <div class="frow"><label class="flabel">Name (optional)</label>
         <input class="finput" id="f-name" type="text" value="${esc(c?.name||'')}"></div>
       <div class="frow"><label class="flabel">Type</label>
@@ -830,7 +840,8 @@ function saveCattle(id){
   const tag=document.getElementById('f-tag').value.trim();
   if(!tag){alert('Tag number is required.');return;}
   if(D.cattle.find(c=>c.tag===tag&&c.id!==id)){alert(`Tag ${tag} is already in use.`);return;}
-  const data={tag,name:document.getElementById('f-name').value.trim(),type:document.getElementById('f-type').value,
+  const data={tag,ccia:document.getElementById('f-ccia').value.trim(),
+    name:document.getElementById('f-name').value.trim(),type:document.getElementById('f-type').value,
     breed:document.getElementById('f-breed').value,dob:document.getElementById('f-dob').value,
     location:document.getElementById('f-loc').value,status:document.getElementById('f-status').value,
     notes:document.getElementById('f-notes').value.trim()};
@@ -1931,6 +1942,7 @@ function applyImport(mode){
   pushBackup(true);
   if(mode==='merge') D=mergeData(D,incoming);
   else D={...incoming,activityLog:Array.isArray(incoming.activityLog)?incoming.activityLog:[]};
+  normalizeCattleData();
   ensureMeta(true);
   D.meta.deviceId=getDeviceId();
   D.meta.lastImportedAt=Date.now();
@@ -2022,6 +2034,7 @@ function restoreBackup(i){
     const obj=JSON.parse(b.data);
     if(!validImport(obj)){alert('Restore failed. Backup data is not valid.');return;}
     D={...obj,activityLog:Array.isArray(obj.activityLog)?obj.activityLog:[]};
+    normalizeCattleData();
     ensureMeta(true);
     D.meta.deviceId=getDeviceId();
     logActivity('settings',`Restored backup from ${fmtStamp(b.timestamp)}`);
