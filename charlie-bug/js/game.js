@@ -15,6 +15,7 @@ let state = {
   screen: 'title',     // 'title' | 'scatter' | 'game' | 'celebrate'
   theme: null,
   themeIndex: -1,
+  themeQueue: [],
   season: null,
   seasonIndex: -1,
   charlie: {
@@ -205,6 +206,7 @@ function playCollect() {
   popG.gain.setValueAtTime(0.18, now);
   popG.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
   pop.start(now); pop.stop(now + 0.08);
+  pop.onended = () => { popG.disconnect(); pop.disconnect(); };
 
   // Warm ascending arpeggio — triangle wave is fuller/warmer than sine
   [329.63, 392.00, 493.88, 659.25].forEach((freq, i) => { // E4 G4 B4 E5
@@ -218,6 +220,7 @@ function playCollect() {
     g.gain.linearRampToValueAtTime(0.28, t + 0.02);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
     osc.start(t); osc.stop(t + 0.3);
+    osc.onended = () => { g.disconnect(); osc.disconnect(); };
   });
 }
 
@@ -236,6 +239,7 @@ function playWin() {
   sweepG.gain.linearRampToValueAtTime(0.2, now + 0.3);
   sweepG.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
   sweep.start(now); sweep.stop(now + 0.5);
+  sweep.onended = () => { sweepG.disconnect(); sweep.disconnect(); };
 
   // Triumphant chord — staggered entry, triangle bass + sine highs
   [261.63, 329.63, 392.00, 523.25, 659.25, 783.99].forEach((freq, i) => {
@@ -250,6 +254,7 @@ function playWin() {
     g.gain.setValueAtTime(0.14, t + 0.7);
     g.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
     osc.start(t); osc.stop(t + 2.6);
+    osc.onended = () => { g.disconnect(); osc.disconnect(); };
   });
 
   // Sparkle twinkles cascading in
@@ -264,6 +269,7 @@ function playWin() {
     g.gain.linearRampToValueAtTime(0.1, t + 0.02);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
     osc.start(t); osc.stop(t + 0.45);
+    osc.onended = () => { g.disconnect(); osc.disconnect(); };
   });
 }
 
@@ -305,6 +311,7 @@ function playAmbient() {
     gain.connect(state.ambientGain);
     osc.start(t);
     osc.stop(t + noteDur + 0.02);
+    osc.onended = () => { gain.disconnect(); osc.disconnect(); };
   }
 
   state.nextBarTime += barDuration;
@@ -432,6 +439,46 @@ function resetSpinTracker() {
   state.spin = { lastFacing: null, total: 0, dir: 0 };
 }
 
+function shuffleIndexes(count) {
+  const indexes = Array.from({ length: count }, (_, i) => i);
+  for (let i = indexes.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
+  }
+  return indexes;
+}
+
+function normalizeThemeQueue(queue) {
+  if (!Array.isArray(queue)) return [];
+  const seen = new Set();
+  return queue.filter(idx => {
+    const valid = Number.isInteger(idx) && idx >= 0 && idx < THEMES.length && !seen.has(idx);
+    if (valid) seen.add(idx);
+    return valid;
+  });
+}
+
+function loadThemeQueue() {
+  const storage = getStorage();
+  if (!storage) return normalizeThemeQueue(state.themeQueue);
+  try {
+    return normalizeThemeQueue(JSON.parse(storage.getItem('charlie-bug-theme-cycle') || '[]'));
+  } catch(e) {
+    try { storage.removeItem('charlie-bug-theme-cycle'); } catch(removeErr) {}
+    return [];
+  }
+}
+
+function saveThemeQueue(queue) {
+  const clean = normalizeThemeQueue(queue);
+  state.themeQueue = clean;
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.setItem('charlie-bug-theme-cycle', JSON.stringify(clean));
+  } catch(e) {}
+}
+
 function loadOrPickTheme() {
   const storage = getStorage();
   if (!storage) return false;
@@ -447,6 +494,21 @@ function loadOrPickTheme() {
   if (saved) {
     try {
       const data = JSON.parse(saved);
+      if (
+        typeof data.themeIndex !== 'number' ||
+        !Number.isInteger(data.themeIndex) ||
+        data.themeIndex < 0 ||
+        data.themeIndex >= THEMES.length ||
+        !Array.isArray(data.scatter) ||
+        data.scatter.length !== THEMES[data.themeIndex].items.length ||
+        !Array.isArray(data.collected) ||
+        data.collected.length !== THEMES[data.themeIndex].items.length ||
+        !data.scatter.every(p =>
+          typeof p.x === 'number' && isFinite(p.x) && p.x >= 0 && p.x <= WORLD_W &&
+          typeof p.y === 'number' && isFinite(p.y) && p.y >= 0 && p.y <= WORLD_H
+        ) ||
+        !data.collected.every(v => typeof v === 'boolean')
+      ) throw new Error('invalid save');
       const theme = THEMES[data.themeIndex];
       if (!theme) throw new Error();
       state.themeIndex = data.themeIndex;
@@ -482,9 +544,16 @@ function loadOrPickTheme() {
 }
 
 function pickNewTheme(avoid) {
-  let idx;
-  do { idx = Math.floor(Math.random() * THEMES.length); }
-  while (THEMES.length > 1 && idx === avoid);
+  let queue = loadThemeQueue();
+  if (!queue.length) {
+    queue = shuffleIndexes(THEMES.length);
+    if (THEMES.length > 1 && queue[0] === avoid) {
+      const swap = 1 + Math.floor(Math.random() * (queue.length - 1));
+      [queue[0], queue[swap]] = [queue[swap], queue[0]];
+    }
+  }
+  const idx = queue.shift();
+  saveThemeQueue(queue);
   state.themeIndex = idx;
   state.theme = THEMES[idx];
 }

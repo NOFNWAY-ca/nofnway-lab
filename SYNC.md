@@ -9,6 +9,8 @@ Experimental site with live tool work and Cloudflare Functions.
 - `king-navigator.html` and `functions/api/bgg.js`
 
 ## Recent Changes
+- Hardened Charlie-Bug with localStorage save schema validation, Web Audio oscillator node cleanup on `onended`, and a page-level CSP meta tag.
+- Changed Charlie-Bug outfit theme selection to use a shuffled no-repeat cycle stored in `charlie-bug-theme-cycle`, falling back to in-memory cycling if localStorage is blocked.
 - Fixed the Charlie-Bug astronaut helmet so the bubble surrounds Charlie's head properly, with a larger translucent dome, inset visor gradient, collar connector, visor frame, and crisp glints.
 - Extended Charlie-Bug season palettes into decorations: flowers, stems, leaves, grass tufts, tree canopies, and pond water now tint per Spring/Summer/Autumn/Winter/Moonlight, with `blendColor()` supporting autumn/winter/moon flower shifts.
 - Added randomized Charlie-Bug world moods: Spring, Summer, Autumn, Winter, and Moonlight. New days now save/load a `seasonIndex`, pass it through render state, and use it to palette-swap grass, garden patches, paths, overlays, and the moonlit sky.
