@@ -9,6 +9,19 @@ Experimental site with live tool work and Cloudflare Functions.
 - `king-navigator.html` and `functions/api/bgg.js`
 
 ## Recent Changes
+- Fixed the Charlie-Bug astronaut helmet so the bubble surrounds Charlie's head properly, with a larger translucent dome, inset visor gradient, collar connector, visor frame, and crisp glints.
+- Extended Charlie-Bug season palettes into decorations: flowers, stems, leaves, grass tufts, tree canopies, and pond water now tint per Spring/Summer/Autumn/Winter/Moonlight, with `blendColor()` supporting autumn/winter/moon flower shifts.
+- Added randomized Charlie-Bug world moods: Spring, Summer, Autumn, Winter, and Moonlight. New days now save/load a `seasonIndex`, pass it through render state, and use it to palette-swap grass, garden patches, paths, overlays, and the moonlit sky.
+- Added a Charlie-Bug dizzy-spin gag: turning three full rotations during gameplay now triggers a short dizzy state with wobble, orbiting stars, and a "Dizzy!" float text.
+- Added three new Charlie-Bug princess themes: Princess Nova, Princess Aurora, and Princess Flora. `draw.js` now supports their hats, wings, antenna tips, body patterns, dress styles, Nova space sky, Aurora snowflakes, Flora bloom overlay, and fallback collectible icons for new cosmetic types.
+- Updated `charlie-bug/` UI copy for the princess/tower direction, added the fifth HUD dress slot, and added an in-game pulsing "Return to your tower" prompt once all costume pieces are collected.
+- Added `charlie-bug/js/draw.js` support for the tower home decoration, tower completion glow, Charlie dress rendering, six dress styles, and the new role-play hats, wings, and antenna tip cosmetics from the rethemed data set.
+- Updated `charlie-bug/js/game.js` for five collectible slots and tower-return progression: Charlie now starts/restarts at the tower, cosmetics include the new `dress` slot, all-collected state waits for returning to the tower before celebration, HUD/category emoji support includes dress, and the old immediate auto-win timeout was removed.
+- Rethemed `charlie-bug/js/data.js` around six role-play themes with five collectibles each, added `dress` category data, five scatter zones, tower coordinates, and tower decoration data. Drawing/HUD support for the new dress and role-specific types still needs a follow-up pass.
+- Added `charlie-bug/` Princess Day theme with tiara, fairy wings, wand tips, sparkle dress cosmetics, princess sparkle overlay, and background castle decoration.
+- Extended `charlie-bug/` polish with walking footprints, collect screen-shake, ambient pentatonic music with mute control, theme-seeded butterflies, and collection name-card flashes.
+- Added young-child polish to `charlie-bug/`: larger collection radius, nearby collectible excitement scaling, off-screen guide arrows, tap-to-walk movement with target ripples, and full-canvas confetti celebration.
+- Hardened `alarm.html` and `functions/api/alarm/[[code]].js` for main-site readiness: new alarms now use stronger 12-character codes, creator-only edit tokens stored locally and sent through `X-Alarm-Owner`, shared links omit the owner token and are view-only, GET responses no longer expose stored owner hashes, alarm saves store `nextFireAt`, push triggering is limited to the alarm due window, and push subscription storage now validates browser push hosts and key shapes.
 - Upgraded `mcmahon-ranch.html` in place from record keeping toward daily ranch operations: added default Today alerts, cattle group selection and bulk notes/move prefill, animal history timelines, pasture density, data export/import/reset, activity log, versioned meta, guarded saves, rolling local backups, manual file/clipboard sync, import preview with Replace/Merge conflict handling, and large-dataset warnings.
 - Extended `mcmahon-ranch.html` shared-use support with local user identity, Personal/Shared mode, per-record `updatedAt`/`updatedBy` stamping on write paths, user-aware recent activity, import summaries showing last editor/change counts, merge conflict logging by `updatedAt`, soft edit warnings, and optional shared JSON endpoint pull/push controls.
 - Added separate CCIA tag support to `mcmahon-ranch.html` cattle records, including seed/default normalization, sortable cattle table column, add/edit modal field, save logic, and backward-compatible handling for existing localStorage data.
@@ -55,7 +68,8 @@ Experimental site with live tool work and Cloudflare Functions.
 - Expanded K.I.N.G.'s next-priority session layer: last-played tracking in the library, broader keyboard shortcuts, a visible save-status indicator, template-driven setup assistant and victory reminders, active turn-order controls, session undo, richer history stats, duration logging, and normalization for imported/restored sessions and history.
 
 ## Next Recommended Step
-- Track any `.env`, KV, or deployment assumptions here whenever alarm work is touched.
+- Before deploying alarm changes, verify production Cloudflare Pages has the `NOFNWAY_LAB` KV binding plus `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_JWK`; local `wrangler pages dev .` needs `--compatibility-date=2026-05-01` with the current local runtime.
+- For existing pre-token alarm links, the first browser previously marked owner locally will generate and claim an edit token on its next save; shared viewers stay view-only in the updated UI.
 - Add `BGG_API_TOKEN` to the Cloudflare Pages environment for NOFNWAY Lab after registering/approving the app with BoardGameGeek.
 - If K.I.N.G. moves closer to public rollout, replace the in-memory `/api/bgg` limiter with KV-backed rate limiting.
 - Browser-preview K.I.N.G. and verify the new flows end-to-end: search-result detail add, shelf/status filtering, recent-session resume, history rendering, and full backup/restore import.

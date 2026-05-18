@@ -1,0 +1,43 @@
+Charlie-Bug Codex notes
+
+Project shape:
+- Single-page canvas game in index.html.
+- No build step, no package manager, no framework.
+- JS files load directly in this order: js/data.js, js/draw.js, js/game.js, js/ui.js.
+
+Core files:
+- js/data.js: world size, themes, decorations, scatter zones.
+- js/draw.js: all canvas drawing, including world art, Charlie, cosmetics, items, particles, celebration.
+- js/game.js: state, input, loop, camera, audio, collection, save/resume.
+- js/ui.js: celebration mini-canvas and screen-reader announcements.
+
+Current game state:
+- Themes are five-piece dress-up sets with hat, wings, antennae, body, and dress slots.
+- Role themes include Royal Princess, Firefighter, Wizard, Astronaut, Chef, Artist, Princess Nova, Princess Aurora, and Princess Flora.
+- Charlie starts at the tower, collects all five pieces, then must return to the tower before celebration.
+- World moods are randomized and saved per day: Spring, Summer, Autumn, Winter, and Moonlight. They palette-swap grass, paths, decorations, ponds, tree canopies, flowers, and overlays.
+- Nova, Aurora, and Flora have special world layers: Nova sky, Aurora snowflakes, and Flora bloom overlay.
+- Collectibles have larger pickup radius, proximity excitement scaling, item-colored inner glow, white sparkle dots, name cards, and off-screen guide arrows.
+- Touch players can tap to walk, with a target ripple. Keyboard, joystick, or gamepad input clears the tap target.
+- Charlie has idle look-around, blinking, a dizzy-spin gag after three full turns, and dress rendering.
+- Walking leaves fading footprints. Collection triggers a small screen shake, particles, float text, and a capped name-card flash.
+- Celebration is full-canvas confetti with spinning Charlie and star rings. The DOM overlay is transparent and only keeps Play Again controls visible.
+- Ambient Web Audio music starts once on first user interaction and uses audio-time lookahead scheduling. Mute button is in the HUD.
+- itch.io embed prep is in place: metadata, responsive 100svh canvas, iframe border reset, loading screen removed at init.
+
+Persistence:
+- Saves use localStorage key charlie-bug-day.
+- Storage access is wrapped so sandboxed iframes or blocked localStorage do not crash the game.
+- Corrupt or completed saves are cleared.
+
+Recent verification:
+- node --check js/data.js
+- node --check js/draw.js
+- node --check js/game.js
+- git diff --check
+- headless Chrome file load
+
+Important local rules:
+- Keep it single-file HTML plus plain script files. No build step.
+- Use textContent or DOM methods for user-facing dynamic text. No innerHTML for user-supplied data.
+- Update ../SYNC.md after meaningful changes.

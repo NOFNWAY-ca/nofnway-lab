@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Charlie-Bug — NOFNWAY Lab</title>
+  <meta name="description" content="Charlie-Bug is a gentle dress-up explorer for little ones. Find four treasures hidden in the garden and dress up your bug!">
+  <meta property="og:title" content="Charlie-Bug">
+  <meta property="og:description" content="Charlie is a princess bug. Each day she dresses up as something new. Find five costume pieces and return to your tower!">
+  <title>Charlie-Bug — Princess Dress-Up Adventure</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,6 +32,23 @@
       touch-action: none;
     }
 
+    iframe { border: none; }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      background: #BFEFFF;
+    }
+
+    #loading p {
+      font: 700 20px sans-serif;
+      color: #2D7D46;
+    }
+
     /* ── Game canvas wrapper ── */
     #canvas-wrap {
       position: fixed;
@@ -43,8 +63,8 @@
 
     #game-canvas {
       display: block;
-      width: min(100vw, 100vh);
-      height: min(100vw, 100vh);
+      width: min(100vw, 100svh);
+      height: min(100vw, 100svh);
       image-rendering: auto;
       filter: saturate(1.08);
     }
@@ -85,6 +105,26 @@
       align-items: center;
     }
 
+    #hud-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #mute-btn {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(255,255,255,0.82);
+      border-radius: 50%;
+      background: rgba(255,255,255,0.7);
+      box-shadow: 0 3px 0 rgba(56,91,51,0.16);
+      cursor: pointer;
+      font-size: 1rem;
+      pointer-events: auto;
+    }
+
     .hud-icon {
       width: 34px; height: 34px;
       background: rgba(255,255,255,0.66);
@@ -115,15 +155,16 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-end;
       z-index: 20;
-      background: rgba(255,253,245,0.88);
-      backdrop-filter: blur(4px);
-      padding: 24px;
+      background: transparent;
+      pointer-events: none;
+      padding: 24px 24px 38px;
       text-align: center;
     }
 
     #celebrate-overlay h2 {
+      display: none;
       font-size: clamp(1.8rem, 7vw, 2.8rem);
       font-weight: 900;
       color: var(--accent);
@@ -132,6 +173,7 @@
     }
 
     #celebrate-theme {
+      display: none;
       font-size: clamp(1rem, 3.5vw, 1.3rem);
       font-weight: 700;
       color: var(--text);
@@ -139,6 +181,7 @@
     }
 
     #celebrate-canvas {
+      display: none;
       border-radius: 50%;
       background: var(--sky);
       box-shadow: 0 4px 20px rgba(0,0,0,0.15);
@@ -146,6 +189,7 @@
     }
 
     #play-again-btn {
+      pointer-events: auto;
       background: var(--accent);
       color: white;
       border: none;
@@ -216,29 +260,36 @@
   </style>
 </head>
 <body>
+<div id="loading">
+  <p>👑 Loading Charlie-Bug…</p>
+</div>
 
 <!-- Screen reader announcements -->
 <div id="sr-announce" aria-live="polite" aria-atomic="true"></div>
 
 <!-- Game canvas -->
 <div id="canvas-wrap">
-  <canvas id="game-canvas" aria-label="Charlie-Bug garden explorer game"></canvas>
+  <canvas id="game-canvas" aria-label="Charlie-Bug garden explorer game" style="touch-action: none;"></canvas>
 </div>
 
 <!-- HUD -->
-<div id="hud" aria-hidden="true">
+<div id="hud">
   <a href="/" id="hud-back">← Lab</a>
-  <div id="hud-items">
-    <div class="hud-icon" id="hud-hat"      title="Hat">🎩</div>
-    <div class="hud-icon" id="hud-wings"    title="Wings">🦋</div>
-    <div class="hud-icon" id="hud-antennae" title="Antennae">✨</div>
-    <div class="hud-icon" id="hud-body"     title="Body">⭐</div>
+  <div id="hud-right">
+    <div id="hud-items" aria-hidden="true">
+      <div class="hud-icon" id="hud-hat"      title="Hat">🎩</div>
+      <div class="hud-icon" id="hud-wings"    title="Wings">🦋</div>
+      <div class="hud-icon" id="hud-antennae" title="Antennae">✨</div>
+      <div class="hud-icon" id="hud-body"     title="Body">⭐</div>
+      <div class="hud-icon" id="hud-dress"    title="Dress">👗</div>
+    </div>
+    <button id="mute-btn" type="button" onclick="toggleMute()" aria-label="Mute music">🔊</button>
   </div>
 </div>
 
 <!-- Celebrate overlay -->
 <div id="celebrate-overlay" style="display:none">
-  <h2>You found everything!</h2>
+  <h2>You made it home! 🏰</h2>
   <div id="celebrate-theme"></div>
   <canvas id="celebrate-canvas" width="120" height="120"></canvas>
   <button id="play-again-btn" onclick="playAgain()">Play Again</button>
