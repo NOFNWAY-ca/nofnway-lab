@@ -221,6 +221,17 @@ tbody tr:hover{background:var(--surface2)}
 #toast-container{position:fixed;right:16px;bottom:16px;z-index:600;display:flex;flex-direction:column;gap:8px;max-width:340px}
 .toast{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--brand);border-radius:8px;padding:10px 14px;font-size:.85rem;box-shadow:0 8px 20px var(--shadow)}
 
+/* ── Lock screen ──────────────────────────────────── */
+#lock-overlay{position:fixed;inset:0;background:var(--bg);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px}
+#lock-overlay.hidden{display:none}
+#lock-box{width:min(340px,100%);text-align:center}
+#lock-box .fn{color:var(--brand);font-size:1.1rem;font-weight:700;display:block;margin-bottom:2px}
+#lock-box .sub{color:var(--muted);font-size:.85rem;margin-bottom:20px}
+#lock-box input{text-align:center;letter-spacing:.04em;margin-bottom:10px}
+#lock-error{display:none;color:var(--danger);font-size:.82rem;margin-bottom:10px}
+#lock-error.show{display:block}
+#lock-box .btn{width:100%}
+
 /* ── Onboarding ───────────────────────────────────── */
 .onboard-choice{display:grid;gap:10px;margin-top:10px}
 .onboard-opt{padding:14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);text-align:left}
@@ -258,6 +269,17 @@ tbody tr:hover{background:var(--surface2)}
 </style>
 </head>
 <body>
+
+<!-- ── Lock screen ───────────────────────────────────── -->
+<div id="lock-overlay">
+  <div id="lock-box">
+    <span class="fn hd">GRAFIX ON DEMAND</span>
+    <div class="sub">Enter the password to open this tool.</div>
+    <div id="lock-error">That password isn't right. Try again.</div>
+    <input type="password" id="lock-input" placeholder="Password" autocomplete="off">
+    <button class="btn btn-primary" type="button" id="lock-submit">Unlock</button>
+  </div>
+</div>
 
 <!-- ── Header ────────────────────────────────────────── -->
 <header id="site-header">
@@ -475,6 +497,8 @@ if(!String.prototype.padStart){
 
 var STORAGE_KEY = 'god_inv_data_v1';
 var ONBOARD_KEY = 'god_inv_onboarded_v1';
+var LOCK_KEY = 'god_inv_unlocked_v1';
+var LOCK_HASH = 'ddcc1ac4a5385c95eb573c3513fb2082a9968e838950881f692649be6ca8b04a';
 var DATA_VERSION = 1;
 
 var JOB_STATUSES = [
@@ -1104,6 +1128,11 @@ function renderSettings(){
     '<div class="actions" style="margin-top:12px"><button class="btn btn-primary" type="button" onclick="saveBusinessSettings()">Save Business Info</button></div>' +
   '</div>' +
   '<div class="card panel" style="margin-bottom:16px">' +
+    '<h3>Lock</h3>' +
+    '<p class="hint" style="margin-bottom:12px">This device stays unlocked once the password has been entered here. Lock it again before handing the device to someone else.</p>' +
+    '<div class="actions"><button class="btn btn-outline" type="button" onclick="lockDevice()">Lock This Device</button></div>' +
+  '</div>' +
+  '<div class="card panel" style="margin-bottom:16px">' +
     '<h3>Backup &amp; Restore</h3>' +
     '<p class="hint" style="margin-bottom:12px">This tool saves to the browser on this device only. If Bruce uses the iPad, phone, and shop computer, each device needs its own backup exported and imported to stay in sync. Export after real work sessions and import that file on the other device.</p>' +
     '<p class="hint" style="margin-bottom:12px"><strong>Last backup on this device:</strong> ' + esc(fmtDateTime(D.meta.lastBackup)) + '</p>' +
@@ -1649,6 +1678,62 @@ function toggleTheme(){
   storageSetItem('god_inv_theme', next);
 }
 
+/* ── Lock screen ──────────────────────────────────────── */
+function bytesToHex(bytes){
+  var hex = '';
+  for(var i = 0; i < bytes.length; i++){
+    hex += bytes[i].toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+function sha256Hex(str){
+  var data = new TextEncoder().encode(str);
+  return window.crypto.subtle.digest('SHA-256', data).then(function(buf){
+    return bytesToHex(new Uint8Array(buf));
+  });
+}
+function isUnlocked(){
+  return storageGetItem(LOCK_KEY) === '1';
+}
+function showLockScreen(){
+  byId('lock-overlay').className = '';
+  window.setTimeout(function(){ byId('lock-input').focus(); }, 50);
+}
+function hideLockScreen(){
+  byId('lock-overlay').className = 'hidden';
+}
+function lockDevice(){
+  storageSetItem(LOCK_KEY, '0');
+  window.location.reload();
+}
+function attemptUnlock(){
+  var val = byId('lock-input').value;
+  if(!val) return;
+  if(!(window.crypto && window.crypto.subtle && window.TextEncoder)){
+    byId('lock-error').textContent = 'This browser cannot check passwords. Try Safari or Chrome.';
+    byId('lock-error').className = 'show';
+    return;
+  }
+  sha256Hex(val).then(function(hash){
+    if(hash === LOCK_HASH){
+      storageSetItem(LOCK_KEY, '1');
+      hideLockScreen();
+      boot();
+    } else {
+      byId('lock-error').textContent = "That password isn't right. Try again.";
+      byId('lock-error').className = 'show';
+      byId('lock-input').value = '';
+      byId('lock-input').focus();
+    }
+  });
+}
+function wireLockScreen(){
+  byId('lock-submit').addEventListener('click', attemptUnlock);
+  byId('lock-input').addEventListener('keydown', function(evt){
+    if(evt.key === 'Enter') attemptUnlock();
+  });
+}
+
 /* ── Boot ──────────────────────────────────────────────── */
 function boot(){
   var savedTheme = storageGetItem('god_inv_theme');
@@ -1669,10 +1754,19 @@ function boot(){
   maybeShowOnboarding(hadStoredData);
 }
 
+function initApp(){
+  wireLockScreen();
+  if(isUnlocked()){
+    hideLockScreen();
+    boot();
+  } else {
+    showLockScreen();
+  }
+}
 if(document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', boot);
+  document.addEventListener('DOMContentLoaded', initApp);
 } else {
-  boot();
+  initApp();
 }
 </script>
 </body>
