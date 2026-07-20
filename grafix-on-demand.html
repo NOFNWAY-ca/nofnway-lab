@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grafix On Demand | Quotes &amp; Invoices</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#17181a;
+  --surface:#212224;
+  --surface2:#2a2b2e;
+  --border:#3a3b3e;
+  --border2:#4a4b4e;
+  --text:#f2f1ee;
+  --muted:#9c9893;
+  --brand:#e8541c;
+  --brand-lit:#ff7a3d;
+  --brand-dim:#b8420f;
+  --success:#4caf6e;
+  --success-bg:#173824;
+  --warn:#dba82c;
+  --warn-bg:#3a2f10;
+  --danger:#e0524a;
+  --danger-bg:#3a1815;
+  --shadow:rgba(0,0,0,.45);
+  --app-height:100vh;
+}
+[data-theme="light"]{
+  --bg:#f3f2ef;
+  --surface:#ffffff;
+  --surface2:#ece9e3;
+  --border:#dcd8ce;
+  --border2:#c9c3b6;
+  --text:#1c1b19;
+  --muted:#6c675e;
+  --brand:#c8460f;
+  --brand-lit:#e8541c;
+  --brand-dim:#a83a0d;
+  --success:#2e7d46;
+  --success-bg:#e3f3e8;
+  --warn:#a97a10;
+  --warn-bg:#fbf0d6;
+  --danger:#c23a32;
+  --danger-bg:#fbe6e4;
+  --shadow:rgba(0,0,0,.12);
+}
+html{font-size:16px}
+body{
+  font-family:'Source Sans 3',Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  min-height:var(--app-height);
+  line-height:1.45;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0 12px;min-height:42px}
+textarea{padding:10px 12px;min-height:80px;resize:vertical;width:100%}
+input,select{width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand-lit);outline-offset:-1px;border-color:var(--brand-lit)}
+a{color:inherit}
+.hd{font-family:'Oswald',Arial Narrow,sans-serif}
+.upper{text-transform:uppercase;letter-spacing:.06em}
+
+/* ── Header / Nav ─────────────────────────────────── */
+#site-header{
+  background:var(--surface);
+  border-bottom:2px solid var(--brand);
+  padding:12px 18px;
+  position:sticky;top:0;z-index:100;
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+}
+.header-brand{flex:1 1 220px;min-width:0}
+.header-brand .fn{color:var(--brand);font-size:20px;font-weight:700}
+.header-brand .sub{font-size:11px;color:var(--muted);margin-top:1px}
+.backup-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  min-height:32px;padding:0 12px;border-radius:999px;
+  font-size:12px;font-weight:600;white-space:nowrap;
+  border:1px solid var(--border);background:var(--surface2);color:var(--muted);
+}
+.backup-pill.ok{border-color:var(--success);color:var(--success);background:var(--success-bg)}
+.backup-pill.warn{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
+.backup-pill.danger{border-color:var(--danger);color:var(--danger);background:var(--danger-bg)}
+.header-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.icon-btn{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  border-radius:6px;width:38px;height:38px;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+}
+.icon-btn:hover{border-color:var(--brand);color:var(--brand)}
+#site-nav{
+  background:var(--surface2);
+  border-bottom:1px solid var(--border);
+  padding:0 18px;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+.nav-tab{
+  font-family:'Oswald',Arial Narrow,sans-serif;
+  font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:12px 16px;color:var(--muted);border:none;background:none;
+  border-bottom:3px solid transparent;margin-bottom:-1px;flex:0 0 auto;
+}
+.nav-tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+.nav-tab:hover{color:var(--text)}
+
+/* ── Layout ───────────────────────────────────────── */
+#main{padding:18px;max-width:1400px;margin:0 auto}
+.app-ready .fallback{display:none}
+#app{display:none}
+.app-ready #app{display:block}
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.section-head h2{font-family:'Oswald',Arial Narrow,sans-serif;font-size:1.5rem;letter-spacing:.02em}
+.section-head p{color:var(--muted);margin-top:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{
+  min-height:42px;padding:0 16px;border-radius:8px;border:1px solid transparent;
+  font-weight:600;font-size:.92rem;transition:opacity .15s,border-color .15s;
+}
+.btn:hover{opacity:.9}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-ghost{background:var(--surface2);border-color:var(--border);color:var(--text)}
+.btn-outline{background:transparent;border-color:var(--border);color:var(--text)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-sm{min-height:34px;padding:0 12px;font-size:.85rem}
+
+/* ── Cards / stats ────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 14px var(--shadow)}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat-card{padding:16px;border-left:3px solid var(--border2)}
+.stat-card.brand{border-left-color:var(--brand)}
+.stat-card.warn{border-left-color:var(--warn)}
+.stat-card.success{border-left-color:var(--success)}
+.stat-value{font-family:'Oswald',Arial Narrow,sans-serif;font-size:1.6rem;line-height:1}
+.stat-label{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:6px}
+.dashboard-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
+.panel{padding:16px}
+.panel h3{font-family:'Oswald',Arial Narrow,sans-serif;font-size:1.05rem;margin-bottom:10px}
+.mini-list{display:grid;gap:8px}
+.mini-item{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)}
+.mini-item h4{font-size:.92rem;margin-bottom:2px}
+.mini-item p{color:var(--muted);font-size:.82rem}
+.empty{padding:22px;text-align:center;color:var(--muted)}
+
+/* ── Toolbar / tables ─────────────────────────────── */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar select,.toolbar input{max-width:220px}
+.count{margin-left:auto;color:var(--muted);font-size:.85rem;font-weight:600}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:680px}
+thead th{background:var(--surface2);color:var(--muted);text-align:left;padding:10px 12px;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+tbody td{padding:10px 12px;border-top:1px solid var(--border);vertical-align:top;font-size:.9rem}
+tbody tr:hover{background:var(--surface2)}
+.td-muted{color:var(--muted);font-size:.82rem}
+.td-actions{white-space:nowrap;text-align:right}
+.td-actions .btn{margin-left:6px}
+.badge{display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.b-quoted{background:var(--surface2);color:var(--muted);border:1px solid var(--border2)}
+.b-deposit{background:var(--warn-bg);color:var(--warn)}
+.b-inprogress{background:#1c2c3a;color:#5aa3e0}
+.b-complete{background:#2a2c1c;color:#c8c14a}
+.b-invoiced{background:var(--danger-bg);color:var(--danger)}
+.b-paid{background:var(--success-bg);color:var(--success)}
+.b-sample{background:var(--brand);color:#fff}
+.b-fleet{background:#1c2c3a;color:#5aa3e0}
+.b-oneoff{background:var(--surface2);color:var(--muted)}
+
+/* ── Forms ────────────────────────────────────────── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.span-2{grid-column:span 2}
+.field label{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.hint{font-size:.78rem;color:var(--muted)}
+
+/* ── Client / fleet grouping ──────────────────────── */
+.client-card{padding:16px;margin-bottom:12px}
+.client-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.client-head h3{font-family:'Oswald',Arial Narrow,sans-serif;font-size:1.15rem}
+.client-meta{color:var(--muted);font-size:.85rem;margin-top:2px}
+.vehicle-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-top:8px}
+.vehicle-row .vname{font-weight:600;font-size:.9rem}
+.vehicle-row .vmeta{color:var(--muted);font-size:.78rem}
+
+/* ── Line items ───────────────────────────────────── */
+.li-table{width:100%;border-collapse:collapse;margin-top:6px}
+.li-table th{font-size:.7rem;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+.li-table td{padding:5px 6px;vertical-align:middle}
+.li-table input,.li-table select{min-height:36px;padding:0 8px;font-size:.85rem}
+.li-table .li-desc{min-width:180px}
+.li-table .li-num{width:82px;text-align:right}
+.li-table .li-tax{width:60px;text-align:center}
+.li-total-row td{text-align:right;font-weight:700;padding-top:10px}
+.totals-box{margin-top:10px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)}
+.totals-box .trow{display:flex;justify-content:space-between;padding:2px 0;font-size:.88rem}
+.totals-box .trow.grand{font-weight:700;font-size:1.05rem;border-top:1px solid var(--border);margin-top:6px;padding-top:8px}
+.totals-box .trow.balance{color:var(--brand-lit);font-weight:700}
+.payment-row{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-top:6px;font-size:.85rem}
+
+/* ── Modal ────────────────────────────────────────── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:400}
+.modal-ov.hidden{display:none}
+.modal{width:min(760px,100%);max-height:92vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 20px 48px rgba(0,0,0,.4)}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.modal-head h3{font-family:'Oswald',Arial Narrow,sans-serif;font-size:1.2rem}
+.modal-body{padding:16px 18px;overflow:auto}
+.modal-foot{padding:14px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.modal-close{width:38px;height:38px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--text);font-size:1.15rem}
+.modal-error{display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);font-weight:600;font-size:.88rem}
+.modal-error.show{display:block}
+
+/* ── confirm2 ─────────────────────────────────────── */
+#confirm2-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;align-items:center;justify-content:center}
+#confirm2-overlay.open{display:flex}
+#confirm2-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px 22px;max-width:380px;width:90%}
+#confirm2-title{font-family:'Oswald',Arial Narrow,sans-serif;font-size:1.1rem;margin-bottom:8px}
+#confirm2-msg{font-size:.88rem;color:var(--muted);margin-bottom:20px;line-height:1.5}
+#confirm2-btns{display:flex;gap:10px;justify-content:flex-end}
+
+/* ── Toast ────────────────────────────────────────── */
+#toast-container{position:fixed;right:16px;bottom:16px;z-index:600;display:flex;flex-direction:column;gap:8px;max-width:340px}
+.toast{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--brand);border-radius:8px;padding:10px 14px;font-size:.85rem;box-shadow:0 8px 20px var(--shadow)}
+
+/* ── Onboarding ───────────────────────────────────── */
+.onboard-choice{display:grid;gap:10px;margin-top:10px}
+.onboard-opt{padding:14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);text-align:left}
+.onboard-opt h4{font-size:.95rem;margin-bottom:4px}
+.onboard-opt p{color:var(--muted);font-size:.82rem}
+
+/* ── Print ────────────────────────────────────────── */
+#print-area{display:none}
+.print-hd{margin-bottom:18px;border-bottom:2px solid #000;padding-bottom:10px}
+.print-hd h1{font-family:'Oswald',Arial Narrow,sans-serif;font-size:1.5rem}
+.print-hd .doc-type{font-size:1rem;font-weight:700;margin-top:4px}
+.print-meta{display:flex;justify-content:space-between;gap:20px;margin-bottom:16px;font-size:.9rem}
+.print-meta div{flex:1}
+.print-meta strong{display:block;font-size:.7rem;text-transform:uppercase;color:#555;margin-bottom:2px}
+.print-li-table{width:100%;border-collapse:collapse;margin-bottom:14px}
+.print-li-table th,.print-li-table td{border:1px solid #999;padding:6px 8px;font-size:.85rem;text-align:left}
+.print-li-table th{background:#eee}
+.print-totals{width:280px;margin-left:auto;font-size:.9rem}
+.print-totals .trow{display:flex;justify-content:space-between;padding:3px 0}
+.print-totals .grand{font-weight:700;border-top:2px solid #000;margin-top:4px;padding-top:6px;font-size:1.05rem}
+.print-note{margin-top:20px;font-size:.8rem;color:#444}
+.print-footer{margin-top:26px;padding-top:12px;border-top:1px solid #999;font-size:.82rem;color:#444}
+
+@media(max-width:900px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .dashboard-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .field.span-2{grid-column:span 1}
+}
+@media print{
+  body{background:#fff;color:#000}
+  #site-header,#site-nav,#main,#toast-container,.modal-ov,#confirm2-overlay{display:none!important}
+  #print-area{display:block!important;padding:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ────────────────────────────────────────── -->
+<header id="site-header">
+  <div class="header-brand">
+    <div><span class="fn hd">GRAFIX ON DEMAND</span></div>
+    <div class="sub">Quotes &amp; Invoices — Steinbach, MB</div>
+  </div>
+  <span class="backup-pill" id="backup-pill">Checking backup status…</span>
+  <div class="header-controls">
+    <button class="btn btn-ghost btn-sm" id="export-btn" data-requires-app="1" type="button">Backup / Export</button>
+    <label class="btn btn-ghost btn-sm" id="import-label" style="display:flex;align-items:center;justify-content:center" data-requires-app="1">
+      Import
+      <input type="file" id="import-file" accept="application/json,.json" style="display:none">
+    </label>
+    <button class="icon-btn" id="theme-toggle" title="Toggle light/dark" type="button">&#9789;</button>
+  </div>
+</header>
+<nav id="site-nav">
+  <button class="nav-tab active" data-tab="dashboard" type="button">Dashboard</button>
+  <button class="nav-tab" data-tab="clients" type="button">Clients</button>
+  <button class="nav-tab" data-tab="jobs" type="button">Jobs</button>
+  <button class="nav-tab" data-tab="invoices" type="button">Invoices</button>
+  <button class="nav-tab" data-tab="settings" type="button">Settings</button>
+</nav>
+
+<main id="main">
+
+  <!-- Static fallback content shown only if the app script fails to run -->
+  <div class="fallback" data-fallback="dashboard">
+    <p class="hint" style="margin-bottom:12px">This page needs its script to load the live dashboard. If you're seeing this for more than a second or two, open the file directly in a browser (Safari/Chrome) instead of a document preview.</p>
+    <div class="card panel">
+      <h3>Grafix On Demand</h3>
+      <p class="td-muted">94 Industrial Rd. Unit #7, Steinbach, MB &middot; 204-905-0520 &middot; bd@grafixondemand.ca</p>
+    </div>
+  </div>
+  <div class="fallback" data-fallback="clients" style="display:none">
+    <div class="card panel"><p class="td-muted">Client list needs the app script to load.</p></div>
+  </div>
+  <div class="fallback" data-fallback="jobs" style="display:none">
+    <div class="card panel"><p class="td-muted">Job board needs the app script to load.</p></div>
+  </div>
+  <div class="fallback" data-fallback="invoices" style="display:none">
+    <div class="card panel"><p class="td-muted">Invoices need the app script to load.</p></div>
+  </div>
+  <div class="fallback" data-fallback="settings" style="display:none">
+    <div class="card panel"><p class="td-muted">Settings need the app script to load.</p></div>
+  </div>
+
+  <div id="app"></div>
+</main>
+
+<!-- ── Print area ────────────────────────────────────── -->
+<div id="print-area"></div>
+
+<!-- ── Toasts ────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ── Generic modal ─────────────────────────────────── -->
+<div id="modal-ov" class="modal-ov hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title"></h3>
+      <button class="modal-close" type="button" id="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-error" class="modal-error"></div>
+      <div id="modal-body"></div>
+    </div>
+    <div id="modal-foot" class="modal-foot"></div>
+  </div>
+</div>
+
+<!-- ── confirm2 ──────────────────────────────────────── -->
+<div id="confirm2-overlay">
+  <div id="confirm2-box">
+    <div id="confirm2-title"></div>
+    <div id="confirm2-msg"></div>
+    <div id="confirm2-btns">
+      <button class="btn btn-ghost btn-sm" id="confirm2-cancel" type="button">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirm2-ok" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Non-blocking Google Fonts load ────────────────── -->
+<script>
+(function(){
+  var pre1 = document.createElement('link');
+  pre1.rel = 'preconnect'; pre1.href = 'https://fonts.googleapis.com';
+  var pre2 = document.createElement('link');
+  pre2.rel = 'preconnect'; pre2.href = 'https://fonts.gstatic.com'; pre2.crossOrigin = 'anonymous';
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap';
+  document.head.appendChild(pre1);
+  document.head.appendChild(pre2);
+  document.head.appendChild(link);
+})();
+</script>
+
+<!-- ── ES5-safe control layer (runs even if the app script below fails) ── -->
+<script>
+(function(){
+  function hasClass(el, name){
+    return el && (' ' + el.className + ' ').indexOf(' ' + name + ' ') !== -1;
+  }
+  function setClass(el, name, on){
+    if(!el) return;
+    var cur = ' ' + el.className + ' ';
+    var has = cur.indexOf(' ' + name + ' ') !== -1;
+    if(on && !has) el.className += ' ' + name;
+    if(!on && has) el.className = cur.replace(' ' + name + ' ', ' ').replace(/^\s+|\s+$/, '');
+  }
+  function qsa(sel){ return document.querySelectorAll(sel); }
+  function byId(id){ return document.getElementById(id); }
+
+  function fallbackShowTab(tab){
+    var tabs = qsa('.nav-tab');
+    var i;
+    for(i = 0; i < tabs.length; i++){
+      setClass(tabs[i], 'active', tabs[i].getAttribute('data-tab') === tab);
+    }
+    var panels = qsa('.fallback');
+    for(i = 0; i < panels.length; i++){
+      panels[i].style.display = (panels[i].getAttribute('data-fallback') === tab) ? 'block' : 'none';
+    }
+  }
+
+  function fallbackToggleTheme(){
+    var root = document.documentElement;
+    var cur = root.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('god_inv_theme', next); } catch (err) {}
+  }
+
+  var lastTouch = 0;
+  function handleControl(evt){
+    if(evt.type === 'touchend') lastTouch = Date.now();
+    if(evt.type === 'click' && Date.now() - lastTouch < 650) return;
+
+    var target = evt.target || evt.srcElement;
+    while(target && target !== document && !target.getAttribute){
+      target = target.parentNode;
+    }
+    if(!target || target === document) return;
+
+    var tabBtn = target;
+    while(tabBtn && tabBtn !== document && !hasClass(tabBtn, 'nav-tab')){
+      tabBtn = tabBtn.parentNode;
+    }
+    if(tabBtn && hasClass(tabBtn, 'nav-tab')){
+      evt.preventDefault();
+      if(window.godApp && typeof window.godApp.switchTab === 'function'){
+        window.godApp.switchTab(tabBtn.getAttribute('data-tab'));
+      } else {
+        fallbackShowTab(tabBtn.getAttribute('data-tab'));
+      }
+      return;
+    }
+
+    if(target.id === 'theme-toggle'){
+      evt.preventDefault();
+      if(window.godApp && typeof window.godApp.toggleTheme === 'function'){
+        window.godApp.toggleTheme();
+      } else {
+        fallbackToggleTheme();
+      }
+      return;
+    }
+
+    var appOnly = target;
+    while(appOnly && appOnly !== document && !(appOnly.getAttribute && appOnly.getAttribute('data-requires-app'))){
+      appOnly = appOnly.parentNode;
+    }
+    if(appOnly && appOnly !== document && appOnly.getAttribute && appOnly.getAttribute('data-requires-app')){
+      if(!(window.godApp && window.godApp.ready)){
+        evt.preventDefault();
+        window.alert('This control needs the app script to finish loading. Try opening this file directly in a browser tab instead of a preview pane.');
+      }
+    }
+  }
+
+  document.addEventListener('click', handleControl, false);
+  document.addEventListener('touchend', handleControl, false);
+
+  try {
+    var savedTheme = localStorage.getItem('god_inv_theme');
+    if(savedTheme === 'light' || savedTheme === 'dark'){
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+  } catch (err) {}
+})();
+</script>
+
+<!-- ── Main application ──────────────────────────────── -->
+<script>
+if(window.NodeList && !NodeList.prototype.forEach){ NodeList.prototype.forEach = Array.prototype.forEach; }
+if(!Array.prototype.includes){
+  Array.prototype.includes = function(search){ return this.indexOf(search) !== -1; };
+}
+if(!String.prototype.includes){
+  String.prototype.includes = function(search, start){ return this.indexOf(search, start || 0) !== -1; };
+}
+if(!String.prototype.padStart){
+  String.prototype.padStart = function(targetLength, padString){
+    var str = String(this);
+    var target = targetLength >> 0;
+    var pad = padString === undefined ? ' ' : String(padString);
+    if(str.length >= target) return str;
+    while(pad.length < target - str.length) pad += pad;
+    return pad.slice(0, target - str.length) + str;
+  };
+}
+
+var STORAGE_KEY = 'god_inv_data_v1';
+var ONBOARD_KEY = 'god_inv_onboarded_v1';
+var DATA_VERSION = 1;
+
+var JOB_STATUSES = [
+  {key:'quoted', label:'Quoted'},
+  {key:'deposit', label:'Deposit Paid'},
+  {key:'inprogress', label:'In Progress'},
+  {key:'complete', label:'Complete'},
+  {key:'invoiced', label:'Invoiced'},
+  {key:'paid', label:'Paid'}
+];
+var JOB_TYPES = [
+  {key:'wrap', label:'Full/Partial Wrap'},
+  {key:'colorchange', label:'Color Change'},
+  {key:'ppf', label:'Paint Protection Film'},
+  {key:'signage', label:'Signage / Decals'},
+  {key:'tint', label:'Window Tint'},
+  {key:'removal', label:'Removal'}
+];
+var LI_CATEGORIES = [
+  {key:'material', label:'Material'},
+  {key:'labor', label:'Labor'},
+  {key:'install', label:'Install / Location Fee'},
+  {key:'removal', label:'Removal'}
+];
+var PAYMENT_METHODS = ['E-Transfer','Cash','Card','Cheque','Other'];
+
+var D = null;
+var currentTab = 'dashboard';
+var modalState = null;
+var _c2cb = null;
+var jobDraft = null;
+var _storageFallback = {};
+var _storageFallbackActive = {};
+
+var ui = {
+  clientsQ: '',
+  jobsQ: '',
+  jobsStatus: '',
+  jobsType: '',
+  invoicesStatus: ''
+};
+
+/* ── Utilities ──────────────────────────────────────── */
+function uid(prefix){ return (prefix || 'id') + '_' + Math.random().toString(36).slice(2, 10); }
+function byId(id){ return document.getElementById(id); }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function esc(value){
+  if(value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function fmtMoney(n){
+  n = Number(n) || 0;
+  return '$' + n.toLocaleString('en-CA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+function fmtDate(value){
+  if(!value) return 'Not set';
+  var parts = value.split('-');
+  var y = Number(parts[0]), m = Number(parts[1]), d = Number(parts[2]);
+  var names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return names[m - 1] + ' ' + d + ', ' + y;
+}
+function fmtDateTime(iso){
+  if(!iso) return 'Never';
+  var d = new Date(iso);
+  if(isNaN(d.getTime())) return 'Never';
+  return d.toLocaleDateString('en-CA', {month:'short', day:'numeric'}) + ' at ' +
+    d.toLocaleTimeString('en-CA', {hour:'numeric', minute:'2-digit'});
+}
+function labelFor(list, key){
+  for(var i = 0; i < list.length; i++){
+    if(list[i].key === key) return list[i].label;
+  }
+  return key || 'Not set';
+}
+function statusBadgeClass(key){
+  return 'b-' + (key || 'quoted');
+}
+
+/* ── Storage (falls back to in-memory if blocked) ──── */
+function storageGetItem(key){
+  if(_storageFallbackActive[key] && Object.prototype.hasOwnProperty.call(_storageFallback, key)){
+    return _storageFallback[key];
+  }
+  try {
+    var v = localStorage.getItem(key);
+    if(v !== null) return v;
+  } catch (err) {}
+  if(Object.prototype.hasOwnProperty.call(_storageFallback, key)) return _storageFallback[key];
+  return null;
+}
+function storageSetItem(key, val){
+  try {
+    localStorage.setItem(key, val);
+    delete _storageFallback[key];
+    delete _storageFallbackActive[key];
+    return true;
+  } catch (err) {
+    _storageFallback[key] = val;
+    _storageFallbackActive[key] = true;
+    return false;
+  }
+}
+
+/* ── Seed / default data ────────────────────────────── */
+function defaultBusiness(){
+  return {
+    name: 'Grafix On Demand',
+    address: '94 Industrial Rd. Unit #7, Steinbach, MB',
+    phone: '204-905-0520',
+    email: 'bd@grafixondemand.ca',
+    tagline: 'Customer first. No surprises.',
+    gstNumber: '',
+    invoicePrefix: 'GOD',
+    nextInvoiceNum: 1001
+  };
+}
+function seedData(){
+  var c1 = uid('cl'), c2 = uid('cl'), c3 = uid('cl');
+  var v1 = uid('vh'), v2 = uid('vh'), v3 = uid('vh'), v4 = uid('vh');
+  return {
+    meta: {version: DATA_VERSION, lastBackup: null},
+    business: defaultBusiness(),
+    clients: [
+      {id:c1, name:'Prairie Fleet Services', phone:'204-346-2210', email:'dispatch@prairiefleet.mb.ca', address:'40 Commerce Dr, Steinbach, MB', type:'fleet', notes:'Bills monthly, PO number required on invoices.', isSample:true, createdAt:today()},
+      {id:c2, name:'Marcus Reimer', phone:'204-380-1187', email:'marcus.reimer@gmail.com', address:'112 Loewen Blvd, Steinbach, MB', type:'oneoff', notes:'', isSample:true, createdAt:today()},
+      {id:c3, name:'Dana Klassen', phone:'204-371-9042', email:'dana.klassen@outlook.com', address:'8 Birchwood Cres, Niverville, MB', type:'oneoff', notes:'', isSample:true, createdAt:today()}
+    ],
+    vehicles: [
+      {id:v1, clientId:c1, unitNumber:'14', year:'2022', make:'Ford', model:'Transit 250', plate:'MB-XR4471', color:'White', notes:'', isSample:true, createdAt:today()},
+      {id:v4, clientId:c1, unitNumber:'22', year:'2020', make:'Ford', model:'F-150', plate:'MB-KT2290', color:'White', notes:'', isSample:true, createdAt:today()},
+      {id:v2, clientId:c2, unitNumber:'', year:'2021', make:'Dodge', model:'Charger GT', plate:'MB-CHR991', color:'Grey', notes:'', isSample:true, createdAt:today()},
+      {id:v3, clientId:c3, unitNumber:'', year:'2023', make:'Tesla', model:'Model 3', plate:'MB-TSL302', color:'Black', notes:'', isSample:true, createdAt:today()}
+    ],
+    jobs: [
+      {
+        id: uid('job'), vehicleId:v2, jobType:'wrap', status:'inprogress',
+        title:'Partial wrap — hood, roof, mirrors, satin black',
+        createdAt:today(), quoteDate:today(), targetDate:'',
+        lineItems:[
+          {id:uid('li'), description:'3M satin black vinyl — hood/roof/mirrors', category:'material', qty:26, unitCost:9.5, taxable:true},
+          {id:uid('li'), description:'Install labor — panel prep and wrap', category:'labor', qty:6, unitCost:75, taxable:true},
+          {id:uid('li'), description:'Mobile install fee — on-site at Loewen Blvd', category:'install', qty:1, unitCost:60, taxable:true}
+        ],
+        payments:[
+          {id:uid('pay'), date:today(), amount:250, method:'E-Transfer', note:'Deposit'}
+        ],
+        invoiceNumber:'', invoicedDate:'', notes:'Customer wants satin, not gloss. Confirmed by text.',
+        isSample:true
+      },
+      {
+        id: uid('job'), vehicleId:v1, jobType:'signage', status:'invoiced',
+        title:'Unit 14 — door decals and DOT signage',
+        createdAt:today(), quoteDate:today(), targetDate:'',
+        lineItems:[
+          {id:uid('li'), description:'Cut vinyl door decals, both sides', category:'material', qty:2, unitCost:85, taxable:true},
+          {id:uid('li'), description:'DOT/NSC signage set', category:'material', qty:1, unitCost:120, taxable:true},
+          {id:uid('li'), description:'Install labor', category:'labor', qty:2, unitCost:75, taxable:true}
+        ],
+        payments:[
+          {id:uid('pay'), date:today(), amount:150, method:'E-Transfer', note:'Deposit on fleet PO #4471'}
+        ],
+        invoiceNumber:'GOD-1001', invoicedDate:today(), notes:'Bill to fleet account, PO #4471.',
+        isSample:true
+      },
+      {
+        id: uid('job'), vehicleId:v3, jobType:'ppf', status:'quoted',
+        title:'Full front PPF — bumper, hood, fenders, mirrors',
+        createdAt:today(), quoteDate:today(), targetDate:'',
+        lineItems:[
+          {id:uid('li'), description:'Self-healing PPF — full front kit', category:'material', qty:1, unitCost:650, taxable:true},
+          {id:uid('li'), description:'Install labor — full front kit', category:'labor', qty:8, unitCost:75, taxable:true}
+        ],
+        payments:[],
+        invoiceNumber:'', invoicedDate:'', notes:'Waiting on customer to confirm booking date.',
+        isSample:true
+      }
+    ]
+  };
+}
+function normalizeData(raw){
+  var base = seedData();
+  var data = raw || {};
+  var out = {
+    meta: {
+      version: DATA_VERSION,
+      lastBackup: (data.meta && data.meta.lastBackup) || null
+    },
+    business: {},
+    clients: Array.isArray(data.clients) ? data.clients : [],
+    vehicles: Array.isArray(data.vehicles) ? data.vehicles : [],
+    jobs: Array.isArray(data.jobs) ? data.jobs : []
+  };
+  var defBiz = defaultBusiness();
+  var srcBiz = data.business || {};
+  var bizKeys = ['name','address','phone','email','tagline','gstNumber','invoicePrefix'];
+  for(var bi = 0; bi < bizKeys.length; bi++){
+    var bk = bizKeys[bi];
+    out.business[bk] = (srcBiz[bk] !== undefined && srcBiz[bk] !== null) ? srcBiz[bk] : defBiz[bk];
+  }
+  out.business.nextInvoiceNum = Number(srcBiz.nextInvoiceNum) || defBiz.nextInvoiceNum;
+
+  out.clients = out.clients.map(function(c){
+    return {
+      id: c.id || uid('cl'),
+      name: c.name || '',
+      phone: c.phone || '',
+      email: c.email || '',
+      address: c.address || '',
+      type: (c.type === 'fleet') ? 'fleet' : 'oneoff',
+      notes: c.notes || '',
+      isSample: !!c.isSample,
+      createdAt: c.createdAt || today()
+    };
+  });
+  out.vehicles = out.vehicles.map(function(v){
+    return {
+      id: v.id || uid('vh'),
+      clientId: v.clientId || '',
+      unitNumber: v.unitNumber || '',
+      year: v.year || '',
+      make: v.make || '',
+      model: v.model || '',
+      plate: v.plate || '',
+      color: v.color || '',
+      notes: v.notes || '',
+      isSample: !!v.isSample,
+      createdAt: v.createdAt || today()
+    };
+  });
+  out.jobs = out.jobs.map(function(j){
+    var validStatus = false, validType = false, si, ti;
+    for(si = 0; si < JOB_STATUSES.length; si++){ if(JOB_STATUSES[si].key === j.status) validStatus = true; }
+    for(ti = 0; ti < JOB_TYPES.length; ti++){ if(JOB_TYPES[ti].key === j.jobType) validType = true; }
+    var lineItems = Array.isArray(j.lineItems) ? j.lineItems.map(function(li){
+      var validCat = false, ci;
+      for(ci = 0; ci < LI_CATEGORIES.length; ci++){ if(LI_CATEGORIES[ci].key === li.category) validCat = true; }
+      return {
+        id: li.id || uid('li'),
+        description: li.description || '',
+        category: validCat ? li.category : 'material',
+        qty: Number(li.qty) || 0,
+        unitCost: Number(li.unitCost) || 0,
+        taxable: li.taxable !== false
+      };
+    }) : [];
+    var payments = Array.isArray(j.payments) ? j.payments.map(function(p){
+      return {
+        id: p.id || uid('pay'),
+        date: p.date || today(),
+        amount: Number(p.amount) || 0,
+        method: p.method || 'Other',
+        note: p.note || ''
+      };
+    }) : [];
+    return {
+      id: j.id || uid('job'),
+      vehicleId: j.vehicleId || '',
+      jobType: validType ? j.jobType : 'wrap',
+      status: validStatus ? j.status : 'quoted',
+      title: j.title || '',
+      createdAt: j.createdAt || today(),
+      quoteDate: j.quoteDate || today(),
+      targetDate: j.targetDate || '',
+      lineItems: lineItems,
+      payments: payments,
+      invoiceNumber: j.invoiceNumber || '',
+      invoicedDate: j.invoicedDate || '',
+      notes: j.notes || '',
+      isSample: !!j.isSample
+    };
+  });
+  return out;
+}
+function loadData(){
+  var raw = storageGetItem(STORAGE_KEY);
+  if(raw){
+    try { D = normalizeData(JSON.parse(raw)); return true; }
+    catch (err) { D = normalizeData(seedData()); return true; }
+  }
+  return false;
+}
+function saveData(){
+  storageSetItem(STORAGE_KEY, JSON.stringify(D));
+}
+
+/* ── Derived lookups ────────────────────────────────── */
+function clientById(id){
+  for(var i = 0; i < D.clients.length; i++){ if(D.clients[i].id === id) return D.clients[i]; }
+  return null;
+}
+function vehicleById(id){
+  for(var i = 0; i < D.vehicles.length; i++){ if(D.vehicles[i].id === id) return D.vehicles[i]; }
+  return null;
+}
+function vehiclesForClient(clientId){
+  return D.vehicles.filter(function(v){ return v.clientId === clientId; });
+}
+function jobsForVehicle(vehicleId){
+  return D.jobs.filter(function(j){ return j.vehicleId === vehicleId; });
+}
+function vehicleLabel(v){
+  if(!v) return 'Unknown vehicle';
+  var ymm = [v.year, v.make, v.model].filter(function(x){ return !!x; }).join(' ');
+  if(v.unitNumber) return 'Unit #' + v.unitNumber + (ymm ? ' — ' + ymm : '');
+  return ymm || 'Unnamed vehicle';
+}
+function jobClient(job){
+  var v = vehicleById(job.vehicleId);
+  return v ? clientById(v.clientId) : null;
+}
+function calcJobTotals(job){
+  var subtotal = 0, taxableSubtotal = 0;
+  job.lineItems.forEach(function(li){
+    var lineTotal = (Number(li.qty) || 0) * (Number(li.unitCost) || 0);
+    subtotal += lineTotal;
+    if(li.taxable) taxableSubtotal += lineTotal;
+  });
+  var gst = taxableSubtotal * 0.05;
+  var pst = taxableSubtotal * 0.07;
+  var total = subtotal + gst + pst;
+  var paid = 0;
+  job.payments.forEach(function(p){ paid += Number(p.amount) || 0; });
+  var balance = total - paid;
+  return {
+    subtotal: subtotal, taxableSubtotal: taxableSubtotal,
+    gst: gst, pst: pst, total: total,
+    paid: paid, balance: balance
+  };
+}
+
+/* ── Toast / confirm2 / modal ────────────────────────── */
+function toast(msg){
+  var region = byId('toast-container');
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  region.appendChild(el);
+  window.setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 3200);
+}
+function confirm2(title, msg, onConfirm, okLabel, okClass){
+  byId('confirm2-title').textContent = title;
+  byId('confirm2-msg').textContent = msg;
+  var okBtn = byId('confirm2-ok');
+  okBtn.textContent = okLabel || 'Confirm';
+  okBtn.className = 'btn btn-sm ' + (okClass || 'btn-danger');
+  _c2cb = onConfirm;
+  byId('confirm2-overlay').className = 'open';
+}
+byId('confirm2-ok').addEventListener('click', function(){
+  byId('confirm2-overlay').className = '';
+  if(_c2cb){ var fn = _c2cb; _c2cb = null; fn(); }
+});
+byId('confirm2-cancel').addEventListener('click', function(){
+  byId('confirm2-overlay').className = '';
+  _c2cb = null;
+});
+
+function openModal(title, bodyHtml, footHtml){
+  modalState = {title: title};
+  byId('modal-title').textContent = title;
+  byId('modal-body').innerHTML = bodyHtml;
+  byId('modal-foot').innerHTML = footHtml || '<button class="btn btn-outline" type="button" onclick="closeModal()">Close</button>';
+  clearModalError();
+  byId('modal-ov').className = 'modal-ov';
+}
+function closeModal(){
+  byId('modal-ov').className = 'modal-ov hidden';
+  modalState = null;
+  jobDraft = null;
+}
+function showModalError(msg){
+  var box = byId('modal-error');
+  box.textContent = msg;
+  box.className = 'modal-error show';
+}
+function clearModalError(){
+  var box = byId('modal-error');
+  box.textContent = '';
+  box.className = 'modal-error';
+}
+byId('modal-close-btn').addEventListener('click', closeModal);
+byId('modal-ov').addEventListener('click', function(evt){
+  if(evt.target === byId('modal-ov')) closeModal();
+});
+
+/* ── Tabs / render dispatch ──────────────────────────── */
+function switchTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.nav-tab').forEach(function(btn){
+    var on = btn.getAttribute('data-tab') === tab;
+    btn.className = 'nav-tab' + (on ? ' active' : '');
+  });
+  render();
+}
+function render(){
+  var app = byId('app');
+  if(currentTab === 'dashboard') app.innerHTML = renderDashboard();
+  else if(currentTab === 'clients') app.innerHTML = renderClients();
+  else if(currentTab === 'jobs') app.innerHTML = renderJobs();
+  else if(currentTab === 'invoices') app.innerHTML = renderInvoices();
+  else if(currentTab === 'settings') app.innerHTML = renderSettings();
+  updateBackupPill();
+}
+
+/* ── Dashboard ────────────────────────────────────────── */
+function renderDashboard(){
+  var outstanding = 0;
+  var quotedValue = 0;
+  var counts = {};
+  JOB_STATUSES.forEach(function(s){ counts[s.key] = 0; });
+  D.jobs.forEach(function(j){
+    counts[j.status] = (counts[j.status] || 0) + 1;
+    var t = calcJobTotals(j);
+    if(j.status === 'invoiced') outstanding += t.balance;
+    if(j.status === 'quoted') quotedValue += t.total;
+  });
+  var recent = D.jobs.slice().sort(function(a, b){ return b.createdAt.localeCompare(a.createdAt); }).slice(0, 6);
+  var needsAttention = D.jobs.filter(function(j){
+    var t = calcJobTotals(j);
+    return j.status === 'invoiced' && t.balance > 0;
+  });
+
+  return '' +
+  '<div class="section-head">' +
+    '<div><h2>Dashboard</h2><p>Outstanding balances, jobs by status, and a quick way to start something new.</p></div>' +
+    '<div class="actions"><button class="btn btn-primary" type="button" onclick="openJobModal()">New Job</button></div>' +
+  '</div>' +
+  '<div class="stats-row">' +
+    '<div class="card stat-card brand"><div class="stat-value">' + fmtMoney(outstanding) + '</div><div class="stat-label">Outstanding (Invoiced)</div></div>' +
+    '<div class="card stat-card"><div class="stat-value">' + fmtMoney(quotedValue) + '</div><div class="stat-label">Quoted, Not Started</div></div>' +
+    '<div class="card stat-card success"><div class="stat-value">' + counts.inprogress + '</div><div class="stat-label">In Progress</div></div>' +
+    '<div class="card stat-card warn"><div class="stat-value">' + needsAttention.length + '</div><div class="stat-label">Invoices With Balance Due</div></div>' +
+  '</div>' +
+  '<div class="dashboard-grid">' +
+    '<div class="card panel">' +
+      '<h3>Jobs by Status</h3>' +
+      '<div class="mini-list">' +
+        JOB_STATUSES.map(function(s){
+          return '<div class="mini-item"><div><h4>' + esc(s.label) + '</h4></div><span class="badge ' + statusBadgeClass(s.key) + '">' + counts[s.key] + '</span></div>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+    '<div class="card panel">' +
+      '<h3>Needs Attention</h3>' +
+      '<div class="mini-list">' +
+        (needsAttention.length ? needsAttention.map(function(j){
+          var v = vehicleById(j.vehicleId); var c = jobClient(j); var t = calcJobTotals(j);
+          return '<div class="mini-item"><div><h4>' + esc(j.invoiceNumber || j.title) + '</h4><p>' + esc(c ? c.name : 'Unknown client') + ' — ' + esc(vehicleLabel(v)) + '</p></div><span class="badge b-invoiced">' + fmtMoney(t.balance) + '</span></div>';
+        }).join('') : '<div class="empty">No unpaid invoices right now.</div>') +
+      '</div>' +
+    '</div>' +
+  '</div>' +
+  '<div class="card panel" style="margin-top:16px">' +
+    '<h3>Recent Jobs</h3>' +
+    '<div class="mini-list">' +
+      (recent.length ? recent.map(function(j){
+        var v = vehicleById(j.vehicleId); var c = jobClient(j);
+        return '<div class="mini-item"><div><h4>' + esc(j.title || labelFor(JOB_TYPES, j.jobType)) + '</h4><p>' + esc(c ? c.name : 'Unknown client') + ' — ' + esc(vehicleLabel(v)) + ' — ' + fmtDate(j.createdAt) + '</p></div><span class="badge ' + statusBadgeClass(j.status) + '">' + esc(labelFor(JOB_STATUSES, j.status)) + '</span></div>';
+      }).join('') : '<div class="empty">No jobs yet. Add your first job to get started.</div>') +
+    '</div>' +
+  '</div>';
+}
+
+/* ── Clients (fleet grouping) ─────────────────────────── */
+function renderClients(){
+  var q = ui.clientsQ.trim().toLowerCase();
+  var filtered = D.clients.filter(function(c){
+    if(!q) return true;
+    return (c.name + ' ' + c.phone + ' ' + c.email).toLowerCase().indexOf(q) !== -1;
+  }).sort(function(a, b){ return a.name.localeCompare(b.name); });
+
+  return '' +
+  '<div class="section-head">' +
+    '<div><h2>Clients</h2><p>One-off customers and fleet accounts. Fleet clients can carry many vehicles.</p></div>' +
+    '<div class="actions"><button class="btn btn-primary" type="button" onclick="openClientModal()">Add Client</button></div>' +
+  '</div>' +
+  '<div class="toolbar">' +
+    '<input type="text" placeholder="Search clients" value="' + esc(ui.clientsQ) + '" oninput="ui.clientsQ=this.value;render()">' +
+    '<div class="count">' + filtered.length + ' of ' + D.clients.length + '</div>' +
+  '</div>' +
+  (filtered.length ? filtered.map(function(c){
+    var vehicles = vehiclesForClient(c.id);
+    return '<div class="card client-card">' +
+      '<div class="client-head">' +
+        '<div><h3>' + esc(c.name) + (c.isSample ? ' <span class="badge b-sample">Sample</span>' : '') + '</h3>' +
+        '<div class="client-meta">' + esc(c.phone || 'No phone') + (c.email ? ' &middot; ' + esc(c.email) : '') + (c.address ? ' &middot; ' + esc(c.address) : '') + '</div></div>' +
+        '<div class="actions">' +
+          '<span class="badge ' + (c.type === 'fleet' ? 'b-fleet' : 'b-oneoff') + '">' + (c.type === 'fleet' ? 'Fleet Account' : 'One-Off') + '</span>' +
+          '<button class="btn btn-outline btn-sm" type="button" onclick="openVehicleModal(\'' + c.id + '\')">Add Vehicle</button>' +
+          '<button class="btn btn-outline btn-sm" type="button" onclick="openClientModal(\'' + c.id + '\')">Edit</button>' +
+          '<button class="btn btn-danger btn-sm" type="button" onclick="deleteClient(\'' + c.id + '\')">Delete</button>' +
+        '</div>' +
+      '</div>' +
+      (c.notes ? '<p class="td-muted" style="margin-top:8px">' + esc(c.notes) + '</p>' : '') +
+      (vehicles.length ? vehicles.map(function(v){
+        var jobs = jobsForVehicle(v.id);
+        return '<div class="vehicle-row"><div><div class="vname">' + esc(vehicleLabel(v)) + (v.isSample ? ' <span class="badge b-sample">Sample</span>' : '') + '</div>' +
+          '<div class="vmeta">' + esc(v.plate || 'No plate on file') + (v.color ? ' &middot; ' + esc(v.color) : '') + ' &middot; ' + jobs.length + ' job' + (jobs.length === 1 ? '' : 's') + '</div></div>' +
+          '<div class="actions">' +
+            '<button class="btn btn-outline btn-sm" type="button" onclick="openJobModal(null,\'' + v.id + '\')">New Job</button>' +
+            '<button class="btn btn-outline btn-sm" type="button" onclick="openVehicleModal(\'' + c.id + '\',\'' + v.id + '\')">Edit</button>' +
+            '<button class="btn btn-danger btn-sm" type="button" onclick="deleteVehicle(\'' + v.id + '\')">Delete</button>' +
+          '</div></div>';
+      }).join('') : '<div class="empty" style="padding:12px">No vehicles on file for this client yet.</div>')
+    + '</div>';
+  }).join('') : '<div class="empty">No clients match your search.</div>');
+}
+
+/* ── Jobs ─────────────────────────────────────────────── */
+function renderJobs(){
+  var q = ui.jobsQ.trim().toLowerCase();
+  var filtered = D.jobs.filter(function(j){
+    var v = vehicleById(j.vehicleId); var c = jobClient(j);
+    if(ui.jobsStatus && j.status !== ui.jobsStatus) return false;
+    if(ui.jobsType && j.jobType !== ui.jobsType) return false;
+    if(q){
+      var hay = (j.title + ' ' + (c ? c.name : '') + ' ' + vehicleLabel(v)).toLowerCase();
+      if(hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  }).sort(function(a, b){ return b.createdAt.localeCompare(a.createdAt); });
+
+  return '' +
+  '<div class="section-head">' +
+    '<div><h2>Jobs</h2><p>Every quote and job in the shop, filterable by status and type.</p></div>' +
+    '<div class="actions"><button class="btn btn-primary" type="button" onclick="openJobModal()">New Job</button></div>' +
+  '</div>' +
+  '<div class="toolbar">' +
+    '<input type="text" placeholder="Search jobs" value="' + esc(ui.jobsQ) + '" oninput="ui.jobsQ=this.value;render()">' +
+    '<select onchange="ui.jobsStatus=this.value;render()">' +
+      '<option value="">All Statuses</option>' +
+      JOB_STATUSES.map(function(s){ return '<option value="' + s.key + '"' + (ui.jobsStatus === s.key ? ' selected' : '') + '>' + esc(s.label) + '</option>'; }).join('') +
+    '</select>' +
+    '<select onchange="ui.jobsType=this.value;render()">' +
+      '<option value="">All Types</option>' +
+      JOB_TYPES.map(function(t){ return '<option value="' + t.key + '"' + (ui.jobsType === t.key ? ' selected' : '') + '>' + esc(t.label) + '</option>'; }).join('') +
+    '</select>' +
+    '<div class="count">' + filtered.length + ' of ' + D.jobs.length + '</div>' +
+  '</div>' +
+  '<div class="table-wrap"><table><thead><tr>' +
+    '<th>Client / Vehicle</th><th>Job</th><th>Type</th><th>Status</th><th>Total</th><th>Balance</th><th></th>' +
+  '</tr></thead><tbody>' +
+    (filtered.length ? filtered.map(function(j){
+      var v = vehicleById(j.vehicleId); var c = jobClient(j); var t = calcJobTotals(j);
+      return '<tr>' +
+        '<td><strong>' + esc(c ? c.name : 'Unknown client') + '</strong><div class="td-muted">' + esc(vehicleLabel(v)) + '</div></td>' +
+        '<td>' + esc(j.title || labelFor(JOB_TYPES, j.jobType)) + (j.isSample ? ' <span class="badge b-sample">Sample</span>' : '') + '<div class="td-muted">' + fmtDate(j.createdAt) + '</div></td>' +
+        '<td>' + esc(labelFor(JOB_TYPES, j.jobType)) + '</td>' +
+        '<td><span class="badge ' + statusBadgeClass(j.status) + '">' + esc(labelFor(JOB_STATUSES, j.status)) + '</span></td>' +
+        '<td>' + fmtMoney(t.total) + '</td>' +
+        '<td>' + (t.balance > 0.004 ? fmtMoney(t.balance) : '<span class="td-muted">Paid</span>') + '</td>' +
+        '<td class="td-actions">' +
+          '<button class="btn btn-outline btn-sm" type="button" onclick="printQuote(\'' + j.id + '\')">Quote</button>' +
+          '<button class="btn btn-outline btn-sm" type="button" onclick="openJobModal(\'' + j.id + '\')">Edit</button>' +
+          '<button class="btn btn-danger btn-sm" type="button" onclick="deleteJob(\'' + j.id + '\')">Delete</button>' +
+        '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="empty">No jobs match the current filters.</td></tr>') +
+  '</tbody></table></div>';
+}
+
+/* ── Invoices ─────────────────────────────────────────── */
+function renderInvoices(){
+  var invoiceable = D.jobs.filter(function(j){ return j.status === 'invoiced' || j.status === 'paid'; });
+  var filtered = invoiceable.filter(function(j){
+    return !ui.invoicesStatus || j.status === ui.invoicesStatus;
+  }).sort(function(a, b){ return (b.invoicedDate || b.createdAt).localeCompare(a.invoicedDate || a.createdAt); });
+
+  return '' +
+  '<div class="section-head">' +
+    '<div><h2>Invoices</h2><p>Jobs that have been invoiced, with deposits applied and balance due.</p></div>' +
+  '</div>' +
+  '<div class="toolbar">' +
+    '<select onchange="ui.invoicesStatus=this.value;render()">' +
+      '<option value="">Invoiced &amp; Paid</option>' +
+      '<option value="invoiced"' + (ui.invoicesStatus === 'invoiced' ? ' selected' : '') + '>Invoiced Only</option>' +
+      '<option value="paid"' + (ui.invoicesStatus === 'paid' ? ' selected' : '') + '>Paid Only</option>' +
+    '</select>' +
+    '<div class="count">' + filtered.length + ' invoice' + (filtered.length === 1 ? '' : 's') + '</div>' +
+  '</div>' +
+  '<div class="table-wrap"><table><thead><tr>' +
+    '<th>Invoice #</th><th>Client / Vehicle</th><th>Invoiced</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th></th>' +
+  '</tr></thead><tbody>' +
+    (filtered.length ? filtered.map(function(j){
+      var v = vehicleById(j.vehicleId); var c = jobClient(j); var t = calcJobTotals(j);
+      return '<tr>' +
+        '<td><strong>' + esc(j.invoiceNumber || 'Not assigned') + '</strong></td>' +
+        '<td>' + esc(c ? c.name : 'Unknown client') + '<div class="td-muted">' + esc(vehicleLabel(v)) + '</div></td>' +
+        '<td>' + fmtDate(j.invoicedDate) + '</td>' +
+        '<td>' + fmtMoney(t.total) + '</td>' +
+        '<td>' + fmtMoney(t.paid) + '</td>' +
+        '<td>' + (t.balance > 0.004 ? fmtMoney(t.balance) : '<span class="td-muted">$0.00</span>') + '</td>' +
+        '<td><span class="badge ' + statusBadgeClass(j.status) + '">' + esc(labelFor(JOB_STATUSES, j.status)) + '</span></td>' +
+        '<td class="td-actions">' +
+          '<button class="btn btn-outline btn-sm" type="button" onclick="printInvoice(\'' + j.id + '\')">Print</button>' +
+          (t.balance > 0.004 ? '<button class="btn btn-outline btn-sm" type="button" onclick="openPaymentModal(\'' + j.id + '\')">Log Payment</button>' : '') +
+          '<button class="btn btn-outline btn-sm" type="button" onclick="openJobModal(\'' + j.id + '\')">Edit</button>' +
+        '</td></tr>';
+    }).join('') : '<tr><td colspan="8" class="empty">No invoices yet. Move a job to "Invoiced" from the Jobs tab.</td></tr>') +
+  '</tbody></table></div>';
+}
+
+/* ── Settings ─────────────────────────────────────────── */
+function renderSettings(){
+  var b = D.business;
+  var hasSample = D.clients.some(function(c){ return c.isSample; }) ||
+    D.vehicles.some(function(v){ return v.isSample; }) ||
+    D.jobs.some(function(j){ return j.isSample; });
+  return '' +
+  '<div class="section-head"><div><h2>Settings</h2><p>Business info used on printed quotes and invoices, plus backup tools.</p></div></div>' +
+  '<div class="card panel" style="margin-bottom:16px">' +
+    '<h3>Business Info</h3>' +
+    '<div class="form-grid">' +
+      '<div class="field"><label>Business Name</label><input type="text" id="set-name" value="' + esc(b.name) + '"></div>' +
+      '<div class="field"><label>Phone</label><input type="text" id="set-phone" value="' + esc(b.phone) + '"></div>' +
+      '<div class="field span-2"><label>Address</label><input type="text" id="set-address" value="' + esc(b.address) + '"></div>' +
+      '<div class="field"><label>Email</label><input type="text" id="set-email" value="' + esc(b.email) + '"></div>' +
+      '<div class="field"><label>GST Number</label><input type="text" id="set-gst" value="' + esc(b.gstNumber) + '" placeholder="123456789RT0001"></div>' +
+      '<div class="field"><label>Invoice Prefix</label><input type="text" id="set-prefix" value="' + esc(b.invoicePrefix) + '"></div>' +
+      '<div class="field"><label>Next Invoice Number</label><input type="number" id="set-nextnum" value="' + esc(b.nextInvoiceNum) + '"></div>' +
+      '<div class="field span-2"><label>Tagline (printed on quotes/invoices)</label><input type="text" id="set-tagline" value="' + esc(b.tagline) + '"></div>' +
+    '</div>' +
+    '<div class="actions" style="margin-top:12px"><button class="btn btn-primary" type="button" onclick="saveBusinessSettings()">Save Business Info</button></div>' +
+  '</div>' +
+  '<div class="card panel" style="margin-bottom:16px">' +
+    '<h3>Backup &amp; Restore</h3>' +
+    '<p class="hint" style="margin-bottom:12px">This tool saves to the browser on this device only. If Bruce uses the iPad, phone, and shop computer, each device needs its own backup exported and imported to stay in sync. Export after real work sessions and import that file on the other device.</p>' +
+    '<p class="hint" style="margin-bottom:12px"><strong>Last backup on this device:</strong> ' + esc(fmtDateTime(D.meta.lastBackup)) + '</p>' +
+    '<div class="actions">' +
+      '<button class="btn btn-primary" type="button" onclick="exportData()">Export Backup (JSON)</button>' +
+      '<label class="btn btn-ghost" style="display:inline-flex;align-items:center">Import Backup<input type="file" id="settings-import-file" accept="application/json,.json" style="display:none"></label>' +
+    '</div>' +
+  '</div>' +
+  (hasSample ? '<div class="card panel" style="margin-bottom:16px">' +
+    '<h3>Sample Data</h3>' +
+    '<p class="hint" style="margin-bottom:12px">This tool was seeded with a few sample clients, vehicles, and jobs so it is not empty on first open. Remove them whenever real data has replaced the need for examples.</p>' +
+    '<div class="actions"><button class="btn btn-outline" type="button" onclick="clearSampleData()">Remove Sample Data</button></div>' +
+  '</div>' : '') +
+  '<div class="card panel">' +
+    '<h3>Reset</h3>' +
+    '<p class="hint" style="margin-bottom:12px">Erases everything on this device and reloads the sample data. Export a backup first if there is anything worth keeping.</p>' +
+    '<div class="actions"><button class="btn btn-danger" type="button" onclick="resetAllData()">Reset This Device</button></div>' +
+  '</div>';
+}
+
+/* ── Client CRUD ──────────────────────────────────────── */
+function openClientModal(id){
+  var c = id ? clientById(id) : {name:'', phone:'', email:'', address:'', type:'oneoff', notes:''};
+  if(id && !c){ toast('That client no longer exists.'); return; }
+  var body = '' +
+    '<div class="form-grid">' +
+      '<div class="field span-2"><label>Name</label><input type="text" id="cf-name" value="' + esc(c.name) + '"></div>' +
+      '<div class="field"><label>Phone</label><input type="text" id="cf-phone" value="' + esc(c.phone) + '"></div>' +
+      '<div class="field"><label>Email</label><input type="text" id="cf-email" value="' + esc(c.email) + '"></div>' +
+      '<div class="field span-2"><label>Address</label><input type="text" id="cf-address" value="' + esc(c.address) + '"></div>' +
+      '<div class="field"><label>Account Type</label><select id="cf-type">' +
+        '<option value="oneoff"' + (c.type === 'oneoff' ? ' selected' : '') + '>One-Off</option>' +
+        '<option value="fleet"' + (c.type === 'fleet' ? ' selected' : '') + '>Fleet Account</option>' +
+      '</select></div>' +
+      '<div class="field span-2"><label>Notes</label><textarea id="cf-notes">' + esc(c.notes) + '</textarea></div>' +
+    '</div>';
+  var foot = '<button class="btn btn-outline" type="button" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-primary" type="button" onclick="saveClient(' + (id ? '\'' + id + '\'' : 'null') + ')">Save Client</button>';
+  openModal(id ? 'Edit Client' : 'Add Client', body, foot);
+}
+function saveClient(id){
+  var name = byId('cf-name').value.trim();
+  if(!name){ showModalError('Name is required.'); return; }
+  var rec = {
+    id: id || uid('cl'),
+    name: name,
+    phone: byId('cf-phone').value.trim(),
+    email: byId('cf-email').value.trim(),
+    address: byId('cf-address').value.trim(),
+    type: byId('cf-type').value,
+    notes: byId('cf-notes').value.trim(),
+    isSample: id ? (clientById(id) || {}).isSample : false,
+    createdAt: id ? (clientById(id) || {}).createdAt || today() : today()
+  };
+  if(id){
+    var idx = D.clients.findIndex(function(x){ return x.id === id; });
+    if(idx >= 0) D.clients[idx] = rec;
+  } else {
+    D.clients.push(rec);
+  }
+  saveData();
+  closeModal();
+  render();
+  toast(id ? 'Client updated.' : 'Client added.');
+}
+function deleteClient(id){
+  var vehicles = vehiclesForClient(id);
+  var jobCount = 0;
+  vehicles.forEach(function(v){ jobCount += jobsForVehicle(v.id).length; });
+  var msg = vehicles.length
+    ? 'This client has ' + vehicles.length + ' vehicle' + (vehicles.length === 1 ? '' : 's') + ' and ' + jobCount + ' job' + (jobCount === 1 ? '' : 's') + ' on file. Deleting the client removes all of it. This cannot be undone.'
+    : 'Delete this client? This cannot be undone.';
+  confirm2('Delete Client', msg, function(){
+    var vehicleIds = vehicles.map(function(v){ return v.id; });
+    D.jobs = D.jobs.filter(function(j){ return vehicleIds.indexOf(j.vehicleId) === -1; });
+    D.vehicles = D.vehicles.filter(function(v){ return v.clientId !== id; });
+    D.clients = D.clients.filter(function(c){ return c.id !== id; });
+    saveData();
+    render();
+    toast('Client deleted.');
+  }, 'Delete', 'btn-danger');
+}
+
+/* ── Vehicle CRUD ─────────────────────────────────────── */
+function openVehicleModal(clientId, id){
+  var v = id ? vehicleById(id) : {clientId: clientId, unitNumber:'', year:'', make:'', model:'', plate:'', color:'', notes:''};
+  if(id && !v){ toast('That vehicle no longer exists.'); return; }
+  var c = clientById(v.clientId);
+  var body = '' +
+    '<p class="hint" style="margin-bottom:10px">Client: <strong>' + esc(c ? c.name : 'Unknown') + '</strong></p>' +
+    '<div class="form-grid">' +
+      '<div class="field"><label>Fleet Unit # (optional)</label><input type="text" id="vf-unit" value="' + esc(v.unitNumber) + '"></div>' +
+      '<div class="field"><label>Plate</label><input type="text" id="vf-plate" value="' + esc(v.plate) + '"></div>' +
+      '<div class="field"><label>Year</label><input type="text" id="vf-year" value="' + esc(v.year) + '"></div>' +
+      '<div class="field"><label>Make</label><input type="text" id="vf-make" value="' + esc(v.make) + '"></div>' +
+      '<div class="field"><label>Model</label><input type="text" id="vf-model" value="' + esc(v.model) + '"></div>' +
+      '<div class="field"><label>Color</label><input type="text" id="vf-color" value="' + esc(v.color) + '"></div>' +
+      '<div class="field span-2"><label>Notes</label><textarea id="vf-notes">' + esc(v.notes) + '</textarea></div>' +
+    '</div>';
+  var foot = '<button class="btn btn-outline" type="button" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-primary" type="button" onclick="saveVehicle(\'' + v.clientId + '\'' + (id ? ',\'' + id + '\'' : '') + ')">Save Vehicle</button>';
+  openModal(id ? 'Edit Vehicle' : 'Add Vehicle', body, foot);
+}
+function saveVehicle(clientId, id){
+  var rec = {
+    id: id || uid('vh'),
+    clientId: clientId,
+    unitNumber: byId('vf-unit').value.trim(),
+    year: byId('vf-year').value.trim(),
+    make: byId('vf-make').value.trim(),
+    model: byId('vf-model').value.trim(),
+    plate: byId('vf-plate').value.trim(),
+    color: byId('vf-color').value.trim(),
+    notes: byId('vf-notes').value.trim(),
+    isSample: id ? (vehicleById(id) || {}).isSample : false,
+    createdAt: id ? (vehicleById(id) || {}).createdAt || today() : today()
+  };
+  if(!rec.year && !rec.make && !rec.model && !rec.unitNumber){
+    showModalError('Enter at least a fleet unit number or a year/make/model.');
+    return;
+  }
+  if(id){
+    var idx = D.vehicles.findIndex(function(x){ return x.id === id; });
+    if(idx >= 0) D.vehicles[idx] = rec;
+  } else {
+    D.vehicles.push(rec);
+  }
+  saveData();
+  closeModal();
+  render();
+  toast(id ? 'Vehicle updated.' : 'Vehicle added.');
+}
+function deleteVehicle(id){
+  var jobs = jobsForVehicle(id);
+  var msg = jobs.length
+    ? 'This vehicle has ' + jobs.length + ' job' + (jobs.length === 1 ? '' : 's') + ' on file. Deleting it removes those jobs too. This cannot be undone.'
+    : 'Delete this vehicle? This cannot be undone.';
+  confirm2('Delete Vehicle', msg, function(){
+    D.jobs = D.jobs.filter(function(j){ return j.vehicleId !== id; });
+    D.vehicles = D.vehicles.filter(function(v){ return v.id !== id; });
+    saveData();
+    render();
+    toast('Vehicle deleted.');
+  }, 'Delete', 'btn-danger');
+}
+
+/* ── Job CRUD (with line-item + payment editor) ──────── */
+function openJobModal(id, presetVehicleId){
+  var existing = id ? D.jobs.filter(function(j){ return j.id === id; })[0] : null;
+  if(id && !existing){ toast('That job no longer exists.'); return; }
+  jobDraft = existing ? JSON.parse(JSON.stringify(existing)) : {
+    id: null, vehicleId: presetVehicleId || '', jobType: 'wrap', status: 'quoted',
+    title: '', createdAt: today(), quoteDate: today(), targetDate: '',
+    lineItems: [], payments: [], invoiceNumber: '', invoicedDate: '', notes: '', isSample: false
+  };
+  openModal(id ? 'Edit Job' : 'New Job', '', jobModalFoot(id));
+  byId('modal-body').innerHTML = renderJobModalBody();
+}
+function jobModalFoot(id){
+  return '<button class="btn btn-outline" type="button" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-primary" type="button" onclick="saveJobDraft()">Save Job</button>';
+}
+function renderJobModalBody(){
+  var jd = jobDraft;
+  var t = {subtotal: 0, gst: 0, pst: 0, total: 0, paid: 0, balance: 0};
+  jd.lineItems.forEach(function(li){
+    var lt = (Number(li.qty) || 0) * (Number(li.unitCost) || 0);
+    t.subtotal += lt;
+    if(li.taxable) { t.gst += lt * 0.05; t.pst += lt * 0.07; }
+  });
+  t.total = t.subtotal + t.gst + t.pst;
+  jd.payments.forEach(function(p){ t.paid += Number(p.amount) || 0; });
+  t.balance = t.total - t.paid;
+
+  var clientOptions = D.clients.slice().sort(function(a, b){ return a.name.localeCompare(b.name); });
+  var selectedClientId = '';
+  var jdVehicle = vehicleById(jd.vehicleId);
+  if(jdVehicle) selectedClientId = jdVehicle.clientId;
+
+  return '' +
+  '<div class="form-grid">' +
+    '<div class="field"><label>Client</label><select id="jf-client" onchange="draftPickClient(this.value)">' +
+      '<option value="">Choose a client…</option>' +
+      clientOptions.map(function(c){ return '<option value="' + c.id + '"' + (c.id === selectedClientId ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="field"><label>Vehicle</label><select id="jf-vehicle" onchange="draftPickVehicle(this.value)">' +
+      (selectedClientId ? vehiclesForClient(selectedClientId).map(function(v){ return '<option value="' + v.id + '"' + (v.id === jd.vehicleId ? ' selected' : '') + '>' + esc(vehicleLabel(v)) + '</option>'; }).join('') : '<option value="">Choose a client first</option>') +
+    '</select></div>' +
+    '<div class="field"><label>Job Type</label><select id="jf-type" onchange="jobDraft.jobType=this.value">' +
+      JOB_TYPES.map(function(x){ return '<option value="' + x.key + '"' + (x.key === jd.jobType ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="field"><label>Status</label><select id="jf-status" onchange="jobDraft.status=this.value">' +
+      JOB_STATUSES.map(function(x){ return '<option value="' + x.key + '"' + (x.key === jd.status ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="field span-2"><label>Job Title / Description</label><input type="text" id="jf-title" value="' + esc(jd.title) + '" placeholder="e.g. Partial wrap — hood and roof"></div>' +
+    '<div class="field"><label>Quote Date</label><input type="date" id="jf-quotedate" value="' + esc(jd.quoteDate) + '"></div>' +
+    '<div class="field"><label>Target Date</label><input type="date" id="jf-targetdate" value="' + esc(jd.targetDate) + '"></div>' +
+  '</div>' +
+  '<h3 style="margin-top:16px;margin-bottom:6px;font-family:Oswald,Arial Narrow,sans-serif;font-size:1rem">Line Items</h3>' +
+  '<table class="li-table"><thead><tr><th>Description</th><th>Category</th><th>Qty</th><th>Unit Cost</th><th>Tax</th><th></th></tr></thead><tbody>' +
+    jd.lineItems.map(function(li, i){
+      return '<tr>' +
+        '<td class="li-desc"><input type="text" value="' + esc(li.description) + '" oninput="draftUpdateLine(' + i + ',\'description\',this.value)"></td>' +
+        '<td><select onchange="draftUpdateLine(' + i + ',\'category\',this.value)">' +
+          LI_CATEGORIES.map(function(c){ return '<option value="' + c.key + '"' + (c.key === li.category ? ' selected' : '') + '>' + esc(c.label) + '</option>'; }).join('') +
+        '</select></td>' +
+        '<td><input class="li-num" type="number" step="0.01" value="' + esc(li.qty) + '" oninput="draftUpdateLine(' + i + ',\'qty\',this.value)"></td>' +
+        '<td><input class="li-num" type="number" step="0.01" value="' + esc(li.unitCost) + '" oninput="draftUpdateLine(' + i + ',\'unitCost\',this.value)"></td>' +
+        '<td class="li-tax"><input type="checkbox" ' + (li.taxable ? 'checked' : '') + ' onchange="draftUpdateLine(' + i + ',\'taxable\',this.checked)"></td>' +
+        '<td><button class="btn btn-danger btn-sm" type="button" onclick="draftRemoveLine(' + i + ')">&times;</button></td>' +
+      '</tr>';
+    }).join('') +
+  '</tbody></table>' +
+  '<button class="btn btn-outline btn-sm" type="button" style="margin-top:8px" onclick="draftAddLine()">+ Add Line Item</button>' +
+  '<div class="totals-box">' +
+    '<div class="trow"><span>Subtotal</span><span>' + fmtMoney(t.subtotal) + '</span></div>' +
+    '<div class="trow"><span>GST (5%)</span><span>' + fmtMoney(t.gst) + '</span></div>' +
+    '<div class="trow"><span>Manitoba RST (7%)</span><span>' + fmtMoney(t.pst) + '</span></div>' +
+    '<div class="trow grand"><span>Total</span><span>' + fmtMoney(t.total) + '</span></div>' +
+    '<div class="trow"><span>Paid to Date</span><span>' + fmtMoney(t.paid) + '</span></div>' +
+    '<div class="trow balance"><span>Balance Due</span><span>' + fmtMoney(t.balance) + '</span></div>' +
+  '</div>' +
+  '<h3 style="margin-top:16px;margin-bottom:6px;font-family:Oswald,Arial Narrow,sans-serif;font-size:1rem">Payments &amp; Deposits</h3>' +
+  (jd.payments.length ? jd.payments.map(function(p){
+    return '<div class="payment-row"><span>' + fmtDate(p.date) + ' — ' + esc(p.method) + (p.note ? ' (' + esc(p.note) + ')' : '') + '</span><strong>' + fmtMoney(p.amount) + '</strong></div>';
+  }).join('') : '<p class="hint">No payments logged yet.</p>') +
+  (jd.id ? '<button class="btn btn-outline btn-sm" type="button" style="margin-top:8px" onclick="openPaymentModal(\'' + jd.id + '\')">Log Payment</button>' : '<p class="hint" style="margin-top:8px">Save this job first, then log payments from the Jobs or Invoices tab.</p>') +
+  '<div class="field" style="margin-top:16px"><label>Notes</label><textarea id="jf-notes">' + esc(jd.notes) + '</textarea></div>';
+}
+function draftPickClient(clientId){
+  jobDraft.vehicleId = '';
+  byId('modal-body').innerHTML = renderJobModalBody();
+  var sel = byId('jf-vehicle');
+  sel.innerHTML = '<option value="">Choose a vehicle…</option>' +
+    vehiclesForClient(clientId).map(function(v){ return '<option value="' + v.id + '">' + esc(vehicleLabel(v)) + '</option>'; }).join('');
+}
+function draftPickVehicle(vehicleId){
+  jobDraft.vehicleId = vehicleId;
+}
+function draftAddLine(){
+  jobDraft.lineItems.push({id: uid('li'), description: '', category: 'material', qty: 1, unitCost: 0, taxable: true});
+  refreshJobDraftBody();
+}
+function draftRemoveLine(i){
+  jobDraft.lineItems.splice(i, 1);
+  refreshJobDraftBody();
+}
+function draftUpdateLine(i, field, value){
+  var li = jobDraft.lineItems[i];
+  if(!li) return;
+  if(field === 'qty' || field === 'unitCost') li[field] = Number(value) || 0;
+  else if(field === 'taxable') li[field] = !!value;
+  else li[field] = value;
+  if(field === 'qty' || field === 'unitCost' || field === 'taxable') refreshJobDraftBody();
+}
+function refreshJobDraftBody(){
+  var scrollTop = byId('modal-body').scrollTop;
+  byId('modal-body').innerHTML = renderJobModalBody();
+  byId('modal-body').scrollTop = scrollTop;
+}
+function saveJobDraft(){
+  var vehicleId = byId('jf-vehicle') ? byId('jf-vehicle').value : jobDraft.vehicleId;
+  if(!vehicleId){ showModalError('Choose a client and vehicle for this job.'); return; }
+  var title = byId('jf-title').value.trim();
+  var wasStatus = jobDraft.id ? (D.jobs.filter(function(j){ return j.id === jobDraft.id; })[0] || {}).status : null;
+  var rec = {
+    id: jobDraft.id || uid('job'),
+    vehicleId: vehicleId,
+    jobType: byId('jf-type').value,
+    status: byId('jf-status').value,
+    title: title,
+    createdAt: jobDraft.createdAt || today(),
+    quoteDate: byId('jf-quotedate').value || today(),
+    targetDate: byId('jf-targetdate').value,
+    lineItems: jobDraft.lineItems,
+    payments: jobDraft.payments,
+    invoiceNumber: jobDraft.invoiceNumber,
+    invoicedDate: jobDraft.invoicedDate,
+    notes: byId('jf-notes').value.trim(),
+    isSample: jobDraft.isSample
+  };
+  if(rec.status === 'invoiced' && !rec.invoiceNumber){
+    rec.invoiceNumber = D.business.invoicePrefix + '-' + D.business.nextInvoiceNum;
+    rec.invoicedDate = today();
+    D.business.nextInvoiceNum = D.business.nextInvoiceNum + 1;
+  }
+  var idx = D.jobs.findIndex(function(x){ return x.id === rec.id; });
+  if(idx >= 0) D.jobs[idx] = rec;
+  else D.jobs.push(rec);
+  saveData();
+  closeModal();
+  render();
+  toast(jobDraft && wasStatus ? 'Job updated.' : 'Job added.');
+}
+function deleteJob(id){
+  confirm2('Delete Job', 'Delete this job and its line items and payments? This cannot be undone.', function(){
+    D.jobs = D.jobs.filter(function(j){ return j.id !== id; });
+    saveData();
+    render();
+    toast('Job deleted.');
+  }, 'Delete', 'btn-danger');
+}
+
+/* ── Payments ─────────────────────────────────────────── */
+function openPaymentModal(jobId){
+  var job = D.jobs.filter(function(j){ return j.id === jobId; })[0];
+  if(!job){ toast('That job no longer exists.'); return; }
+  var body = '' +
+    '<div class="form-grid">' +
+      '<div class="field"><label>Date</label><input type="date" id="pf-date" value="' + today() + '"></div>' +
+      '<div class="field"><label>Amount</label><input type="number" step="0.01" id="pf-amount" value=""></div>' +
+      '<div class="field"><label>Method</label><select id="pf-method">' +
+        PAYMENT_METHODS.map(function(m){ return '<option value="' + m + '">' + m + '</option>'; }).join('') +
+      '</select></div>' +
+      '<div class="field"><label>Note (optional)</label><input type="text" id="pf-note" placeholder="e.g. Deposit"></div>' +
+    '</div>';
+  var foot = '<button class="btn btn-outline" type="button" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-primary" type="button" onclick="savePayment(\'' + jobId + '\')">Log Payment</button>';
+  openModal('Log Payment', body, foot);
+}
+function savePayment(jobId){
+  var amount = Number(byId('pf-amount').value);
+  if(!amount || amount <= 0){ showModalError('Enter a payment amount greater than zero.'); return; }
+  var job = D.jobs.filter(function(j){ return j.id === jobId; })[0];
+  if(!job) return;
+  job.payments.push({
+    id: uid('pay'),
+    date: byId('pf-date').value || today(),
+    amount: amount,
+    method: byId('pf-method').value,
+    note: byId('pf-note').value.trim()
+  });
+  var t = calcJobTotals(job);
+  if(job.status === 'invoiced' && t.balance <= 0.004){
+    job.status = 'paid';
+  } else if(job.status === 'quoted'){
+    job.status = 'deposit';
+  }
+  saveData();
+  closeModal();
+  render();
+  toast('Payment logged.');
+}
+
+/* ── Print: quote / invoice ──────────────────────────── */
+function printLetterhead(docType, job){
+  var b = D.business;
+  return '<div class="print-hd"><h1>' + esc(b.name) + '</h1>' +
+    '<div>' + esc(b.address) + ' &middot; ' + esc(b.phone) + ' &middot; ' + esc(b.email) + '</div>' +
+    '<div class="doc-type">' + esc(docType) + (job.invoiceNumber && docType === 'INVOICE' ? ' — ' + esc(job.invoiceNumber) : '') + '</div></div>';
+}
+function printMeta(job, showInvoiceDate){
+  var v = vehicleById(job.vehicleId); var c = jobClient(job);
+  return '<div class="print-meta">' +
+    '<div><strong>Bill To</strong>' + esc(c ? c.name : 'Unknown client') + '<br>' + esc(c ? c.phone : '') + '<br>' + esc(c ? c.address : '') + '</div>' +
+    '<div><strong>Vehicle</strong>' + esc(vehicleLabel(v)) + (v && v.plate ? '<br>Plate: ' + esc(v.plate) : '') + '</div>' +
+    '<div><strong>Job</strong>' + esc(job.title || labelFor(JOB_TYPES, job.jobType)) + '<br>' +
+      (showInvoiceDate ? 'Invoiced: ' + fmtDate(job.invoicedDate) : 'Quoted: ' + fmtDate(job.quoteDate)) + '</div>' +
+  '</div>';
+}
+function printLineItems(job){
+  return '<table class="print-li-table"><thead><tr><th>Description</th><th>Category</th><th>Qty</th><th>Unit Cost</th><th>Line Total</th></tr></thead><tbody>' +
+    job.lineItems.map(function(li){
+      var lt = (Number(li.qty) || 0) * (Number(li.unitCost) || 0);
+      return '<tr><td>' + esc(li.description) + '</td><td>' + esc(labelFor(LI_CATEGORIES, li.category)) + '</td><td>' + esc(li.qty) + '</td><td>' + fmtMoney(li.unitCost) + '</td><td>' + fmtMoney(lt) + '</td></tr>';
+    }).join('') +
+  '</tbody></table>';
+}
+function printQuote(jobId){
+  var job = D.jobs.filter(function(j){ return j.id === jobId; })[0];
+  if(!job){ toast('That job no longer exists.'); return; }
+  var t = calcJobTotals(job);
+  var html = printLetterhead('QUOTE', job) + printMeta(job, false) + printLineItems(job) +
+    '<div class="print-totals">' +
+      '<div class="trow"><span>Subtotal</span><span>' + fmtMoney(t.subtotal) + '</span></div>' +
+      '<div class="trow"><span>GST (5%)</span><span>' + fmtMoney(t.gst) + '</span></div>' +
+      '<div class="trow"><span>Manitoba RST (7%)</span><span>' + fmtMoney(t.pst) + '</span></div>' +
+      '<div class="trow grand"><span>Estimated Total</span><span>' + fmtMoney(t.total) + '</span></div>' +
+    '</div>' +
+    '<p class="print-note">This is a quote, not an invoice. Prices are estimates and may change if the scope of work changes. Valid for 30 days from the quote date above.</p>' +
+    '<div class="print-footer">' + esc(D.business.tagline || '') + '</div>';
+  byId('print-area').innerHTML = html;
+  window.print();
+}
+function printInvoice(jobId){
+  var job = D.jobs.filter(function(j){ return j.id === jobId; })[0];
+  if(!job){ toast('That job no longer exists.'); return; }
+  var t = calcJobTotals(job);
+  var paymentRows = job.payments.length ? job.payments.map(function(p){
+    return '<div class="trow"><span>' + fmtDate(p.date) + ' — ' + esc(p.method) + '</span><span>' + fmtMoney(p.amount) + '</span></div>';
+  }).join('') : '<div class="trow"><span>No payments recorded</span><span>' + fmtMoney(0) + '</span></div>';
+  var html = printLetterhead('INVOICE', job) + printMeta(job, true) + printLineItems(job) +
+    '<div class="print-totals">' +
+      '<div class="trow"><span>Subtotal</span><span>' + fmtMoney(t.subtotal) + '</span></div>' +
+      '<div class="trow"><span>GST (5%)</span><span>' + fmtMoney(t.gst) + '</span></div>' +
+      '<div class="trow"><span>Manitoba RST (7%)</span><span>' + fmtMoney(t.pst) + '</span></div>' +
+      '<div class="trow grand"><span>Total</span><span>' + fmtMoney(t.total) + '</span></div>' +
+    '</div>' +
+    '<p class="print-note" style="margin-bottom:6px"><strong>Payments Applied</strong></p>' +
+    '<div class="print-totals">' + paymentRows +
+      '<div class="trow grand"><span>Balance Due</span><span>' + fmtMoney(t.balance) + '</span></div>' +
+    '</div>' +
+    '<div class="print-footer">' + esc(D.business.tagline || '') + (D.business.gstNumber ? ' &middot; GST# ' + esc(D.business.gstNumber) : '') + '</div>';
+  byId('print-area').innerHTML = html;
+  window.print();
+}
+
+/* ── Backup / export / import ────────────────────────── */
+function updateBackupPill(){
+  var pill = byId('backup-pill');
+  if(!pill) return;
+  if(!D.meta.lastBackup){
+    pill.textContent = 'Never backed up on this device';
+    pill.className = 'backup-pill warn';
+    return;
+  }
+  var hours = (Date.now() - new Date(D.meta.lastBackup).getTime()) / 3600000;
+  var label = 'Last backup: ' + fmtDateTime(D.meta.lastBackup);
+  if(hours <= 24){ pill.textContent = label; pill.className = 'backup-pill ok'; }
+  else if(hours <= 168){ pill.textContent = label; pill.className = 'backup-pill warn'; }
+  else { pill.textContent = label; pill.className = 'backup-pill danger'; }
+}
+function exportData(){
+  D.meta.lastBackup = new Date().toISOString();
+  saveData();
+  var blob = new Blob([JSON.stringify(D, null, 2)], {type: 'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var stamp = today();
+  a.href = url;
+  a.download = 'grafix-on-demand-backup-' + stamp + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  render();
+  toast('Backup exported. Move this file to your other device and import it there.');
+}
+function handleImportFile(file){
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    var parsed;
+    try { parsed = JSON.parse(reader.result); }
+    catch (err) { toast('That file is not a valid backup.'); return; }
+    confirm2('Import Backup', 'This replaces all data currently on this device with the contents of the backup file. Continue?', function(){
+      D = normalizeData(parsed);
+      D.meta.lastBackup = D.meta.lastBackup || new Date().toISOString();
+      saveData();
+      storageSetItem(ONBOARD_KEY, '1');
+      switchTab('dashboard');
+      toast('Backup imported.');
+    }, 'Import & Replace', 'btn-danger');
+  };
+  reader.readAsText(file);
+}
+
+/* ── Settings actions ─────────────────────────────────── */
+function saveBusinessSettings(){
+  D.business.name = byId('set-name').value.trim() || D.business.name;
+  D.business.phone = byId('set-phone').value.trim();
+  D.business.address = byId('set-address').value.trim();
+  D.business.email = byId('set-email').value.trim();
+  D.business.gstNumber = byId('set-gst').value.trim();
+  D.business.invoicePrefix = byId('set-prefix').value.trim() || 'GOD';
+  D.business.nextInvoiceNum = Number(byId('set-nextnum').value) || D.business.nextInvoiceNum;
+  D.business.tagline = byId('set-tagline').value.trim();
+  saveData();
+  render();
+  toast('Business info saved.');
+}
+function clearSampleData(){
+  confirm2('Remove Sample Data', 'This removes every client, vehicle, and job marked as sample data. Real data you have entered is not affected.', function(){
+    var sampleClientIds = D.clients.filter(function(c){ return c.isSample; }).map(function(c){ return c.id; });
+    var sampleVehicleIds = D.vehicles.filter(function(v){ return v.isSample; }).map(function(v){ return v.id; });
+    D.jobs = D.jobs.filter(function(j){ return !j.isSample; });
+    D.vehicles = D.vehicles.filter(function(v){ return !v.isSample; });
+    D.clients = D.clients.filter(function(c){ return !c.isSample; });
+    saveData();
+    render();
+    toast('Sample data removed.');
+  }, 'Remove Sample Data', 'btn-danger');
+}
+function resetAllData(){
+  confirm2('Reset This Device', 'This erases every client, vehicle, and job stored on this device and reloads the sample data. Make sure you have exported a backup if there is anything worth keeping. This cannot be undone.', function(){
+    D = normalizeData(seedData());
+    saveData();
+    switchTab('dashboard');
+    toast('This device has been reset.');
+  }, 'Reset Device', 'btn-danger');
+}
+
+/* ── Onboarding (multi-device first-run prompt) ──────── */
+function maybeShowOnboarding(hadStoredData){
+  if(hadStoredData) return;
+  if(storageGetItem(ONBOARD_KEY) === '1') return;
+  var body = '' +
+    '<p style="margin-bottom:10px">This looks like the first time this file has been opened on this device. If you already have a backup from another device, import it now so everything matches.</p>' +
+    '<div class="onboard-choice">' +
+      '<label class="onboard-opt" style="cursor:pointer">' +
+        '<h4>Import a backup file</h4><p>Use the JSON backup exported from your other device.</p>' +
+        '<input type="file" id="onb-import-file" accept="application/json,.json" style="margin-top:8px">' +
+      '</label>' +
+      '<button class="onboard-opt" type="button" onclick="dismissOnboarding()"><h4>Start with sample data</h4><p>Explore the tool with a few example clients and jobs. Remove them later from Settings.</p></button>' +
+    '</div>';
+  openModal('New Device Detected', body, '<button class="btn btn-outline" type="button" onclick="dismissOnboarding()">Skip for now</button>');
+  byId('onb-import-file').addEventListener('change', function(evt){
+    var file = evt.target.files[0];
+    if(!file) return;
+    storageSetItem(ONBOARD_KEY, '1');
+    closeModal();
+    handleImportFile(file);
+  });
+}
+function dismissOnboarding(){
+  storageSetItem(ONBOARD_KEY, '1');
+  closeModal();
+}
+
+/* ── Wire up static controls ──────────────────────────── */
+function wireControls(){
+  document.querySelectorAll('.nav-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){ switchTab(btn.getAttribute('data-tab')); });
+  });
+  byId('theme-toggle').addEventListener('click', toggleTheme);
+  byId('export-btn').addEventListener('click', exportData);
+  byId('import-file').addEventListener('change', function(evt){
+    handleImportFile(evt.target.files[0]);
+    evt.target.value = '';
+  });
+  document.addEventListener('change', function(evt){
+    if(evt.target && evt.target.id === 'settings-import-file'){
+      handleImportFile(evt.target.files[0]);
+      evt.target.value = '';
+    }
+  });
+}
+function toggleTheme(){
+  var root = document.documentElement;
+  var cur = root.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  storageSetItem('god_inv_theme', next);
+}
+
+/* ── Boot ──────────────────────────────────────────────── */
+function boot(){
+  var savedTheme = storageGetItem('god_inv_theme');
+  if(savedTheme === 'light' || savedTheme === 'dark'){
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }
+  var hadStoredData = loadData();
+  if(!D) D = normalizeData(seedData());
+  if(!hadStoredData) saveData();
+  wireControls();
+  render();
+  document.documentElement.className += ' app-ready';
+  window.godApp = {
+    ready: true,
+    switchTab: switchTab,
+    toggleTheme: toggleTheme
+  };
+  maybeShowOnboarding(hadStoredData);
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
+</script>
+</body>
+</html>
